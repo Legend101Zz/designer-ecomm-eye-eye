@@ -46,7 +46,7 @@ Run server in dev mode:
 npm run server:dev
 ```
 
-## How to work with the AR-Backend
+## How to work with the Backend
 
 There are few rules that you have to obey .
 
