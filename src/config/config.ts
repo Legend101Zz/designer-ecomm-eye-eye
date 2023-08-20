@@ -36,4 +36,6 @@ export default {
   port: envVars.PORT,
   xApiKey: envVars.API_KEY_TOKEN,
   mongoUri: envVars.MONGODB_URI,
+  googleClient: envVars.GOOGLE_CLIENT_ID,
+  googleClientSecret: envVars.GOOGLE_CLIENT_SECRET,
 };
