@@ -3,7 +3,9 @@ import { Methods } from './Methods';
 import { Metadatakeys } from './MetadataKeys';
 
 function routeBinder(method: string) {
+  // eslint-disable-next-line func-names
   return function (path: string) {
+    // eslint-disable-next-line func-names
     return function (target: any, key: string) {
       Reflect.defineMetadata(Metadatakeys.path, path, target, key);
       Reflect.defineMetadata(Metadatakeys.method, method, target, key);

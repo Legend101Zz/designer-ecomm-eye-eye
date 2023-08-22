@@ -36,6 +36,7 @@ export function controller(routePrefix: string) {
     const prototypeKeys = Object.keys(target.prototype);
 
     prototypeKeys.forEach((key) => {
+      // eslint-disable-next-line security/detect-object-injection
       const routeHandler = target.prototype[key];
 
       const path = Reflect.getMetadata(
@@ -61,6 +62,7 @@ export function controller(routePrefix: string) {
       const validator = bodyValidators(requiredBodyProps);
 
       if (path && method) {
+        // eslint-disable-next-line security/detect-object-injection
         router[method](
           `${routePrefix}${path}`,
           ...middlewares,

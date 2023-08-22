@@ -1,9 +1,10 @@
-import { Router } from 'express';
-import { AppRouter } from '@core/decoraters';
-import './user.controller';
+// import { Router } from 'express';
 
-const router: Router = Router();
+// import './user.controller';
+// import logger from '@core/utils/logger';
 
-router.use(AppRouter.getInstance());
+// const router: Router = Router();
 
-export default router;
+// logger.info('user route working');
+
+// export default router;

@@ -1,10 +1,10 @@
 import { Router } from 'express';
-
+import { AppRouter } from '@core/decoraters';
 import healthCheck from '@components/healthcheck/healthCheck.router';
-import user from '@components/user/user.router';
+import '@components/user/user.controller';
 
 const router: Router = Router();
 router.use(healthCheck);
-router.use(user);
+router.use(AppRouter.getInstance());
 
 export default router;

@@ -1,3 +1,4 @@
+/* eslint-disable func-names */
 import 'reflect-metadata';
 import { RequestHandler } from 'express';
 import { Metadatakeys } from './MetadataKeys';
