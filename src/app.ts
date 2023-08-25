@@ -1,5 +1,6 @@
 import express, { Application } from 'express';
-
+import passport from 'passport';
+import session from 'express-session';
 import api from 'api';
 import httpContext from 'express-http-context';
 import consts from '@config/consts';
@@ -19,6 +20,16 @@ app.use(httpLogger.successHandler);
 app.use(httpLogger.errorHandler);
 app.use(uniqueReqId);
 app.use(express.json());
+app.use(
+  session({
+    secret: 'somethingsecretgoeshere',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: true },
+  }),
+);
+app.use(passport.initialize());
+app.use(passport.session());
 app.use(consts.API_ROOT_PATH, api);
 app.use(swaggerApiDocs);
 app.use(http404);

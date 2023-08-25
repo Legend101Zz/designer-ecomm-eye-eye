@@ -1,20 +1,10 @@
 import { Router, Request, Response } from 'express';
 import passport from 'passport';
-import cookieSession from 'cookie-session';
 import './auth';
+import { isLoggedIn } from '@core/middlewares/userAuth.middleware';
 // import logger from '@core/utils/logger';
 
 const router: Router = Router();
-
-router.use(
-  cookieSession({
-    name: 'google-auth-session',
-    keys: ['key1', 'key2'],
-  }),
-);
-
-router.use(passport.initialize());
-router.use(passport.session());
 
 router.get('/', (req: Request, res: Response) => {
   res.json({ message: 'You are not logged in' });
@@ -23,7 +13,7 @@ router.get('/', (req: Request, res: Response) => {
 router.get('/failed', (req, res: Response) => {
   res.send('Failed');
 });
-router.get('/success', (req: Request, res: Response) => {
+router.get('/success', isLoggedIn, (req: Request, res: Response) => {
   res.send(`Welcome ${req}`);
 });
 
@@ -35,7 +25,7 @@ router.get(
 );
 
 router.get(
-  '/google/callback',
+  '/auth/google/callback',
   passport.authenticate('google', {
     failureRedirect: '/failed',
   }),
@@ -43,5 +33,11 @@ router.get(
     res.redirect('/success');
   },
 );
+
+router.get('/logout', (req: any, res) => {
+  req.session = null;
+  req.logout(); // Use the logout method without arguments
+  res.redirect('/');
+});
 
 export default router;

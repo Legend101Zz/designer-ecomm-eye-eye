@@ -7,7 +7,7 @@ const googleStrategy = new GoogleStrategy(
   {
     clientID: config.googleClient,
     clientSecret: config.googleClientSecret,
-    callbackURL: 'http://localhost:8080/auth/google/callback',
+    callbackURL: 'http://localhost:8080/api/auth/google/callback',
     passReqToCallback: true,
   },
   (request, accessToken, refreshToken, profile, done) => {
