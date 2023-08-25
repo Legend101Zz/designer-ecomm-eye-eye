@@ -1,12 +1,16 @@
 import 'reflect-metadata';
+import logger from '@core/utils/logger';
 import { Methods } from './Methods';
 import { Metadatakeys } from './MetadataKeys';
+
+logger.info(Reflect);
 
 function routeBinder(method: string) {
   // eslint-disable-next-line func-names
   return function (path: string) {
     // eslint-disable-next-line func-names
     return function (target: any, key: string) {
+      logger.debug(key);
       Reflect.defineMetadata(Metadatakeys.path, path, target, key);
       Reflect.defineMetadata(Metadatakeys.method, method, target, key);
     };

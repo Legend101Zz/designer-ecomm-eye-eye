@@ -38,6 +38,7 @@
     "@types/morgan": "^1.9.3",
     "apicache": "^1.6.3",
     "cloudinary": "^1.40.0",
+    "cookie-session": "^2.0.0",
     "dotenv": "^14.3.2",
     "express": "^4.17.1",
     "express-http-context": "^1.2.4",

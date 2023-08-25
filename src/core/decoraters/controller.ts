@@ -34,7 +34,7 @@ export function controller(routePrefix: string) {
     const router = AppRouter.getInstance();
 
     const prototypeKeys = Object.keys(target.prototype);
-
+    logger.info(prototypeKeys);
     prototypeKeys.forEach((key) => {
       // eslint-disable-next-line security/detect-object-injection
       const routeHandler = target.prototype[key];
