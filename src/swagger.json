@@ -38,6 +38,36 @@
         }
       }
     },
+    "/api/user/data": {
+      "get": {
+        "tags": ["User data after auth"],
+        "summary": "Api to fetch user data from server after successful authentication  ",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "token",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK  user data fetched"
+          },
+          "401": {
+            "description": "Access forbidden. Not logged in or Incorrect x-api-key!",
+            "error": {}
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
+    },
     "/api/user": {
       "post": {
         "tags": ["create user"],
