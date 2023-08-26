@@ -27,6 +27,17 @@
         }
       }
     },
+    "/api/auth/google": {
+      "get": {
+        "tags": ["Google SignIn/SignUp"],
+        "summary": "Google auth strategy ,creates a new user in db if no user exists , else logs the user in  ",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/user": {
       "post": {
         "tags": ["create user"],

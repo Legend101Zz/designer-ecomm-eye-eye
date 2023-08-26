@@ -53,7 +53,7 @@ passport.serializeUser((User: any, cb) => {
 });
 
 passport.deserializeUser(async (id, cb) => {
-  const checkuser = await user.findOne(id).catch((err) => {
+  const checkuser = await user.findById(id).catch((err) => {
     logger.error(`Error Deserialising ${err}`);
     cb(err, null);
   });

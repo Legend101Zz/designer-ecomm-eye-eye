@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import passport from 'passport';
 import logger from '@core/utils/logger';
 import { isLoggedIn } from '@core/middlewares/userAuth.middleware';
+import protectedByApiKey from '@core/middlewares/apiKey.middleware';
 import './auth';
 // import logger from '@core/utils/logger';
 
@@ -9,6 +10,10 @@ const router: Router = Router();
 
 router.get('/user', (req: Request, res: Response) => {
   res.json({ message: 'You are not logged in' });
+});
+
+router.get('/user/data', isLoggedIn, (req: any, res) => {
+  res.json(req.session.userData);
 });
 
 router.get('/failed', (req, res: Response) => {
@@ -34,7 +39,9 @@ router.get(
     failureRedirect: '/api/failed',
   }),
   (req: any, res: Response) => {
-    console.log(req.user);
+    console.log('check', req.user);
+    req.session.userData = req.user;
+    console.log('check2', req.session);
     res.redirect('/api/success');
   },
 );

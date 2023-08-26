@@ -1,8 +1,8 @@
 import { NextFunction, Response } from 'express';
 
 const isLoggedIn = (req: any, res: Response, next: NextFunction) => {
-  console.log(req.user);
-  if (req.user) {
+  console.log(req.session);
+  if (req.session.userData) {
     next();
   } else {
     res.status(401).send('You must login first');
