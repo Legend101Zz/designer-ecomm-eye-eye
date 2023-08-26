@@ -3,6 +3,7 @@ export interface IUser {
   _id: string;
   username: String;
   email: String;
-  password: String;
-  following: any;
+  password?: String;
+  following?: any;
+  googleId: String;
 }
