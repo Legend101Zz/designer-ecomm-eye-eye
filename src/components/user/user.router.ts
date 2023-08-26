@@ -12,7 +12,7 @@ router.get('/user', (req: Request, res: Response) => {
   res.json({ message: 'You are not logged in' });
 });
 
-router.get('/user/data', isLoggedIn, (req: any, res) => {
+router.get('/user/data', [protectedByApiKey], isLoggedIn, (req: any, res) => {
   res.json(req.session.userData);
 });
 

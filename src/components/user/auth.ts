@@ -16,7 +16,7 @@ const googleStrategy = new GoogleStrategy(
   },
   async (request, accessToken, refreshToken, profile, cb) => {
     const defaultUser = {
-      username: `${profile.name.givenName} ${profile.name.familyName}`,
+      username: `${profile.name.givenName}`,
       email: profile.emails[0].value,
       googleId: profile.id,
     };
