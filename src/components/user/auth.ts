@@ -20,6 +20,7 @@ const googleStrategy = new GoogleStrategy(
       email: profile.emails[0].value,
       googleId: profile.id,
     };
+
     const checkUser: any = await user
       .findOne({ googleId: profile.id })
       .catch((err) => {
@@ -27,8 +28,28 @@ const googleStrategy = new GoogleStrategy(
         cb(err, null);
       });
 
-    if (checkUser) {
+    const checkUser2: any = await user
+      .findOne({ email: profile.emails[0].value })
+      .catch((err) => {
+        logger.error(`Sign Up error ${err}`);
+        cb(err, null);
+      });
+
+    console.log(checkUser2);
+
+    if (checkUser && checkUser2) {
       cb(null, checkUser);
+    } else if (checkUser2) {
+      checkUser2.googleId = profile.id;
+      await checkUser2
+        .save()
+        .then((result: any) => {
+          cb(null, result);
+        })
+        .catch((err: any) => {
+          logger.error(`Sign Up error ${err}`);
+          cb(err, null);
+        });
     } else {
       await user
         .create(defaultUser)
