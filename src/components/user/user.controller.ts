@@ -21,5 +21,20 @@ const createUser = async (req: Request, res: Response) => {
   }
 };
 
+const loginUser = async (req: Request, res: Response) => {
+  try {
+    const newUser = req.body as IUser;
+    const check: any = await user.find({ email: newUser.email });
+    // console.log(check[0].password, newUser.password, 'here');
+    if (check[0].password === newUser.password) {
+      return res.status(201).send({ message: 'success', data: check });
+    }
+    return res.status(201).send({ message: 'Invalid Credentials' });
+  } catch (err) {
+    res.status(httpStatus.INTERNAL_SERVER_ERROR);
+    return res.send({ message: 'Server Error' });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
-export { createUser };
+export { createUser, loginUser };

@@ -5,7 +5,7 @@ import { isLoggedIn } from '@core/middlewares/userAuth.middleware';
 import protectedByApiKey from '@core/middlewares/apiKey.middleware';
 import validation from '@core/middlewares/validate.middleware';
 import createUserValidation from './createUserValidation';
-import { createUser } from './user.controller';
+import { createUser, loginUser } from './user.controller';
 import './auth';
 // import logger from '@core/utils/logger';
 
@@ -61,5 +61,7 @@ router.post(
   [protectedByApiKey, validation(createUserValidation)],
   createUser,
 );
+
+router.post('/user/login', [protectedByApiKey], loginUser);
 
 export default router;
