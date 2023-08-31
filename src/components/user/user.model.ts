@@ -20,6 +20,6 @@ const UserSchema: Schema<IUser> = new Schema({
   ],
 });
 
-const user = mongoose.model<IUser>('Designer', UserSchema);
+const user = mongoose.model<IUser>('User', UserSchema);
 // eslint-disable-next-line import/prefer-default-export
 export { user };

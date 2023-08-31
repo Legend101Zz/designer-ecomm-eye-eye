@@ -3,11 +3,15 @@ import passport from 'passport';
 import logger from '@core/utils/logger';
 import { isLoggedIn } from '@core/middlewares/userAuth.middleware';
 import protectedByApiKey from '@core/middlewares/apiKey.middleware';
+import validation from '@core/middlewares/validate.middleware';
+import createUserValidation from './createUserValidation';
+import { createUser } from './user.controller';
 import './auth';
 // import logger from '@core/utils/logger';
 
 const router: Router = Router();
 
+// google auth routes
 router.get('/user', (req: Request, res: Response) => {
   res.json({ message: 'You are not logged in' });
 });
@@ -51,5 +55,11 @@ router.get('/logout', (req: any, res) => {
   req.logout(); // Use the logout method without arguments
   res.redirect('/api/user');
 });
+
+router.post(
+  '/user/create',
+  [protectedByApiKey, validation(createUserValidation)],
+  createUser,
+);
 
 export default router;
