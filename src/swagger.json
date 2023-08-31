@@ -56,6 +56,7 @@
           "200": {
             "description": "OK  user data fetched"
           },
+
           "401": {
             "description": "Access forbidden. Not logged in or Incorrect x-api-key!",
             "error": {}
@@ -68,9 +69,9 @@
         ]
       }
     },
-    "/api/user": {
+    "/api/user/create": {
       "post": {
-        "tags": ["create user"],
+        "tags": ["create user manually without oauth"],
         "description": "Create user",
         "parameters": [
           {
@@ -106,6 +107,62 @@
             "description": "Access forbidden. Incorrect x-api-key!",
             "error": {}
           },
+          "201": {
+            "description": "OK User already exists"
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "message": {}
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
+    },
+    "/api/user/login": {
+      "post": {
+        "tags": ["login user manually without oauth"],
+        "description": "Login user",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "Provide API-key (ie. API_KEY_TOKEN from .env.locals file)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Input",
+            "in": "body",
+            "description": "Input data required to create new user",
+            "schema": {
+              "$ref": "#/definitions/UserLoginInput"
+            }
+          }
+        ],
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "User has been Logged In",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/definitions/ResponseWithMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access forbidden. Incorrect x-api-key!",
+            "error": {}
+          },
+          "201": {
+            "description": "OK Invalid Credentials"
+          },
           "500": {
             "description": "Internal Server Error",
             "message": {}
@@ -130,7 +187,7 @@
       }
     },
     "UserInput": {
-      "required": ["name", "email"],
+      "required": ["name", "email", "password"],
       "properties": {
         "name": {
           "type": "string",
@@ -139,6 +196,23 @@
         "email": {
           "type": "string",
           "default": "john.d@example.net"
+        },
+        "password": {
+          "type": "string",
+          "default": "john@11$"
+        }
+      }
+    },
+    "UserLoginInput": {
+      "required": ["email", "password"],
+      "properties": {
+        "email": {
+          "type": "string",
+          "default": "john.d@example.net"
+        },
+        "password": {
+          "type": "string",
+          "default": "john@11$"
         }
       }
     },
