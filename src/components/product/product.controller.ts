@@ -1,11 +1,6 @@
 import { Request, Response } from 'express';
 import httpStatus from 'http-status';
-import {
-  create,
-  read,
-  update,
-  deleteById,
-} from '@components/product/product.service';
+import { create } from '@components/product/product.service';
 import { Iproduct } from './product.interface';
 
 const createProd = async (req: Request, res: Response) => {

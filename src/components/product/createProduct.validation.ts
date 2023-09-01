@@ -14,7 +14,7 @@ enum Category {
   Cup = 'cup',
 }
 
-const createUserValidation: ValidationSchema = {
+const createProductValidation: ValidationSchema = {
   body: Joi.object().keys({
     name: Joi.string().required(),
     quantity: Joi.number().integer().min(0).required(),
@@ -27,4 +27,4 @@ const createUserValidation: ValidationSchema = {
   }),
 };
 
-export default createUserValidation;
+export default createProductValidation;
