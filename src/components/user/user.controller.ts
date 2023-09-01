@@ -8,7 +8,7 @@ const createUser = async (req: Request, res: Response) => {
   try {
     const newUser = req.body as IUser;
     const check = await user.find({ email: newUser.email });
-    console.log(check, 'here');
+    // console.log(check, 'here');
     if (check.length === 0 || !check) {
       await create(newUser);
       res.status(httpStatus.CREATED);
