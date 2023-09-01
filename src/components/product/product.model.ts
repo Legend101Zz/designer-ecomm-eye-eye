@@ -16,7 +16,7 @@ const ProductSchema: Schema<Iproduct> = new Schema({
     type: Number,
     required: true,
   },
-  color: { type: String, required: true },
+  color: [{ type: String, required: true }],
   category: { type: String, required: true },
 
   image: [ImageSchema],

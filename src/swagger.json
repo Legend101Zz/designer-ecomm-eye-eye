@@ -174,8 +174,62 @@
           }
         ]
       }
+    },
+    "/api/product/create": {
+      "post": {
+        "tags": ["adding a new product to the inventory"],
+        "description": "Login user",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "Provide API-key (ie. API_KEY_TOKEN from .env.locals file)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Input",
+            "in": "body",
+            "description": "Input data required to create new user",
+            "schema": {
+              "$ref": "#/definitions/ProductInput"
+            }
+          }
+        ],
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "product added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/definitions/ResponseWithMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access forbidden. Incorrect x-api-key!",
+            "error": {}
+          },
+          "201": {
+            "description": "OK Invalid Credentials"
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "message": {}
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
     }
   },
+
   "definitions": {
     "Input": {
       "required": ["input"],
@@ -216,6 +270,29 @@
         }
       }
     },
+    "ProductInput": {
+      "required": ["name", "quantity", "color", "category"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "default": "eye-eye-tee"
+        },
+        "quantity": {
+          "type": "number",
+          "default": "100"
+        },
+        "color": {
+          "type": "color",
+          "default": "red",
+          "$ref": "#/components/schemas/ColorEnum"
+        },
+        "category": {
+          "type": "category",
+          "default": "Tshirt",
+          "$ref": "#/components/schemas/CategoryEnum"
+        }
+      }
+    },
     "ResponseWithMessage": {
       "type": "object",
       "properties": {
@@ -228,6 +305,18 @@
       "type": "apiKey",
       "name": "x-api-key",
       "in": "header"
+    }
+  },
+  "components": {
+    "schemas": {
+      "ColorEnum": {
+        "type": "string",
+        "enum": ["red", "black", "white", "yellow"]
+      },
+      "CategoryEnum": {
+        "type": "string",
+        "enum": ["shirt", "Tshirt", "Cup"]
+      }
     }
   }
 }
