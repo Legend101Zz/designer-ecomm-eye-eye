@@ -16,9 +16,9 @@ const create = async (prod: Iproduct): Promise<boolean> => {
 };
 
 const read = async (id: string): Promise<Iproduct> => {
-  logger.debug(`Sent user.id ${id}`);
-  const user = await product.findOne({ _id: id });
-  return user as Iproduct;
+  logger.debug(`Sent product.id ${id}`);
+  const prod = await product.findOne({ _id: id });
+  return prod as Iproduct;
 };
 
 const update = async (prod: Iproduct): Promise<boolean> => {
