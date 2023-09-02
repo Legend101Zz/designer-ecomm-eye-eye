@@ -10,6 +10,7 @@ import uniqueReqId from '@core/middlewares/uniqueReqId.middleware';
 import http404 from '@components/404/404.router';
 import swaggerApiDocs from '@components/swagger-ui/swagger.router';
 import db from '@db';
+import cors from 'cors';
 
 db.connect();
 
@@ -20,6 +21,7 @@ app.use(httpLogger.successHandler);
 app.use(httpLogger.errorHandler);
 app.use(uniqueReqId);
 app.use(express.json());
+app.use(cors());
 app.use(
   session({
     secret: 'somethingsecretgoeshere',

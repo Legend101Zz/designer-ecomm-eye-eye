@@ -39,6 +39,7 @@
     "apicache": "^1.6.3",
     "cloudinary": "^1.40.0",
     "cookie-session": "^2.0.0",
+    "cors": "^2.8.5",
     "dotenv": "^14.3.2",
     "express": "^4.17.1",
     "express-http-context": "^1.2.4",
@@ -66,6 +67,7 @@
   },
   "devDependencies": {
     "@types/apicache": "^1.6.0",
+    "@types/cors": "^2.8.13",
     "@types/node": "^16.11.11",
     "@typescript-eslint/eslint-plugin": "^5.5.0",
     "@typescript-eslint/parser": "^5.5.0",
