@@ -227,6 +227,55 @@
           }
         ]
       }
+    },
+    "/api/product/read/{id}": {
+      "get": {
+        "tags": ["Get product details"],
+        "summary": "API to fetch product data from the server, requires a product ID in the URL.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Product ID"
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "token",
+            "schema": {
+              "type": "string"
+            },
+            "description": "API Key for authentication"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - Product data fetched"
+          },
+          "401": {
+            "description": "Access forbidden - Not logged in or Incorrect x-api-key!",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Access forbidden"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
     }
   },
 
