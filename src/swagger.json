@@ -13,10 +13,25 @@
   "schemes": ["http", "https"],
   "consumes": ["application/json"],
   "produces": ["application/json"],
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "Endpoints related to user authentication"
+    },
+
+    {
+      "name": "Product Management",
+      "description": "Endpoints for managing products"
+    },
+    {
+      "name": "Misc",
+      "description": "Misc Endpoints"
+    }
+  ],
   "paths": {
     "/api/health": {
       "get": {
-        "tags": ["healthcheck"],
+        "tags": ["Misc"],
         "summary": "Application service health check 💗",
         "produces": ["application/json"],
         "consumes": ["application/json"],
@@ -29,7 +44,7 @@
     },
     "/api/auth/google": {
       "get": {
-        "tags": ["Google SignIn/SignUp"],
+        "tags": ["Authentication"],
         "summary": "Google auth strategy, creates a new user in db if no user exists, else logs the user in",
         "responses": {
           "200": {
@@ -40,7 +55,7 @@
     },
     "/api/user/data": {
       "get": {
-        "tags": ["User data after auth"],
+        "tags": ["Authentication"],
         "summary": "API to fetch user data from the server after successful authentication",
         "parameters": [
           {
@@ -70,8 +85,8 @@
     },
     "/api/user/create": {
       "post": {
-        "tags": ["create user manually without oauth"],
-        "description": "Create user",
+        "tags": ["Authentication"],
+        "description": "Create user without oauth",
         "parameters": [
           {
             "name": "x-api-key",
@@ -123,8 +138,8 @@
     },
     "/api/user/login": {
       "post": {
-        "tags": ["login user manually without oauth"],
-        "description": "Login user",
+        "tags": ["Authentication"],
+        "description": "Login user manually without oauth",
         "parameters": [
           {
             "name": "x-api-key",
@@ -176,8 +191,8 @@
     },
     "/api/product/create": {
       "post": {
-        "tags": ["adding a new product to the inventory"],
-        "description": "Login user",
+        "tags": ["Product Management"],
+        "description": "adding a new product to the inventory",
         "parameters": [
           {
             "name": "x-api-key",
@@ -229,7 +244,7 @@
     },
     "/api/product/read/{id}": {
       "get": {
-        "tags": ["Get product details"],
+        "tags": ["Product Management"],
         "summary": "API to fetch product data from the server, requires a product ID in the URL.",
         "parameters": [
           {
@@ -278,7 +293,7 @@
     },
     "/api/product/changeQuantity": {
       "post": {
-        "tags": ["Change product quantity"],
+        "tags": ["Product Management"],
         "description": "Change the quantity of a product",
         "parameters": [
           {
@@ -328,7 +343,7 @@
     },
     "/api/product/addColor": {
       "post": {
-        "tags": ["Add color to product"],
+        "tags": ["Product Management"],
         "description": "Add a color to a product",
         "parameters": [
           {
@@ -382,7 +397,7 @@
     },
     "/api/product/deleteColor": {
       "post": {
-        "tags": ["Delete color from product"],
+        "tags": ["Product Management"],
         "description": "Delete a color from a product",
         "parameters": [
           {
