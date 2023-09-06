@@ -30,7 +30,7 @@
     "/api/auth/google": {
       "get": {
         "tags": ["Google SignIn/SignUp"],
-        "summary": "Google auth strategy ,creates a new user in db if no user exists , else logs the user in  ",
+        "summary": "Google auth strategy, creates a new user in db if no user exists, else logs the user in",
         "responses": {
           "200": {
             "description": "OK"
@@ -41,7 +41,7 @@
     "/api/user/data": {
       "get": {
         "tags": ["User data after auth"],
-        "summary": "Api to fetch user data from server after successful authentication  ",
+        "summary": "API to fetch user data from the server after successful authentication",
         "parameters": [
           {
             "name": "x-api-key",
@@ -54,9 +54,8 @@
         ],
         "responses": {
           "200": {
-            "description": "OK  user data fetched"
+            "description": "OK user data fetched"
           },
-
           "401": {
             "description": "Access forbidden. Not logged in or Incorrect x-api-key!",
             "error": {}
@@ -85,7 +84,7 @@
           {
             "name": "Input",
             "in": "body",
-            "description": "Input data required to create new user",
+            "description": "Input data required to create a new user",
             "schema": {
               "$ref": "#/definitions/UserInput"
             }
@@ -138,7 +137,7 @@
           {
             "name": "Input",
             "in": "body",
-            "description": "Input data required to create new user",
+            "description": "Input data required to create a new user",
             "schema": {
               "$ref": "#/definitions/UserLoginInput"
             }
@@ -191,7 +190,7 @@
           {
             "name": "Input",
             "in": "body",
-            "description": "Input data required to create new user",
+            "description": "Input data required to create a new product",
             "schema": {
               "$ref": "#/definitions/ProductInput"
             }
@@ -200,7 +199,7 @@
         "produces": ["application/json"],
         "responses": {
           "200": {
-            "description": "product added",
+            "description": "Product added",
             "content": {
               "application/json": {
                 "schema": {
@@ -276,9 +275,166 @@
           }
         ]
       }
+    },
+    "/api/product/changeQuantity": {
+      "post": {
+        "tags": ["Change product quantity"],
+        "description": "Change the quantity of a product",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "Provide API-key (ie. API_KEY_TOKEN from .env.locals file)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Input",
+            "in": "body",
+            "description": "Input data required to change the quantity of a product",
+            "schema": {
+              "$ref": "#/definitions/ChangeQuantityInput"
+            }
+          }
+        ],
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "Product quantity changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/definitions/ResponseWithMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access forbidden. Incorrect x-api-key!",
+            "error": {}
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "message": {}
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
+    },
+    "/api/product/addColor": {
+      "post": {
+        "tags": ["Add color to product"],
+        "description": "Add a color to a product",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "Provide API-key (ie. API_KEY_TOKEN from .env.locals file)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Input",
+            "in": "body",
+            "description": "Input data required to add a color to a product",
+            "schema": {
+              "$ref": "#/definitions/AddColorInput"
+            }
+          }
+        ],
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "Color added to the product",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/definitions/ResponseWithMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access forbidden. Incorrect x-api-key!",
+            "error": {}
+          },
+          "404": {
+            "description": "Product not found",
+            "error": {}
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "message": {}
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
+    },
+    "/api/product/deleteColor": {
+      "post": {
+        "tags": ["Delete color from product"],
+        "description": "Delete a color from a product",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "Provide API-key (ie. API_KEY_TOKEN from .env.locals file)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Input",
+            "in": "body",
+            "description": "Input data required to delete a color from a product",
+            "schema": {
+              "$ref": "#/definitions/DeleteColorInput"
+            }
+          }
+        ],
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "Color deleted from the product",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/definitions/ResponseWithMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access forbidden. Incorrect x-api-key!",
+            "error": {}
+          },
+          "404": {
+            "description": "Product not found",
+            "error": {}
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "message": {}
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
     }
   },
-
   "definitions": {
     "Input": {
       "required": ["input"],
@@ -339,6 +495,45 @@
           "type": "category",
           "default": "Tshirt",
           "$ref": "#/components/schemas/CategoryEnum"
+        }
+      }
+    },
+    "ChangeQuantityInput": {
+      "required": ["productId", "quantity"],
+      "properties": {
+        "productId": {
+          "type": "string",
+          "description": "Product ID"
+        },
+        "quantity": {
+          "type": "number",
+          "description": "New quantity"
+        }
+      }
+    },
+    "AddColorInput": {
+      "required": ["productId", "color"],
+      "properties": {
+        "productId": {
+          "type": "string",
+          "description": "Product ID"
+        },
+        "color": {
+          "type": "string",
+          "description": "Color to add"
+        }
+      }
+    },
+    "DeleteColorInput": {
+      "required": ["productId", "color"],
+      "properties": {
+        "productId": {
+          "type": "string",
+          "description": "Product ID"
+        },
+        "color": {
+          "type": "string",
+          "description": "Color to delete"
         }
       }
     },
