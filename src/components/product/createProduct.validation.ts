@@ -27,4 +27,28 @@ const createProductValidation: ValidationSchema = {
   }),
 };
 
-export default createProductValidation;
+const createQuantityValidation: ValidationSchema = {
+  body: Joi.object().keys({
+    quantity: Joi.number().integer().min(0).required(),
+    productId: Joi.string()
+      .regex(/^[0-9a-fA-F]{24}$/)
+      .required(),
+  }),
+};
+
+const createColorValidation: ValidationSchema = {
+  body: Joi.object().keys({
+    color: Joi.string()
+      .valid(...Object.values(Color))
+      .required(),
+    productId: Joi.string()
+      .regex(/^[0-9a-fA-F]{24}$/)
+      .required(),
+  }),
+};
+
+export {
+  createProductValidation,
+  createQuantityValidation,
+  createColorValidation,
+};
