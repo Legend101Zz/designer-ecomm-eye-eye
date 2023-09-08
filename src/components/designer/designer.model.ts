@@ -8,12 +8,13 @@ const ImageSchema: Schema<IModel> = new Schema({
 });
 
 const DesignerSchema: Schema<IDesigner> = new Schema({
-  username: {
-    type: String,
-    required: true,
+  userId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
   },
-  password: { type: String, required: true },
+
   profileImage: ImageSchema,
+  isApproved: { type: Boolean, default: false },
   Designs: [
     {
       type: Schema.Types.ObjectId,

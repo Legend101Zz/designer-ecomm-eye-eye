@@ -1,8 +1,9 @@
+import mongoose from 'mongoose';
 import { IModel } from '@core/interfaces/validationSchema';
 
 export interface IDesigner {
-  username: String;
-  password: String;
+  userId: { type: mongoose.Schema.Types.ObjectId };
   profileImage: IModel;
-  Designs: any;
+  Designs: [{ type: mongoose.Schema.Types.ObjectId }];
+  isApproved: Boolean;
 }

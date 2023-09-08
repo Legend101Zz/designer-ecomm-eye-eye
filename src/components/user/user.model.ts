@@ -18,6 +18,7 @@ const UserSchema: Schema<IUser> = new Schema({
       ref: 'Designer',
     },
   ],
+  isDesigner: { type: Boolean, default: false },
 });
 
 const user = mongoose.model<IUser>('User', UserSchema);
