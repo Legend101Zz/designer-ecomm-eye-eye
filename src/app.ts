@@ -2,6 +2,7 @@ import express, { Application } from 'express';
 import passport from 'passport';
 import session from 'express-session';
 import api from 'api';
+import bodyParser from 'body-parser';
 import httpContext from 'express-http-context';
 import consts from '@config/consts';
 import httpLogger from '@core/utils/httpLogger';
@@ -20,13 +21,19 @@ app.use(httpContext.middleware);
 app.use(httpLogger.successHandler);
 app.use(httpLogger.errorHandler);
 app.use(uniqueReqId);
-app.use(express.json());
+app.use(bodyParser.json());
+app.use(
+  bodyParser.urlencoded({
+    extended: false,
+  }),
+);
 app.use(cors());
 app.use(
   session({
     secret: 'somethingsecretgoeshere',
     cookie: { maxAge: 24 * 60 * 60 * 10000 },
     saveUninitialized: false,
+    resave: false,
   }),
 );
 app.use(passport.initialize());

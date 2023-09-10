@@ -38,6 +38,7 @@
     "@types/morgan": "^1.9.3",
     "@types/nodemailer": "^6.4.9",
     "apicache": "^1.6.3",
+    "body-parser": "^1.20.2",
     "cloudinary": "^1.40.0",
     "cookie-session": "^2.0.0",
     "cors": "^2.8.5",

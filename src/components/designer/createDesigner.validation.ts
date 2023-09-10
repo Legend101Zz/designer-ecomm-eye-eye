@@ -3,7 +3,7 @@ import { ValidationSchema } from '@core/interfaces/validationSchema';
 
 const createDesignerValidation: ValidationSchema = {
   body: Joi.object().keys({
-    productId: Joi.string()
+    userId: Joi.string()
       .regex(/^[0-9a-fA-F]{24}$/)
       .required(),
   }),

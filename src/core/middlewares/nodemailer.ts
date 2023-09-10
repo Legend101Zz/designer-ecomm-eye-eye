@@ -1,17 +1,19 @@
-import { NextFunction, Request, Response } from 'express';
+// @ts-nocheck
+
+import { Request, Response } from 'express';
 import nodemailer, { Transporter } from 'nodemailer';
 import logger from '@core/utils/logger';
 import config from '@config/config';
 
 // Define a Nodemailer transporter
 const transporter: Transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: false, // Set this to true if your SMTP server requires SSL/TLS
+  service: 'gmail',
   auth: {
-    mailUser: config.mailUser,
-    mailPass: config.mailUser,
+    user: config.mailUser,
+    pass: config.mailUser,
   },
+  port: 465,
+  host: 'smtp.gmail.com',
 });
 
 // Middleware function to send an email
@@ -19,10 +21,10 @@ const transporter: Transporter = nodemailer.createTransport({
 export const sendEmailMiddleware = (
   req: Request,
   res: Response,
-  next: NextFunction,
+  to: string,
+  subject: string,
+  text: string,
 ) => {
-  const { to, subject, text } = req.body;
-
   const mailOptions = {
     from: config.mailUser,
     to,
@@ -39,6 +41,6 @@ export const sendEmailMiddleware = (
     }
     logger.debug(info.response);
 
-    next();
+    return res.status(500).json({ error: 'mail sent successfully' });
   });
 };
