@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import httpStatus from 'http-status';
 import { Request, Response } from 'express';
 import { IUser } from '@components/user/user.interface';
 import { create } from '@components/user/user.service';
 import { user } from '@components/user/user.model';
+import { address } from './userAddress.model';
 
 const createUser = async (req: Request, res: Response) => {
   try {
@@ -36,5 +38,59 @@ const loginUser = async (req: Request, res: Response) => {
   }
 };
 
+const addAddress = async (req: Request, res: Response) => {
+  const {
+    address_line1,
+    address_line2,
+    city,
+    postal_code,
+    country,
+    address_type,
+  } = req.body;
+  try {
+    const duplicateAddresses = await address.aggregate([
+      {
+        $group: {
+          _id: {
+            address_line1,
+            address_line2,
+            city,
+            postal_code,
+            country,
+            address_type,
+          },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $match: { count: { $gt: 1 } },
+      },
+    ]);
+
+    if (duplicateAddresses.length > 0) {
+      return res.status(200).json({
+        message: 'Duplicate addresses found',
+        duplicates: duplicateAddresses,
+      });
+    }
+    // eslint-disable-next-line new-cap
+    const newAddress = new address({
+      address_line1,
+      address_line2,
+      city,
+      postal_code,
+      country,
+      address_type,
+    });
+    await newAddress.save();
+    return res.status(201).json({ message: 'Address added successfully' });
+  } catch (error) {
+    return res.status(500).json({
+      message: 'An error occurred while checking for duplicates',
+      error,
+    });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
-export { createUser, loginUser };
+export { createUser, loginUser, addAddress };
