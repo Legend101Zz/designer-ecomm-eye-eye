@@ -10,4 +10,7 @@ export interface IUser {
   following?: [{ type: mongoose.Schema.Types.ObjectId }];
   googleId: String;
   isDesigner: Boolean;
+  addresses: [String];
+  phone?: String;
+  DesignerId?: { type: mongoose.Schema.Types.ObjectId };
 }

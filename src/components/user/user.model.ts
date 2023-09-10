@@ -12,6 +12,8 @@ const UserSchema: Schema<IUser> = new Schema({
 
   googleId: { type: String },
 
+  phone: { type: String },
+
   following: [
     {
       type: Schema.Types.ObjectId,
@@ -19,6 +21,10 @@ const UserSchema: Schema<IUser> = new Schema({
     },
   ],
   isDesigner: { type: Boolean, default: false },
+  DesignerId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Designer',
+  },
 });
 
 const user = mongoose.model<IUser>('User', UserSchema);

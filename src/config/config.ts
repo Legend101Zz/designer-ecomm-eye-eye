@@ -38,4 +38,6 @@ export default {
   mongoUri: envVars.MONGODB_URI,
   googleClient: envVars.GOOGLE_CLIENT_ID,
   googleClientSecret: envVars.GOOGLE_CLIENT_SECRET,
+  mailUser: envVars.GMAIL_MAIL,
+  mailPass: envVars.GMAIL_PASSWORD,
 };
