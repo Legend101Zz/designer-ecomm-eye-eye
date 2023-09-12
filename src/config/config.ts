@@ -40,4 +40,5 @@ export default {
   googleClientSecret: envVars.GOOGLE_CLIENT_SECRET,
   mailUser: envVars.GMAIL_MAIL,
   mailPass: envVars.GMAIL_PASSWORD,
+  salt: envVars.SALT,
 };

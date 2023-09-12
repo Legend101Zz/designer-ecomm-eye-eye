@@ -5,7 +5,6 @@ const createUserValidation: ValidationSchema = {
   body: Joi.object().keys({
     username: Joi.string().required(),
     email: Joi.string().email(),
-    password: Joi.string().required(),
   }),
 };
 

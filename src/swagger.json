@@ -86,7 +86,7 @@
     "/api/user/create": {
       "post": {
         "tags": ["Authentication"],
-        "description": "Create user without oauth",
+        "description": "Create user without oauth , random password is generated and mail is sent",
         "parameters": [
           {
             "name": "x-api-key",
@@ -461,7 +461,7 @@
       }
     },
     "UserInput": {
-      "required": ["name", "email", "password"],
+      "required": ["name", "email"],
       "properties": {
         "name": {
           "type": "string",
@@ -470,10 +470,6 @@
         "email": {
           "type": "string",
           "default": "john.d@example.net"
-        },
-        "password": {
-          "type": "string",
-          "default": "john@11$"
         }
       }
     },

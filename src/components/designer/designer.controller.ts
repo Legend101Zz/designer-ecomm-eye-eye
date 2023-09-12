@@ -14,7 +14,7 @@ const requestDesigner = async (req: Request, res: Response) => {
   const text = ' Please wait while we review your profile';
 
   try {
-    const checkUser: IUser = await user.findById(userId);
+    const checkUser: any = await user.findById(userId);
     const email = `${checkUser.email}`;
     console.log(checkUser);
     if (checkUser.isDesigner) {
@@ -24,6 +24,8 @@ const requestDesigner = async (req: Request, res: Response) => {
     }
     // eslint-disable-next-line new-cap
     const newDesigner = new designer({ userId });
+    checkUser.isDesigner = true;
+    await checkUser.save();
     await newDesigner.save();
     return sendEmailMiddleware(req, res, email, subject, text);
   } catch (err) {
