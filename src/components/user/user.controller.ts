@@ -38,7 +38,7 @@ const createUser = async (req: Request, res: Response) => {
     const subject = 'Welcome to EYE-EYE-TEE';
     const password = generateRandomPassword();
     const mail = `${newUser.email}`;
-    const text = `Your credentials are :- \n username : ${newUser.DesignerId} \n password: ${password}`;
+    const text = `Your credentials are :- \n username : ${newUser.username} \n password: ${password}`;
     const salt = await bcrypt.genSalt(Number(config.salt));
     const hashPassword = await bcrypt.hash(password, salt);
     const check = await user.find({ email: newUser.email });
