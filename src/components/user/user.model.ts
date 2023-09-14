@@ -20,6 +20,12 @@ const UserSchema: Schema<IUser> = new Schema({
       ref: 'Designer',
     },
   ],
+  addresses: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'Address',
+    },
+  ],
   isDesigner: { type: Boolean, default: false },
   DesignerId: {
     type: Schema.Types.ObjectId,

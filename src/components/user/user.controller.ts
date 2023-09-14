@@ -2,6 +2,7 @@
 import httpStatus from 'http-status';
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
+import mongoose from 'mongoose';
 import config from '@config/config';
 import { sendEmailMiddleware } from '@core/middlewares/nodemailer';
 import { IUser } from '@components/user/user.interface';
@@ -79,6 +80,7 @@ const addAddress = async (req: Request, res: Response) => {
     postal_code,
     country,
     address_type,
+    user_id,
   } = req.body;
   try {
     const duplicateAddresses = await address.aggregate([
@@ -106,6 +108,7 @@ const addAddress = async (req: Request, res: Response) => {
         duplicates: duplicateAddresses,
       });
     }
+    const userCheck = await user.findById(user_id);
     // eslint-disable-next-line new-cap
     const newAddress = new address({
       address_line1,
@@ -114,7 +117,14 @@ const addAddress = async (req: Request, res: Response) => {
       postal_code,
       country,
       address_type,
+      user_id,
     });
+
+    userCheck.addresses.push(
+      // eslint-disable-next-line no-underscore-dangle
+      newAddress._id as unknown as mongoose.Schema.Types.ObjectId,
+    );
+    await userCheck.save();
     await newAddress.save();
     return res.status(201).json({ message: 'Address added successfully' });
   } catch (error) {

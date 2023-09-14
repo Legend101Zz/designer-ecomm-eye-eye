@@ -8,4 +8,18 @@ const createUserValidation: ValidationSchema = {
   }),
 };
 
-export default createUserValidation;
+const createAddressValidation: ValidationSchema = {
+  body: Joi.object().keys({
+    address_line1: Joi.string().required(),
+    address_line2: Joi.string(),
+    city: Joi.string().required(),
+    postal_code: Joi.string().required(),
+    country: Joi.string().required(),
+    address_type: Joi.string().required(),
+    user_id: Joi.string()
+      .regex(/^[0-9a-fA-F]{24}$/)
+      .required(),
+  }),
+};
+
+export { createUserValidation, createAddressValidation };

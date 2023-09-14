@@ -4,8 +4,11 @@ import logger from '@core/utils/logger';
 import { isLoggedIn } from '@core/middlewares/userAuth.middleware';
 import protectedByApiKey from '@core/middlewares/apiKey.middleware';
 import validation from '@core/middlewares/validate.middleware';
-import createUserValidation from './createUserValidation';
-import { createUser, loginUser } from './user.controller';
+import {
+  createUserValidation,
+  createAddressValidation,
+} from './createUserValidation';
+import { createUser, loginUser, addAddress } from './user.controller';
 import './auth';
 // import logger from '@core/utils/logger';
 
@@ -43,9 +46,8 @@ router.get(
     failureRedirect: '/api/failed',
   }),
   (req: any, res: Response) => {
-    console.log('check', req.user);
     req.session.userData = req.user;
-    console.log('check2', req.session);
+
     res.redirect('/api/success');
   },
 );
@@ -55,6 +57,14 @@ router.get('/logout', (req: any, res) => {
   req.logout(); // Use the logout method without arguments
   res.redirect('/api/user');
 });
+
+// other routes
+
+router.post(
+  '/user/addAddress',
+  [protectedByApiKey, validation(createAddressValidation)],
+  addAddress,
+);
 
 router.post(
   '/user/create',

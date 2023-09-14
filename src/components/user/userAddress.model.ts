@@ -8,6 +8,10 @@ const AddressSchema: Schema<IAddress> = new Schema({
   postal_code: String,
   country: String,
   address_type: String,
+  user_id: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+  },
 });
 
 const address = mongoose.model<IAddress>('Address', AddressSchema);

@@ -7,10 +7,10 @@ export interface IUser {
   username: String;
   email: String;
   password?: String;
-  following?: [{ type: mongoose.Schema.Types.ObjectId }];
+  following?: mongoose.Schema.Types.ObjectId[];
   googleId: String;
   isDesigner: Boolean;
-  addresses: [String];
+  addresses?: mongoose.Schema.Types.ObjectId[];
   phone?: String;
   DesignerId?: { type: mongoose.Schema.Types.ObjectId };
 }
