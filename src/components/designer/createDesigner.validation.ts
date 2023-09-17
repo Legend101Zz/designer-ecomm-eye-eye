@@ -9,5 +9,19 @@ const createDesignerValidation: ValidationSchema = {
   }),
 };
 
+const updateDesignerValidationSchema: ValidationSchema = {
+  body: Joi.object().keys({
+    designerId: Joi.string()
+      .regex(/^[0-9a-fA-F]{24}$/)
+      .required(),
+    legal_first_name: Joi.string().allow(''),
+    legal_last_name: Joi.string().allow(''),
+    description: Joi.string().allow(''),
+    legal_address: Joi.string().allow(''),
+    socialMedia: Joi.array().items(Joi.string()),
+    portfolioLinks: Joi.array().items(Joi.string()),
+  }),
+};
+
 // eslint-disable-next-line import/prefer-default-export
-export { createDesignerValidation };
+export { createDesignerValidation, updateDesignerValidationSchema };

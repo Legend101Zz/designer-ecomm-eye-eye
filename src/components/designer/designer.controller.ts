@@ -54,5 +54,41 @@ const requestDesigner = async (req: Request, res: Response) => {
 //   }
 // };
 
+const updateDesignerProfile = async (req: Request, res: Response) => {
+  const { designerId, updates } = req.body;
+
+  try {
+    const updatedDesigner = await designer.findOneAndUpdate(
+      { designerId }, // Find the designer by userId
+      {
+        $set: {
+          legal_first_name: updates.legal_first_name || '',
+          legal_last_name: updates.legal_last_name || '',
+          description: updates.description || '',
+          legal_address: updates.legal_address || '',
+        },
+        $push: {
+          socialMedia: { $each: updates.socialMedia || [] },
+          portfolioLinks: { $each: updates.portfolioLinks || [] },
+        },
+      },
+      { new: true }, // Return the updated document
+    );
+
+    if (!updatedDesigner) {
+      return res
+        .status(201)
+        .send({ success: false, message: 'Designer not found' });
+    }
+
+    return res.status(200).send({ success: true, designer: updatedDesigner });
+  } catch (error) {
+    logger.error(error); // You can use console.error instead of logger.error
+    return res
+      .status(500)
+      .send({ success: false, message: 'Internal server error' });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
-export { requestDesigner };
+export { requestDesigner, updateDesignerProfile };
