@@ -5,6 +5,10 @@ import { create, read } from '@components/product/product.service';
 import { product } from '@components/product/product.model';
 import { Iproduct } from './product.interface';
 
+interface CustomRequest extends Request {
+  files: any; // Include the 'file' property with the MulterFile type
+}
+
 const createProd = async (req: Request, res: Response) => {
   const prod = req.body as Iproduct;
   await create(prod);
@@ -79,5 +83,42 @@ const deleteColor = async (req: Request, res: Response) => {
   }
 };
 
+const updateProfilePhoto = async (req: CustomRequest, res: Response) => {
+  const { productId } = req.body;
+  const images = req.files; // Assuming req.files is an array of image files
+
+  try {
+    const updatedImages = [];
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const image of images) {
+      updatedImages.push({ url: image.path, filename: image.filename });
+    }
+
+    // Use your Product model to update the image field with all the images
+    const updatedProduct = await product.findByIdAndUpdate(
+      productId,
+      { $push: { image: { $each: updatedImages } } }, // Add multiple images to the array
+      { new: true }, // Return the updated document
+    );
+
+    if (!updatedProduct) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    return res.status(200).json(updatedProduct);
+  } catch (error) {
+    console.error(error); // You can use console.error instead of logger.error
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
-export { createProd, readProd, changeQuan, addColor, deleteColor };
+export {
+  createProd,
+  readProd,
+  changeQuan,
+  addColor,
+  deleteColor,
+  updateProfilePhoto,
+};

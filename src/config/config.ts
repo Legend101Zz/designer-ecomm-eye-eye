@@ -41,4 +41,7 @@ export default {
   mailUser: envVars.GMAIL_MAIL,
   mailPass: envVars.GMAIL_PASSWORD,
   salt: envVars.SALT,
+  cloud: envVars.CLOUD_NAME,
+  cloud_key: envVars.CLOUD_API_KEY,
+  cloud_secret: envVars.CLOUD_API_SECRET,
 };
