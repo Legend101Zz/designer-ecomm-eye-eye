@@ -626,6 +626,60 @@
           }
         ]
       }
+    },
+    "/api/designer/updateProfile": {
+      "post": {
+        "tags": ["Designer Management"],
+        "description": "For updating legal_first_name ,legal_last_name ,description ,socialMedia links, legal_address,portfolioLinks",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "Provide API-key (ie. API_KEY_TOKEN from .env.locals file)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Input",
+            "in": "body",
+            "description": "Input data required to update designer profile",
+            "schema": {
+              "$ref": "#/definitions/designerProfile"
+            }
+          }
+        ],
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/definitions/ResponseWithMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access forbidden. Incorrect x-api-key!",
+            "error": {}
+          },
+          "201": {
+            "description": "Designer not found",
+            "error": {}
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "message": {}
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
     }
   },
   "definitions": {
@@ -723,6 +777,39 @@
         "color": {
           "type": "string",
           "description": "Color to delete"
+        }
+      }
+    },
+    "designerProfile": {
+      "required": ["designerId"],
+      "properties": {
+        "designerId": {
+          "type": "string",
+          "description": "Product ID"
+        },
+        "legal_first_name": {
+          "type": "string",
+          "description": " legal_first_name"
+        },
+        "legal_last_name": {
+          "type": "string",
+          "description": "legal_last_name"
+        },
+        "description": {
+          "type": "string",
+          "description": "legal_last_name"
+        },
+        "socialMedia": {
+          "type": "string",
+          "description": "socialMedia links"
+        },
+        "legal_address": {
+          "type": "string",
+          "description": "legal_address"
+        },
+        "portfolioLinks": {
+          "type": "string",
+          "description": "portfolioLinks"
         }
       }
     },
