@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import protectedByApiKey from '@core/middlewares/apiKey.middleware';
 import validation from '@core/middlewares/validate.middleware';
-import { requestDesigner, updateDesignerProfile } from './designer.controller';
+import {
+  requestDesigner,
+  updateDesignerProfile,
+  addProfilePhoto,
+} from './designer.controller';
 import {
   createDesignerValidation,
   updateDesignerValidationSchema,
@@ -20,5 +24,7 @@ router.post(
   [protectedByApiKey, validation(updateDesignerValidationSchema)],
   updateDesignerProfile,
 );
+
+router.post('/designer/addProfilePhoto', [protectedByApiKey], addProfilePhoto);
 
 export default router;
