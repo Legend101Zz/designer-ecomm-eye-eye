@@ -38,26 +38,6 @@ const requestDesigner = async (req: Request, res: Response) => {
   }
 };
 
-// const createProduct = async (req: Request, res: Response) => {
-//   const { designerId } = req.body.userId;
-
-//   try {
-//     const checkUser: IDesigner = await designer.findById(designerId);
-//     if (checkUser.isApproved) {
-//       return res
-//         .status(201)
-//         .send({ message: 'User is already a registered Designer ' });
-//     }
-//     // eslint-disable-next-line new-cap
-//     const newDesigner = new designer({ userId });
-//     await newDesigner.save();
-//     return res.status(201).send({ message: 'Designer n' });
-//   } catch (err) {
-//     res.status(httpStatus.INTERNAL_SERVER_ERROR);
-//     return res.send({ message: 'Server Error' });
-//   }
-// };
-
 const addProfilePhoto = async (req: CustomRequest, res: Response) => {
   const { designerId } = req.body;
   const { path, filename } = req.files[0];

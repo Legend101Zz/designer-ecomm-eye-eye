@@ -83,7 +83,7 @@ const deleteColor = async (req: Request, res: Response) => {
   }
 };
 
-const updateProfilePhoto = async (req: CustomRequest, res: Response) => {
+const addProductImages = async (req: CustomRequest, res: Response) => {
   const { productId } = req.body;
   const images = req.files; // Assuming req.files is an array of image files
 
@@ -120,5 +120,5 @@ export {
   changeQuan,
   addColor,
   deleteColor,
-  updateProfilePhoto,
+  addProductImages,
 };

@@ -24,6 +24,14 @@
       "description": "Endpoints for managing products"
     },
     {
+      "name": "User Management",
+      "description": "Endpoints for managing users"
+    },
+    {
+      "name": "Designer Management",
+      "description": "Endpoints for managing designers"
+    },
+    {
       "name": "Misc",
       "description": "Misc Endpoints"
     }
@@ -448,6 +456,67 @@
           }
         ]
       }
+    },
+    "/api/product/productPhotos": {
+      "post": {
+        "tags": ["Product Management"],
+        "description": "Add multiple photos of the product",
+        "consumes": "multipart/form-data",
+
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "Provide API-key (ie. API_KEY_TOKEN from .env.locals file)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Input",
+            "in": "body",
+            "description": "Input data required to delete a color from a product",
+            "schema": {
+              "$ref": "#/definitions/productImages"
+            }
+          },
+          {
+            "in": "formData",
+            "name": "image",
+            "type": "file"
+          }
+        ],
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "Images added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/definitions/ResponseWithMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access forbidden. Incorrect x-api-key!",
+            "error": {}
+          },
+          "404": {
+            "description": "Product not found",
+            "error": {}
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "message": {}
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
     }
   },
   "definitions": {
@@ -545,6 +614,19 @@
         "color": {
           "type": "string",
           "description": "Color to delete"
+        }
+      }
+    },
+    "productImages": {
+      "required": ["productId", "image"],
+      "properties": {
+        "productId": {
+          "type": "string",
+          "description": "Product ID"
+        },
+        "image": {
+          "type": "file",
+          "description": "All files to be added must be under the post filed of image"
         }
       }
     },

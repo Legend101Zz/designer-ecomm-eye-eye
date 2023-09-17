@@ -8,7 +8,7 @@ import {
   createProd,
   deleteColor,
   readProd,
-  updateProfilePhoto,
+  addProductImages,
 } from './product.controller';
 import {
   createQuantityValidation,
@@ -48,15 +48,13 @@ router.post(
   deleteColor,
 );
 
-// test routes
-
 router
-  .route('/product/test')
+  .route('/product/productPhotos')
 
   .post(
     [protectedByApiKey],
     cloudinaryMiddleware, // Use the Cloudinary middleware here
-    updateProfilePhoto,
+    addProductImages,
   );
 
 export default router;
