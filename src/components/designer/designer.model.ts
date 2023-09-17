@@ -21,6 +21,14 @@ const DesignerSchema: Schema<IDesigner> = new Schema({
       ref: 'Design',
     },
   ],
+  legal_first_name: String,
+  legal_last_name: String,
+  description: String,
+  socialMedia: [{ type: String }],
+  phone: Number,
+  portfolioLinks: [{ type: String }],
+  legal_address: String,
+  panCard: ImageSchema,
 });
 
 const designer = mongoose.model<IDesigner>('Designer', DesignerSchema);

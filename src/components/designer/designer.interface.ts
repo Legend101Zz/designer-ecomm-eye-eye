@@ -10,7 +10,7 @@ export interface IDesigner {
   legal_last_name?: String;
   description?: String;
   socialMedia?: String[];
-  phone: number;
+  phone?: number;
   legal_address?: String;
   portfolioLinks?: String[];
   panCard?: IModel;
