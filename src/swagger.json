@@ -517,6 +517,115 @@
           }
         ]
       }
+    },
+    "/api/user/addAddress": {
+      "post": {
+        "tags": ["User Management"],
+        "description": "Add a addresses to user schema",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "Provide API-key (ie. API_KEY_TOKEN from .env.locals file)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Input",
+            "in": "body",
+            "description": "Input data required to add address",
+            "schema": {
+              "$ref": "#/definitions/userAddress"
+            }
+          }
+        ],
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "Address added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/definitions/ResponseWithMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access forbidden. Incorrect x-api-key!",
+            "error": {}
+          },
+          "201": {
+            "description": "Duplicate address",
+            "error": {}
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "message": {}
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
+    },
+    "/api/designer/request": {
+      "post": {
+        "tags": ["Designer Management"],
+        "description": "Request for upgradation of user to a designer ( mail is sent to user )",
+        "parameters": [
+          {
+            "name": "Input",
+            "in": "body",
+            "description": "add user Id",
+            "schema": {
+              "user": {
+                "required": ["userId"],
+                "properties": {
+                  "userId": {
+                    "name": "userId",
+                    "type": "string",
+                    "description": "userID"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "mail sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/definitions/ResponseWithMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access forbidden. Incorrect x-api-key!",
+            "error": {}
+          },
+          "201": {
+            "description": "User is already a registered Designer",
+            "error": {}
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "message": {}
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
     }
   },
   "definitions": {
@@ -627,6 +736,47 @@
         "image": {
           "type": "file",
           "description": "All files to be added must be under the post filed of image"
+        }
+      }
+    },
+    "userAddress": {
+      "required": [
+        "address_line1",
+        "address_line2",
+        "city",
+        "postal_code",
+        "country",
+        "address_type",
+        "user_id"
+      ],
+      "properties": {
+        "user_id": {
+          "type": "string",
+          "description": "user ID"
+        },
+        "address_line1": {
+          "type": "string",
+          "description": "address line1"
+        },
+        "address_line2": {
+          "type": "string",
+          "description": "address line2"
+        },
+        "city": {
+          "type": "string",
+          "description": "city"
+        },
+        "postal_code": {
+          "type": "string",
+          "description": "postal code"
+        },
+        "country": {
+          "type": "string",
+          "description": "country"
+        },
+        "address_type": {
+          "type": "string",
+          "description": "address type"
         }
       }
     },

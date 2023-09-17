@@ -20,7 +20,7 @@ const requestDesigner = async (req: Request, res: Response) => {
   try {
     const checkUser: any = await user.findById(userId);
     const email = `${checkUser.email}`;
-    console.log(checkUser);
+    // console.log(checkUser);
     if (checkUser.isDesigner) {
       return res
         .status(201)

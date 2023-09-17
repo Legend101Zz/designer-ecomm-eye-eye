@@ -41,6 +41,6 @@ export const sendEmailMiddleware = (
     }
     logger.debug(info.response);
 
-    return res.status(500).json({ error: 'mail sent successfully' });
+    return res.status(500).json({ success: 'mail sent successfully' });
   });
 };

@@ -103,7 +103,7 @@ const addAddress = async (req: Request, res: Response) => {
     ]);
 
     if (duplicateAddresses.length > 0) {
-      return res.status(200).json({
+      return res.status(201).json({
         message: 'Duplicate addresses found',
         duplicates: duplicateAddresses,
       });
@@ -126,7 +126,7 @@ const addAddress = async (req: Request, res: Response) => {
     );
     await userCheck.save();
     await newAddress.save();
-    return res.status(201).json({ message: 'Address added successfully' });
+    return res.status(200).json({ message: 'Address added successfully' });
   } catch (error) {
     return res.status(500).json({
       message: 'An error occurred while checking for duplicates',
