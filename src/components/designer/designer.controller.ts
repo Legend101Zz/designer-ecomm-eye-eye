@@ -8,6 +8,10 @@ import { sendEmailMiddleware } from '@core/middlewares/nodemailer';
 import { IUser } from '@components/user/user.interface';
 import { IDesigner } from './designer.interface';
 
+interface CustomRequest extends Request {
+  files: any; // Include the 'file' property with the MulterFile type
+}
+
 const requestDesigner = async (req: Request, res: Response) => {
   const { userId } = req.body;
   const subject = 'Designer Profile Creation Request';
@@ -54,20 +58,41 @@ const requestDesigner = async (req: Request, res: Response) => {
 //   }
 // };
 
-const addProfilePhoto = async (req: Request, res: Response) => {
+const addProfilePhoto = async (req: CustomRequest, res: Response) => {
   const { designerId } = req.body;
   const { path, filename } = req.files[0];
 
   try {
-    // Use your Product model to update the image field
     const updatedDesigner = await designer.findByIdAndUpdate(
       designerId,
-      { $push: { profileImage: { url: path, filename } } }, // Add the product photo to the array
+      { $push: { profileImage: { url: path, filename } } },
       { new: true }, // Return the updated document
     );
 
     if (!updatedDesigner) {
-      return res.status(404).json({ message: 'Product not found' });
+      return res.status(404).json({ message: 'Designer not found' });
+    }
+
+    return res.status(200).json(updatedDesigner);
+  } catch (error) {
+    logger.error(error); // You can use console.error instead of logger.error
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+const addPanCard = async (req: CustomRequest, res: Response) => {
+  const { designerId } = req.body;
+  const { path, filename } = req.files[0];
+
+  try {
+    const updatedDesigner = await designer.findByIdAndUpdate(
+      designerId,
+      { $push: { panCard: { url: path, filename } } },
+      { new: true }, // Return the updated document
+    );
+
+    if (!updatedDesigner) {
+      return res.status(404).json({ message: 'Designer  not found' });
     }
 
     return res.status(200).json(updatedDesigner);
@@ -114,4 +139,4 @@ const updateDesignerProfile = async (req: Request, res: Response) => {
 };
 
 // eslint-disable-next-line import/prefer-default-export
-export { requestDesigner, updateDesignerProfile, addProfilePhoto };
+export { requestDesigner, updateDesignerProfile, addProfilePhoto, addPanCard };
