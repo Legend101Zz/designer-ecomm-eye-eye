@@ -17,11 +17,29 @@ const ProductSchema: Schema<Iproduct> = new Schema({
     required: true,
   },
   color: [{ type: String, required: true }],
-  category: { type: String, required: true },
-
+  category: {
+    type: String,
+    required: true,
+  },
   image: [ImageSchema],
 });
 
+ProductSchema.pre('save', function (next) {
+  // Access the category field of the current document
+  const { category } = this;
+  let { color } = this;
+  // Check if the category is 'shirt'
+  if (category === 'shirt') {
+    color = [];
+  } else {
+    this.color = undefined; // Remove the 'color' field
+  }
+
+  // Call next to continue with the save operation
+  next();
+});
+
 const product = mongoose.model<Iproduct>('Product', ProductSchema);
+
 // eslint-disable-next-line import/prefer-default-export
 export { product };
