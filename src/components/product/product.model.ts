@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import mongoose, { Schema } from 'mongoose';
 import { IModel } from '@core/interfaces/validationSchema';
 import { Iproduct } from './product.interface';
@@ -24,13 +25,14 @@ const ProductSchema: Schema<Iproduct> = new Schema({
   image: [ImageSchema],
 });
 
+// eslint-disable-next-line func-names
 ProductSchema.pre('save', function (next) {
   // Access the category field of the current document
   const { category } = this;
   let { color } = this;
   // Check if the category is 'shirt'
-  if (category === 'shirt') {
-    color = [];
+  if (category === ('shirt' || 'Tshirt')) {
+    color = ['red'];
   } else {
     this.color = undefined; // Remove the 'color' field
   }
