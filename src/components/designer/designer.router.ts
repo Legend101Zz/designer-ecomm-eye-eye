@@ -7,6 +7,7 @@ import {
   addProfilePhoto,
   addPanCard,
   checkDesignerApproval,
+  publicData,
 } from './designer.controller';
 import {
   createDesignerValidation,
@@ -40,6 +41,12 @@ router.post(
   [protectedByApiKey],
   checkDesignerApproval,
   addPanCard,
+);
+
+router.get(
+  '/designer/viewProfile/:designerId',
+  [protectedByApiKey],
+  publicData,
 );
 
 export default router;

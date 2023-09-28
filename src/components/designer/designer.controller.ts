@@ -131,7 +131,7 @@ const publicData = async (req: Request, res: Response) => {
 
     // Find the designer by ID
     const designerData = await designer.findById(designerId);
-
+    // console.log(designerData);
     if (!designerData) {
       return res.status(404).json({ message: 'Designer not found' });
     }
@@ -170,7 +170,7 @@ const publicData = async (req: Request, res: Response) => {
 
     return res.status(200).json(publicDesignerData);
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -181,7 +181,6 @@ const checkDesignerApproval = async (
   res: Response,
   next: NextFunction,
 ) => {
-  console.log(req.body);
   const { designerId } = req.body;
 
   try {

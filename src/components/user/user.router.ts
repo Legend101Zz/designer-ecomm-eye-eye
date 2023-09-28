@@ -8,7 +8,12 @@ import {
   createUserValidation,
   createAddressValidation,
 } from './createUserValidation';
-import { createUser, loginUser, addAddress } from './user.controller';
+import {
+  createUser,
+  loginUser,
+  addAddress,
+  followDesigner,
+} from './user.controller';
 import './auth';
 // import logger from '@core/utils/logger';
 
@@ -71,6 +76,8 @@ router.post(
   [protectedByApiKey, validation(createUserValidation)],
   createUser,
 );
+
+router.post('/user/follow', [protectedByApiKey], followDesigner);
 
 router.post('/user/login', [protectedByApiKey], loginUser);
 

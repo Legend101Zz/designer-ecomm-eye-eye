@@ -4,10 +4,12 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
 import config from '@config/config';
+import logger from '@core/utils/logger';
 import { sendEmailMiddleware } from '@core/middlewares/nodemailer';
 import { IUser } from '@components/user/user.interface';
 import { create } from '@components/user/user.service';
 import { user } from '@components/user/user.model';
+import { designer } from '@components/designer/designer.model';
 import { address } from './userAddress.model';
 
 function generateRandomPassword(length = 8) {
@@ -135,5 +137,34 @@ const addAddress = async (req: Request, res: Response) => {
   }
 };
 
+const followDesigner = async (req: Request, res: Response) => {
+  try {
+    const { userId, designerId } = req.body;
+
+    // Check if the user and designer exist
+    const CheckUser = await user.findById(userId);
+    const CheckDesigner = await designer.findById(designerId);
+
+    if (!CheckUser || !CheckDesigner) {
+      return res.status(404).json({ message: 'User or designer not found' });
+    }
+
+    // Add the designer's ID to the user's following array
+    CheckUser.following.push(designerId);
+    await CheckUser.save();
+
+    // Add the user's ID to the designer's followers array
+    CheckDesigner.followers.push(userId);
+    await CheckDesigner.save();
+
+    return res
+      .status(200)
+      .json({ message: 'User is now following the designer' });
+  } catch (error) {
+    logger.error(error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
-export { createUser, loginUser, addAddress };
+export { createUser, loginUser, addAddress, followDesigner };
