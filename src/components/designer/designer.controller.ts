@@ -11,6 +11,11 @@ import { IDesigner } from './designer.interface';
 interface CustomRequest extends Request {
   files: any; // Include the 'file' property with the MulterFile type
 }
+interface CustomDesignerData extends Omit<IDesigner, 'userId'> {
+  username: any;
+  email: any;
+  following: any;
+}
 
 const requestDesigner = async (req: Request, res: Response) => {
   const { userId } = req.body;
@@ -118,6 +123,58 @@ const updateDesignerProfile = async (req: Request, res: Response) => {
   }
 };
 
+// controller for showing designer's public data
+
+const publicData = async (req: Request, res: Response) => {
+  try {
+    const { designerId } = req.params;
+
+    // Find the designer by ID
+    const designerData = await designer.findById(designerId);
+
+    if (!designerData) {
+      return res.status(404).json({ message: 'Designer not found' });
+    }
+
+    // Find the associated user data (assuming there's a relationship between designer and user)
+    const userData = await user.findById(designerData.userId);
+
+    if (!userData) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Extract the desired fields for the public data
+    const publicDesignerData: CustomDesignerData = {
+      username: userData.username,
+      email: userData.email,
+      following: userData.following,
+      isApproved: designerData.isApproved, // Assuming you have a "following" field in the User schema
+    };
+
+    // Include non-empty fields from designerData
+    if (designerData.legal_first_name) {
+      publicDesignerData.legal_first_name = designerData.legal_first_name;
+    }
+    if (designerData.legal_last_name) {
+      publicDesignerData.legal_last_name = designerData.legal_last_name;
+    }
+    if (designerData.description) {
+      publicDesignerData.description = designerData.description;
+    }
+    if (designerData.socialMedia && designerData.socialMedia.length > 0) {
+      publicDesignerData.socialMedia = designerData.socialMedia;
+    }
+    if (designerData.portfolioLinks && designerData.portfolioLinks.length > 0) {
+      publicDesignerData.portfolioLinks = designerData.portfolioLinks;
+    }
+
+    return res.status(200).json(publicDesignerData);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 // Middleware function to check if a designer is approved
 const checkDesignerApproval = async (
   req: Request,
@@ -155,4 +212,5 @@ export {
   addProfilePhoto,
   addPanCard,
   checkDesignerApproval,
+  publicData,
 };

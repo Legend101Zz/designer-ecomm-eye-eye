@@ -6,6 +6,7 @@ export interface IDesigner {
   profileImage?: IModel;
   Designs?: [{ type: mongoose.Schema.Types.ObjectId }];
   isApproved: Boolean;
+  followers?: mongoose.Schema.Types.ObjectId[];
   legal_first_name?: String;
   legal_last_name?: String;
   description?: String;

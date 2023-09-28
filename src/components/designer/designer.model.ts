@@ -12,7 +12,12 @@ const DesignerSchema: Schema<IDesigner> = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'User',
   },
-
+  followers: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
+  ],
   profileImage: ImageSchema,
   isApproved: { type: Boolean, default: false },
   Designs: [
