@@ -6,6 +6,7 @@ import {
   updateDesignerProfile,
   addProfilePhoto,
   addPanCard,
+  checkDesignerApproval,
 } from './designer.controller';
 import {
   createDesignerValidation,
@@ -23,11 +24,22 @@ router.post(
 router.post(
   '/designer/updateProfile',
   [protectedByApiKey, validation(updateDesignerValidationSchema)],
+  checkDesignerApproval,
   updateDesignerProfile,
 );
 
-router.post('/designer/addProfilePhoto', [protectedByApiKey], addProfilePhoto);
+router.post(
+  '/designer/addProfilePhoto',
+  [protectedByApiKey],
+  checkDesignerApproval,
+  addProfilePhoto,
+);
 
-router.post('/designer/addPanCard', [protectedByApiKey], addPanCard);
+router.post(
+  '/designer/addPanCard',
+  [protectedByApiKey],
+  checkDesignerApproval,
+  addPanCard,
+);
 
 export default router;

@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import httpStatus from 'http-status';
 import logger from '@core/utils/logger';
 import { designer } from '@components/designer/designer.model';
@@ -86,8 +86,8 @@ const updateDesignerProfile = async (req: Request, res: Response) => {
   const { designerId, updates } = req.body;
 
   try {
-    const updatedDesigner = await designer.findOneAndUpdate(
-      { designerId }, // Find the designer by userId
+    const updatedDesigner = await designer.findByIdAndUpdate(
+      { _id: designerId }, // Find the designer by userId
       {
         $set: {
           legal_first_name: updates.legal_first_name || '',
@@ -118,5 +118,41 @@ const updateDesignerProfile = async (req: Request, res: Response) => {
   }
 };
 
+// Middleware function to check if a designer is approved
+const checkDesignerApproval = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  console.log(req.body);
+  const { designerId } = req.body;
+
+  try {
+    // Find the designer document by ID
+    const designerDoc = await designer.findById(designerId);
+
+    if (!designerDoc) {
+      return res.status(404).json({ message: 'Designer not found' });
+    }
+
+    // Check if the designer is approved
+    if (!designerDoc.isApproved) {
+      return res.status(401).json({ message: 'Designer is not approved' });
+    }
+
+    // If the designer is approved, proceed to the next middleware or route handler
+    return next();
+  } catch (error) {
+    logger.error(error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
-export { requestDesigner, updateDesignerProfile, addProfilePhoto, addPanCard };
+export {
+  requestDesigner,
+  updateDesignerProfile,
+  addProfilePhoto,
+  addPanCard,
+  checkDesignerApproval,
+};

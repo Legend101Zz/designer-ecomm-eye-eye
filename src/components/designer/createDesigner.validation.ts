@@ -14,12 +14,14 @@ const updateDesignerValidationSchema: ValidationSchema = {
     designerId: Joi.string()
       .regex(/^[0-9a-fA-F]{24}$/)
       .required(),
-    legal_first_name: Joi.string().allow(''),
-    legal_last_name: Joi.string().allow(''),
-    description: Joi.string().allow(''),
-    legal_address: Joi.string().allow(''),
-    socialMedia: Joi.array().items(Joi.string()),
-    portfolioLinks: Joi.array().items(Joi.string()),
+    updates: Joi.object().keys({
+      legal_first_name: Joi.string().allow(''),
+      legal_last_name: Joi.string().allow(''),
+      description: Joi.string().allow(''),
+      legal_address: Joi.string().allow(''),
+      socialMedia: Joi.array().items(Joi.string()),
+      portfolioLinks: Joi.array().items(Joi.string()),
+    }),
   }),
 };
 

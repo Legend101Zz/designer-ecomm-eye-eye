@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import mongoose, { Schema } from 'mongoose';
 import { IModel } from '@core/interfaces/validationSchema';
-import { Iproduct } from './product.interface';
+import { Iproduct, Color } from './product.interface';
 
 const ImageSchema: Schema<IModel> = new Schema({
   url: String,
@@ -29,10 +29,10 @@ const ProductSchema: Schema<Iproduct> = new Schema({
 ProductSchema.pre('save', function (next) {
   // Access the category field of the current document
   const { category } = this;
-  let { color } = this;
+
   // Check if the category is 'shirt'
-  if (category === ('shirt' || 'Tshirt')) {
-    color = ['red'];
+  if (category === 'shirt' || category === 'Tshirt') {
+    this.color = Color.red;
   } else {
     this.color = undefined; // Remove the 'color' field
   }

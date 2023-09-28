@@ -9,7 +9,7 @@ export interface Iproduct {
   image: IModel;
 }
 
-enum Color {
+export enum Color {
   red = 'red',
   black = 'black',
   white = 'white',
