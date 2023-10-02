@@ -9,22 +9,36 @@ const addToWishList = async (req: Request, res: Response) => {
     const wish = await wishlist.findOne({ userId: user });
 
     if (wish) {
-      // Push the productIds to the 'products' array
+      // Check if any of the productIds already exist in the 'products' array
+      const existingProducts = wish.products.filter((productId) =>
+        productIds.includes(productId),
+      );
+
+      if (existingProducts.length > 0) {
+        return res.status(400).json({
+          message: 'Some of the products are already in the wishlist',
+          existingProducts,
+        });
+      }
+
+      // Add only the unique productIds to the 'products' array
       await wishlist.updateOne(
         // eslint-disable-next-line no-underscore-dangle
         { _id: wish._id },
-        { $push: { products: productIds } },
+        { $push: { products: { $each: productIds } } },
       );
+
       return res
         .status(200)
-        .json({ message: 'Added Item to wishlist successfully' });
+        .json({ message: 'Added Item(s) to wishlist successfully' });
     }
+
     // eslint-disable-next-line new-cap
     const newWish = new wishlist({ userId: user, products: productIds }); // Change 'products' to 'productIds'
     await newWish.save();
     return res.status(200).json({
       message:
-        'Created Wishlist for user and Added Item to wishlist successfully',
+        'Created Wishlist for user and Added Item(s) to wishlist successfully',
     });
   } catch (error) {
     logger.error(error);
