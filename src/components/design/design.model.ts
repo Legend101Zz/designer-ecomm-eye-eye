@@ -22,6 +22,7 @@ const DesignSchema: Schema<IDesign> = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Product',
   },
+  isVerified: { type: Boolean, default: false },
 });
 
 const design = mongoose.model<IDesign>('Design', DesignSchema);

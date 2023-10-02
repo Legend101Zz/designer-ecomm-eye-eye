@@ -7,4 +7,5 @@ export interface IDesign {
   likes: number;
   title: String;
   description: String;
+  isVerified: Boolean;
 }
