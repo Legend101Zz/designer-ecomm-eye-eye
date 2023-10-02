@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import protectedByApiKey from '@core/middlewares/apiKey.middleware';
 import validation from '@core/middlewares/validate.middleware';
+import cloudinaryMiddleware from '@core/middlewares/cloudinary';
 import {
   requestDesigner,
   updateDesignerProfile,
@@ -35,27 +36,34 @@ router.post(
   '/designer/updateProfile',
   [protectedByApiKey, validation(updateDesignerValidationSchema)],
   checkDesignerApproval,
+
   updateDesignerProfile,
 );
 
 router.post(
   '/designer/addProfilePhoto',
   [protectedByApiKey],
+  cloudinaryMiddleware,
   checkDesignerApproval,
+
   addProfilePhoto,
 );
 
 router.post(
   '/designer/addPanCard',
   [protectedByApiKey],
+  cloudinaryMiddleware,
   checkDesignerApproval,
+
   addPanCard,
 );
 
 router.post(
   '/designer/createDesign',
+  cloudinaryMiddleware,
   [protectedByApiKey, validation(createDesignValidationSchema)],
   checkDesignerApproval,
+
   createDesign,
 );
 
