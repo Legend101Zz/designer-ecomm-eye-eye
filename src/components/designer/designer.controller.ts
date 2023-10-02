@@ -5,7 +5,7 @@ import { designer } from '@components/designer/designer.model';
 import { user } from '@components/user/user.model';
 import { product } from '@components/product/product.model';
 import { sendEmailMiddleware } from '@core/middlewares/nodemailer';
-import { IUser } from '@components/user/user.interface';
+import { design } from '@components/design/design.model';
 import { IDesigner } from './designer.interface';
 
 interface CustomRequest extends Request {
@@ -222,6 +222,51 @@ const checkDesignerApproval = async (
   }
 };
 
+// controller for creating design
+const createDesign = async (req: CustomRequest, res: Response) => {
+  try {
+    // Extract data from the request
+    const { title, description, designerId, productId } = req.body;
+    const { path, filename } = req.files[0];
+
+    // Check if the designer exists
+    const existingDesigner: any = await designer.findById(designerId);
+    if (!existingDesigner) {
+      return res.status(404).json({ message: 'Designer not found' });
+    }
+
+    // Check if the product exists
+    const existingProduct = await product.findById(productId);
+    if (!existingProduct) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    // Create a new design
+
+    // eslint-disable-next-line new-cap
+    const newDesign = new design({
+      title,
+      description,
+      designImage: [{ url: path, filename }],
+      designer: designerId,
+      product: productId,
+    });
+
+    // Save the design
+    const savedDesign = await newDesign.save();
+
+    // Add the design reference to the designer's Designs array
+    // eslint-disable-next-line no-underscore-dangle
+    existingDesigner.Designs.push(savedDesign._id);
+    await existingDesigner.save();
+
+    return res.status(201).json(savedDesign);
+  } catch (error) {
+    logger.error(error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export {
   requestDesigner,
@@ -230,4 +275,5 @@ export {
   addPanCard,
   checkDesignerApproval,
   publicData,
+  createDesign,
 };

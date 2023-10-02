@@ -25,5 +25,22 @@ const updateDesignerValidationSchema: ValidationSchema = {
   }),
 };
 
+const createDesignValidationSchema: ValidationSchema = {
+  body: Joi.object({
+    title: Joi.string().required(),
+    description: Joi.string().required(),
+    designerId: Joi.string()
+      .regex(/^[0-9a-fA-F]{24}$/)
+      .required(),
+    productId: Joi.string()
+      .regex(/^[0-9a-fA-F]{24}$/)
+      .required(),
+  }),
+};
+
 // eslint-disable-next-line import/prefer-default-export
-export { createDesignerValidation, updateDesignerValidationSchema };
+export {
+  createDesignerValidation,
+  updateDesignerValidationSchema,
+  createDesignValidationSchema,
+};

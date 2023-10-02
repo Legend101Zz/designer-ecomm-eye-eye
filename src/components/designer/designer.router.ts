@@ -8,13 +8,22 @@ import {
   addPanCard,
   checkDesignerApproval,
   publicData,
+  createDesign,
 } from './designer.controller';
 import {
   createDesignerValidation,
   updateDesignerValidationSchema,
+  createDesignValidationSchema,
 } from './createDesigner.validation';
 
 const router: Router = Router();
+
+router.get(
+  '/designer/viewProfile/:designerId',
+  [protectedByApiKey],
+  checkDesignerApproval,
+  publicData,
+);
 
 router.post(
   '/designer/request',
@@ -43,10 +52,11 @@ router.post(
   addPanCard,
 );
 
-router.get(
-  '/designer/viewProfile/:designerId',
-  [protectedByApiKey],
-  publicData,
+router.post(
+  '/designer/createDesign',
+  [protectedByApiKey, validation(createDesignValidationSchema)],
+  checkDesignerApproval,
+  createDesign,
 );
 
 export default router;
