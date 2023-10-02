@@ -135,9 +135,11 @@ const publicData = async (req: Request, res: Response) => {
     if (!designerData) {
       return res.status(404).json({ message: 'Designer not found' });
     }
-
-    // Find the associated user data (assuming there's a relationship between designer and user)
-    const userData = await user.findById(designerData.userId);
+    // designer's user id
+    const userData = await user
+      .findById(designerData.userId)
+      .populate({ path: 'following', select: 'userId' })
+      .exec();
 
     if (!userData) {
       return res.status(404).json({ message: 'User not found' });
@@ -167,6 +169,22 @@ const publicData = async (req: Request, res: Response) => {
     if (designerData.portfolioLinks && designerData.portfolioLinks.length > 0) {
       publicDesignerData.portfolioLinks = designerData.portfolioLinks;
     }
+
+    // Now, let's populate the 'following' field manually
+    const followingUserIds = userData.following.map(
+      (followedUser: any) => followedUser.userId,
+    );
+
+    // Query to retrieve usernames based on user IDs
+    const followingUsernames = await user.find(
+      { _id: { $in: followingUserIds } },
+      'username',
+    );
+
+    // Extract the usernames and add them to publicDesignerData
+    publicDesignerData.following = followingUsernames.map(
+      (check) => check.username,
+    );
 
     return res.status(200).json(publicDesignerData);
   } catch (error) {
