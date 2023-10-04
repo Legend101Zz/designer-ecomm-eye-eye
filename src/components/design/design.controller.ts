@@ -5,9 +5,10 @@ import { design } from './design.model';
 const showDesigns = async (req: Request, res: Response) => {
   try {
     const verifiedDesigns = await design
-      .find({ isVerified: true }) // Filter by designs with isVerified set to true
+      .find() // Filter by designs with isVerified set to true
       .populate('product', 'name')
-      .populate('designer', 'legal_first_name legal_last_name');
+      .populate('designer', 'legal_first_name legal_last_name')
+      .exec();
 
     return res.status(200).json(verifiedDesigns);
   } catch (error) {
