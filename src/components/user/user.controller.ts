@@ -61,19 +61,32 @@ const createUser = async (req: Request, res: Response) => {
 
 const loginUser = async (req: Request, res: Response) => {
   try {
-    const newUser = req.body as IUser;
-    const check: any = await user.find({ email: newUser.email });
-    // console.log(check[0].password, newUser.password, 'here');
-    if (check[0].password === newUser.password) {
-      return res.status(201).send({ message: 'success', data: check });
+    const { email, password } = req.body;
+
+    // Find the user by their email
+    const userRecord = await user.findOne({ email });
+
+    if (!userRecord) {
+      // User not found
+      return res.status(401).json({ message: 'Invalid Credentials' });
     }
-    return res.status(201).send({ message: 'Invalid Credentials' });
+    const hashedPassword = String(userRecord.password);
+    // Compare the provided password with the hashed password in the database
+    const passwordMatch = await bcrypt.compare(password, hashedPassword);
+
+    if (passwordMatch) {
+      // Passwords match, user is authenticated
+      // Remove the password field from the userRecord object
+      userRecord.password = 'TOP-SECRET 😛';
+      return res.status(200).json({ message: 'Success', data: userRecord });
+    }
+
+    return res.status(401).json({ message: 'Invalid Credentials' });
   } catch (err) {
-    res.status(httpStatus.INTERNAL_SERVER_ERROR);
-    return res.send({ message: 'Server Error' });
+    logger.error(err);
+    return res.status(500).json({ message: 'Server Error' });
   }
 };
-
 const addAddress = async (req: Request, res: Response) => {
   const {
     address_line1,
