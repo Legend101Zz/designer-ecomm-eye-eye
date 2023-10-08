@@ -183,7 +183,7 @@ const followDesigner = async (req: Request, res: Response) => {
 // controllers for handling cart operations
 
 // Add a product to the user's cart
-export const addToCart = async (req: Request, res: Response) => {
+const addToCart = async (req: Request, res: Response) => {
   const { productId, quantity, userId } = req.body;
 
   try {
@@ -219,7 +219,7 @@ export const addToCart = async (req: Request, res: Response) => {
 };
 
 // Change the quantity of a product in the user's cart
-export const changeCartQuantity = async (req: Request, res: Response) => {
+const changeCartQuantity = async (req: Request, res: Response) => {
   const { productId, quantity, userId } = req.body;
 
   try {
@@ -254,7 +254,7 @@ export const changeCartQuantity = async (req: Request, res: Response) => {
 };
 
 // Remove an item from the user's cart
-export const removeFromCart = async (req: Request, res: Response) => {
+const removeFromCart = async (req: Request, res: Response) => {
   const { productId, userId } = req.body;
 
   try {
@@ -283,4 +283,12 @@ export const removeFromCart = async (req: Request, res: Response) => {
 };
 
 // eslint-disable-next-line import/prefer-default-export
-export { createUser, loginUser, addAddress, followDesigner };
+export {
+  createUser,
+  loginUser,
+  addAddress,
+  followDesigner,
+  addToCart,
+  removeFromCart,
+  changeCartQuantity,
+};

@@ -9,6 +9,9 @@ import {
   createAddressValidation,
 } from './createUserValidation';
 import {
+  addToCart,
+  changeCartQuantity,
+  removeFromCart,
   createUser,
   loginUser,
   addAddress,
@@ -80,5 +83,13 @@ router.post(
 router.post('/user/follow', [protectedByApiKey], followDesigner);
 
 router.post('/user/login', [protectedByApiKey], loginUser);
+
+// cart routes
+
+router.post('/user/addToCart', [protectedByApiKey], addToCart);
+
+router.post('/user/updateCart', [protectedByApiKey], changeCartQuantity);
+
+router.post('/user/deleteFromCart', [protectedByApiKey], removeFromCart);
 
 export default router;
