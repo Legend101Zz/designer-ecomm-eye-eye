@@ -16,11 +16,12 @@ const TransactionSchema: Schema<Itransactions> = new Schema({
       quantity: Number,
     },
   ],
-  transaction_id: { type: String, required: true },
+  transaction_id: { type: String },
   user: {
     type: Schema.Types.ObjectId,
     ref: 'User',
   },
+  isCompleted: { type: Boolean, default: true },
 });
 
 const transcations = mongoose.model<Itransactions>(

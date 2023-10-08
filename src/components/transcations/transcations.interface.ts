@@ -7,4 +7,5 @@ export interface Itransactions {
   ];
   transaction_id: string;
   user: mongoose.Schema.Types.ObjectId;
+  isCompleted: Boolean;
 }
