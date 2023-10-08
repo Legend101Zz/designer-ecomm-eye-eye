@@ -21,7 +21,7 @@ const TransactionSchema: Schema<Itransactions> = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'User',
   },
-  isCompleted: { type: Boolean, default: true },
+  isCompleted: { type: Boolean, default: false },
 });
 
 const transcations = mongoose.model<Itransactions>(

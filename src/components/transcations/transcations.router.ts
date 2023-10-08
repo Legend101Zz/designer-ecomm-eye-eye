@@ -6,7 +6,7 @@ import { createProductsValidation } from './createTransactionValidation';
 
 const router: Router = Router();
 
-router.get(
+router.post(
   '/transactions/initiate',
   [protectedByApiKey, validation(createProductsValidation)],
   createTransaction,
