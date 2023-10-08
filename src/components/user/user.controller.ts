@@ -9,9 +9,9 @@ import { sendEmailMiddleware } from '@core/middlewares/nodemailer';
 import { IUser } from '@components/user/user.interface';
 import { create } from '@components/user/user.service';
 import { user } from '@components/user/user.model';
+import { design } from '@components/design/design.model';
 import { designer } from '@components/designer/designer.model';
 import { address } from './userAddress.model';
-import { design } from '@components/design/design.model';
 
 function generateRandomPassword(length = 8) {
   // Define character sets for different types of characters
@@ -267,10 +267,10 @@ export const removeFromCart = async (req: Request, res: Response) => {
     }
 
     // Remove the product from the cart by filtering it out
-    checkUser.cart = [
-      // Wrap the filtered array in an array literal
-      ...checkUser.cart.filter((item) => !item.product.equals(productId)),
-    ];
+    const updatedCart = checkUser.cart.filter(
+      (item) => item.product.toString() !== productId.toString(),
+    );
+    checkUser.cart = updatedCart;
 
     // Save the user with the updated cart
     await checkUser.save();
