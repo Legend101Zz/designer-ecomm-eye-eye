@@ -13,4 +13,5 @@ export interface IUser {
   addresses?: mongoose.Schema.Types.ObjectId[];
   phone?: String;
   DesignerId?: { type: mongoose.Schema.Types.ObjectId };
+  cart: [{ product: mongoose.Schema.Types.ObjectId; quantity: number }];
 }

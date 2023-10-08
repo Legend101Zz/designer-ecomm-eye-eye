@@ -11,6 +11,7 @@ import { create } from '@components/user/user.service';
 import { user } from '@components/user/user.model';
 import { designer } from '@components/designer/designer.model';
 import { address } from './userAddress.model';
+import { design } from '@components/design/design.model';
 
 function generateRandomPassword(length = 8) {
   // Define character sets for different types of characters
@@ -175,6 +176,108 @@ const followDesigner = async (req: Request, res: Response) => {
       .json({ message: 'User is now following the designer' });
   } catch (error) {
     logger.error(error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// controllers for handling cart operations
+
+// Add a product to the user's cart
+export const addToCart = async (req: Request, res: Response) => {
+  const { productId, quantity, userId } = req.body;
+
+  try {
+    // Find the user by ID
+    const checkProduct = await design.findById(productId);
+    const checkUser = await user.findById(userId);
+
+    if (!(checkUser && checkProduct)) {
+      return res.status(404).json({ message: 'User or Product not found' });
+    }
+
+    // Check if the product is already in the cart
+    const cartItem = checkUser.cart.find(
+      (item) => item.product.toString() === productId.toString(),
+    );
+
+    if (cartItem) {
+      // Update the quantity if the product is already in the cart
+      cartItem.quantity += quantity;
+    } else {
+      // Add the product to the cart if it's not already there
+      checkUser.cart.push({ product: productId, quantity });
+    }
+
+    // Save the user with the updated cart
+    await checkUser.save();
+
+    return res.status(200).json({ message: 'Product added to cart' });
+  } catch (err) {
+    logger.error(err);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Change the quantity of a product in the user's cart
+export const changeCartQuantity = async (req: Request, res: Response) => {
+  const { productId, quantity, userId } = req.body;
+
+  try {
+    // Find the user by ID
+    const checkProduct = await design.findById(productId);
+    const checkUser = await user.findById(userId);
+
+    if (!(checkUser && checkProduct)) {
+      return res.status(404).json({ message: 'User or Product not found' });
+    }
+
+    // Find the cart item corresponding to the product
+    const cartItem = checkUser.cart.find(
+      (item) => item.product.toString() === productId.toString(),
+    );
+
+    if (!cartItem) {
+      return res.status(404).json({ message: 'Product not found in cart' });
+    }
+
+    // Update the quantity
+    cartItem.quantity = quantity;
+
+    // Save the user with the updated cart
+    await checkUser.save();
+
+    return res.status(200).json({ message: 'Cart quantity updated' });
+  } catch (err) {
+    logger.error(err);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Remove an item from the user's cart
+export const removeFromCart = async (req: Request, res: Response) => {
+  const { productId, userId } = req.body;
+
+  try {
+    // Find the user by ID
+    const checkProduct = await design.findById(productId);
+    const checkUser = await user.findById(userId);
+
+    if (!(checkUser && checkProduct)) {
+      return res.status(404).json({ message: 'User or Product not found' });
+    }
+
+    // Remove the product from the cart by filtering it out
+    checkUser.cart = [
+      // Wrap the filtered array in an array literal
+      ...checkUser.cart.filter((item) => !item.product.equals(productId)),
+    ];
+
+    // Save the user with the updated cart
+    await checkUser.save();
+
+    return res.status(200).json({ message: 'Product removed from cart' });
+  } catch (err) {
+    logger.error(err);
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
