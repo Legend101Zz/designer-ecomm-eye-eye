@@ -60,6 +60,38 @@ const createUser = async (req: Request, res: Response) => {
   }
 };
 
+const updatePassword = async (req: Request, res: Response) => {
+  try {
+    const { userId, newPassword } = req.body;
+
+    // Check if the user exists
+    const existingUser = await user.findById(userId);
+    if (!existingUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Generate a new password and hash it
+    const salt = await bcrypt.genSalt(Number(config.salt));
+    const hashPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update the user's password
+    existingUser.password = hashPassword;
+    await existingUser.save();
+
+    // Send an email notification
+    const subject = 'Password Update Notification';
+    const mail = `${existingUser.email}`;
+    const text = `Your password has been updated.`;
+
+    await sendEmailMiddleware(req, res, mail, subject, text);
+
+    return res.status(200).json({ message: 'Password updated successfully' });
+  } catch (err) {
+    logger.error(err);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 const loginUser = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
@@ -291,4 +323,5 @@ export {
   addToCart,
   removeFromCart,
   changeCartQuantity,
+  updatePassword,
 };

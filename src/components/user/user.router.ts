@@ -13,6 +13,7 @@ import {
   changeCartQuantity,
   removeFromCart,
   createUser,
+  updatePassword,
   loginUser,
   addAddress,
   followDesigner,
@@ -79,6 +80,8 @@ router.post(
   [protectedByApiKey, validation(createUserValidation)],
   createUser,
 );
+
+router.post('/user/update-password', [protectedByApiKey], updatePassword);
 
 router.post('/user/follow', [protectedByApiKey], followDesigner);
 
