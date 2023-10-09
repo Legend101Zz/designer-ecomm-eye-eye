@@ -32,6 +32,10 @@
       "description": "Endpoints for managing designers"
     },
     {
+      "name": "Final Product",
+      "description": "Endpoints related to the final product"
+    },
+    {
       "name": "Misc",
       "description": "Misc Endpoints"
     }
@@ -897,6 +901,32 @@
         ]
       }
     },
+    "/api/designs/show": {
+      "get": {
+        "summary": "Get a list of verified designs",
+        "description": "Retrieve a list of verified designs.",
+        "tags": ["Final Product"],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Design"
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
     "/api/user/deleteFromCart": {
       "post": {
         "tags": ["User Management"],
@@ -1169,6 +1199,46 @@
         "image": {
           "type": "file",
           "description": "All files to be added must be under the post filed of image"
+        }
+      }
+    },
+    "Image": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "filename": {
+          "type": "string"
+        }
+      }
+    },
+    "Design": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "designImage": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Image"
+          }
+        },
+        "designer": {
+          "type": "string",
+          "description": "Designer's ID"
+        },
+        "product": {
+          "type": "string",
+          "description": "Product's ID"
+        },
+        "isVerified": {
+          "type": "boolean",
+          "default": false
         }
       }
     },
