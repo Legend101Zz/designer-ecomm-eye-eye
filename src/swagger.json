@@ -28,8 +28,12 @@
       "description": "Endpoints for managing users"
     },
     {
-      "name": "Designer Management",
+      "name": "Designer",
       "description": "Endpoints for managing designers"
+    },
+    {
+      "name": "Transactions",
+      "description": "Endpoints related to the product transactions by user"
     },
     {
       "name": "Final Product",
@@ -686,9 +690,17 @@
     },
     "/api/designer/request": {
       "post": {
-        "tags": ["Designer Management"],
+        "tags": ["Designer"],
         "description": "Request for upgradation of user to a designer ( mail is sent to user )",
         "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "token",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "Input",
             "in": "body",
@@ -741,7 +753,7 @@
     },
     "/api/designer/updateProfile": {
       "post": {
-        "tags": ["Designer Management"],
+        "tags": ["Designer"],
         "description": "For updating legal_first_name ,legal_last_name ,description ,socialMedia links, legal_address,portfolioLinks",
         "parameters": [
           {
@@ -799,6 +811,14 @@
         "summary": "Add a product to the user's cart",
         "parameters": [
           {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "token",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "body",
             "in": "body",
             "description": "Input data required to add a product to the cart",
@@ -853,6 +873,14 @@
         "summary": "Change the quantity of a product in the user's cart",
         "parameters": [
           {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "token",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "body",
             "in": "body",
             "description": "Input data required to change the cart quantity",
@@ -901,6 +929,44 @@
         ]
       }
     },
+    "/api/transactions/initiate": {
+      "post": {
+        "tags": ["Transactions"],
+        "summary": "Initiate a new transaction",
+        "description": "Initiate a new transaction with user, delivery address, and products.",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "token",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Transaction"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Transaction initiated successfully"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
+    },
     "/api/designs/show": {
       "get": {
         "summary": "Get a list of verified designs",
@@ -908,7 +974,17 @@
         "tags": ["Final Product"],
         "security": [
           {
-            "apiKey": []
+            "api_key": "$X_API_KEY"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "token",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -979,6 +1055,165 @@
             "api_key": "$X_API_KEY"
           }
         ]
+      }
+    },
+    "/api/designer/viewProfile/{designerId}": {
+      "get": {
+        "tags": ["Designer"],
+        "summary": "View designer profile",
+        "description": "Get public information about a designer's profile.",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "token",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "designerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Designer profile retrieved successfully"
+          },
+          "401": {
+            "description": "Designer is not approved"
+          },
+          "404": {
+            "description": "Designer not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/designer/addProfilePhoto": {
+      "post": {
+        "tags": ["Designer"],
+        "summary": "Add profile photo",
+        "description": "Upload and add a profile photo for a designer.",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "token",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "designerId",
+            "in": "formData",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "image",
+            "in": "formData",
+            "required": true,
+            "type": "file"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profile photo added successfully"
+          },
+          "404": {
+            "description": "Designer not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/designer/addPanCard": {
+      "post": {
+        "tags": ["Designer"],
+        "summary": "Add PAN card",
+        "description": "Upload and add a PAN card image for a designer.",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "token",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "designerId",
+            "in": "formData",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "image",
+            "in": "formData",
+            "required": true,
+            "type": "file"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PAN card added successfully"
+          },
+          "404": {
+            "description": "Designer not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/designer/createDesign": {
+      "post": {
+        "tags": ["Designer"],
+        "summary": "Create design",
+        "description": "Create a new design for a designer.",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "token",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "designerId",
+            "in": "formData",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Design created successfully"
+          },
+          "404": {
+            "description": "Designer not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
       }
     }
   },
@@ -1098,6 +1333,44 @@
         "quantity": {
           "type": "number",
           "description": "New quantity"
+        }
+      }
+    },
+    "Transaction": {
+      "type": "object",
+      "properties": {
+        "DeliveryAddress": {
+          "type": "string",
+          "description": "ID of the delivery address"
+        },
+        "productsBought": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "product": {
+                "type": "string",
+                "description": "ID of the product bought"
+              },
+              "quantity": {
+                "type": "integer",
+                "description": "Quantity of the product bought"
+              }
+            }
+          },
+          "description": "Array of products bought"
+        },
+        "transaction_id": {
+          "type": "string",
+          "description": "Transaction ID"
+        },
+        "user": {
+          "type": "string",
+          "description": "ID of the user initiating the transaction"
+        },
+        "isCompleted": {
+          "type": "boolean",
+          "description": "Flag indicating whether the transaction is completed"
         }
       }
     },
