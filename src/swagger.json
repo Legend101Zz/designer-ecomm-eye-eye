@@ -144,6 +144,60 @@
         ]
       }
     },
+    "/api/user/update-password": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Update user password",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "Provide API-key (ie. API_KEY_TOKEN from .env.locals file)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Input",
+            "in": "body",
+            "description": "Input data required to update the user's password",
+            "schema": {
+              "$ref": "#/definitions/UpdatePasswordInput"
+            }
+          }
+        ],
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "Password updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/definitions/ResponseWithMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access forbidden. Incorrect x-api-key!",
+            "error": {}
+          },
+          "404": {
+            "description": "User not found",
+            "error": {}
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "message": {}
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
+    },
     "/api/user/login": {
       "post": {
         "tags": ["Authentication"],
@@ -335,6 +389,60 @@
           },
           "401": {
             "description": "Access forbidden. Incorrect x-api-key!",
+            "error": {}
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "message": {}
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
+    },
+    "/api/user/follow": {
+      "post": {
+        "tags": ["User Management"],
+        "description": "Follow a designer",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "Provide API-key (ie. API_KEY_TOKEN from .env.locals file)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Input",
+            "in": "body",
+            "description": "Input data required to follow a designer",
+            "schema": {
+              "$ref": "#/definitions/FollowDesignerInput"
+            }
+          }
+        ],
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "User is now following the designer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/definitions/ResponseWithMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access forbidden. Incorrect x-api-key!",
+            "error": {}
+          },
+          "404": {
+            "description": "User or designer not found",
             "error": {}
           },
           "500": {
@@ -1021,6 +1129,35 @@
           "description": "portfolioLinks"
         }
       }
+    },
+    "FollowDesignerInput": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "User ID"
+        },
+        "designerId": {
+          "type": "string",
+          "description": "Designer ID"
+        }
+      },
+      "required": ["userId", "designerId"]
+    },
+
+    "UpdatePasswordInput": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "User ID"
+        },
+        "newPassword": {
+          "type": "string",
+          "description": "New Password"
+        }
+      },
+      "required": ["userId", "newPassword"]
     },
     "productImages": {
       "required": ["productId", "image"],
