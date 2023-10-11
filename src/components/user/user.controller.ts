@@ -101,7 +101,7 @@ const loginUser = async (req: Request, res: Response) => {
 
     if (!userRecord) {
       // User not found
-      return res.status(401).json({ message: 'Invalid Credentials' });
+      return res.status(201).json({ message: 'Invalid Credentials' });
     }
     const hashedPassword = String(userRecord.password);
     // Compare the provided password with the hashed password in the database
