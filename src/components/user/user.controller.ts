@@ -114,7 +114,7 @@ const loginUser = async (req: Request, res: Response) => {
       return res.status(200).json({ message: 'Success', data: userRecord });
     }
 
-    return res.status(401).json({ message: 'Invalid Credentials' });
+    return res.status(201).json({ message: 'Invalid Credentials' });
   } catch (err) {
     logger.error(err);
     return res.status(500).json({ message: 'Server Error' });
