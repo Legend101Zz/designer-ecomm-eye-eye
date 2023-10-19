@@ -31,12 +31,15 @@ const requestDesigner = async (req: CustomRequest, res: Response) => {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     address_line2,
     city,
+    state,
     // eslint-disable-next-line @typescript-eslint/naming-convention
     postal_code,
     country,
     // eslint-disable-next-line @typescript-eslint/naming-convention
     address_type,
   } = req.body;
+
+  console.log(req.body, req.files);
 
   const subject = 'Designer Profile Creation Request';
   const text = ' Please wait while we review your profile';
@@ -68,6 +71,7 @@ const requestDesigner = async (req: CustomRequest, res: Response) => {
       address_line1,
       address_line2,
       city,
+      state,
       postal_code,
       country,
       address_type,
@@ -97,7 +101,8 @@ const requestDesigner = async (req: CustomRequest, res: Response) => {
         filename: coverPhotoFilename,
       };
     }
-    // @ts-nocheck
+    // @ts-ignore
+    // eslint-disable-next-line no-underscore-dangle
     newDesigner.legal_address.push(newAddress._id);
     // Save all changes
     await Promise.all([

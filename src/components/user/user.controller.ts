@@ -125,6 +125,7 @@ const addAddress = async (req: Request, res: Response) => {
     address_line1,
     address_line2,
     city,
+    state,
     postal_code,
     country,
     address_type,
@@ -137,6 +138,7 @@ const addAddress = async (req: Request, res: Response) => {
           _id: {
             address_line1,
             address_line2,
+            state,
             city,
             postal_code,
             country,
@@ -161,6 +163,7 @@ const addAddress = async (req: Request, res: Response) => {
     const newAddress = new address({
       address_line1,
       address_line2,
+      state,
       city,
       postal_code,
       country,

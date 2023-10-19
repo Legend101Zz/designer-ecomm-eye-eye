@@ -28,7 +28,9 @@ router.get(
 
 router.post(
   '/designer/request',
-  [protectedByApiKey, validation(createDesignerValidation)],
+
+  [protectedByApiKey, cloudinaryMiddleware],
+
   requestDesigner,
 );
 
