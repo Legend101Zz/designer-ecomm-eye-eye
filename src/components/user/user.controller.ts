@@ -317,7 +317,7 @@ const removeFromCart = async (req: Request, res: Response) => {
 // Create a controller function to update user fields
 const updateUser = async (req: Request, res: Response) => {
   try {
-    const { phone, name, description, userId } = req.body;
+    const { phone, name, description, userId, username } = req.body;
 
     // Check if the user exists
     const existingUser = await user.findById(userId);
@@ -335,6 +335,9 @@ const updateUser = async (req: Request, res: Response) => {
     }
     if (description) {
       existingUser.description = description;
+    }
+    if (username) {
+      existingUser.username = username;
     }
 
     // Save the updated user
