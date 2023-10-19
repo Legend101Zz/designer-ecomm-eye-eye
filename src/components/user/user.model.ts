@@ -13,6 +13,8 @@ const UserSchema: Schema<IUser> = new Schema({
   googleId: { type: String },
 
   phone: { type: String },
+  name: { type: String },
+  description: { type: String },
 
   following: [
     {

@@ -17,6 +17,7 @@ import {
   loginUser,
   addAddress,
   followDesigner,
+  updateUser,
 } from './user.controller';
 import './auth';
 // import logger from '@core/utils/logger';
@@ -86,6 +87,8 @@ router.post('/user/update-password', [protectedByApiKey], updatePassword);
 router.post('/user/follow', [protectedByApiKey], followDesigner);
 
 router.post('/user/login', [protectedByApiKey], loginUser);
+
+router.post('/user/profile', [protectedByApiKey], updateUser);
 
 // cart routes
 

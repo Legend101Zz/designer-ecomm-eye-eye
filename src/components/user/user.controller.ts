@@ -314,6 +314,42 @@ const removeFromCart = async (req: Request, res: Response) => {
   }
 };
 
+// Create a controller function to update user fields
+const updateUser = async (req: Request, res: Response) => {
+  try {
+    const { phone, name, description, userId } = req.body;
+
+    // Check if the user exists
+    const existingUser = await user.findById(userId);
+
+    if (!existingUser) {
+      return res.status(201).json({ message: 'User not found' });
+    }
+
+    // Update user fields if they are provided in the request body
+    if (phone) {
+      existingUser.phone = phone;
+    }
+    if (name) {
+      existingUser.name = name;
+    }
+    if (description) {
+      existingUser.description = description;
+    }
+
+    // Save the updated user
+    await existingUser.save();
+
+    return res
+      .status(200)
+      .json({ message: 'User updated successfully', user: existingUser });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: 'Internal server error', error: error.message });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export {
   createUser,
@@ -324,4 +360,5 @@ export {
   removeFromCart,
   changeCartQuantity,
   updatePassword,
+  updateUser,
 };
