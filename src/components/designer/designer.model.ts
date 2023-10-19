@@ -19,6 +19,7 @@ const DesignerSchema: Schema<IDesigner> = new Schema({
     },
   ],
   profileImage: ImageSchema,
+  coverImage: ImageSchema,
   isApproved: { type: Boolean, default: false },
   Designs: [
     {
@@ -28,12 +29,21 @@ const DesignerSchema: Schema<IDesigner> = new Schema({
   ],
   legal_first_name: String,
   legal_last_name: String,
+  fullname: String,
+  artistName: String,
   description: String,
   socialMedia: [{ type: String }],
   phone: Number,
   portfolioLinks: [{ type: String }],
-  legal_address: String,
+  cvLinks: [{ type: String }],
+  legal_address: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'Address',
+    },
+  ],
   panCard: ImageSchema,
+  panCardNumber: String,
 });
 
 const designer = mongoose.model<IDesigner>('Designer', DesignerSchema);

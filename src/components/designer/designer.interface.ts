@@ -15,7 +15,7 @@ export interface IDesigner {
   description?: String;
   socialMedia?: String[];
   phone?: number;
-  legal_address?: String;
+  legal_address?: mongoose.Schema.Types.ObjectId[];
   portfolioLinks?: String[];
   cvLinks?: String[];
   panCard?: IModel;

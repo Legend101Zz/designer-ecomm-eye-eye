@@ -6,6 +6,7 @@ import { user } from '@components/user/user.model';
 import { product } from '@components/product/product.model';
 import { sendEmailMiddleware } from '@core/middlewares/nodemailer';
 import { design } from '@components/design/design.model';
+import { address } from '@components/user/userAddress.model';
 import { IDesigner } from './designer.interface';
 
 interface CustomRequest extends Request {
@@ -17,8 +18,26 @@ interface CustomDesignerData extends Omit<IDesigner, 'userId'> {
   following: any;
 }
 
-const requestDesigner = async (req: Request, res: Response) => {
-  const { userId } = req.body;
+const requestDesigner = async (req: CustomRequest, res: Response) => {
+  const {
+    userId,
+    fullname,
+    artistName,
+    description,
+    portfolioLinks,
+    cvLinks,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    address_line1,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    address_line2,
+    city,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    postal_code,
+    country,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    address_type,
+  } = req.body;
+
   const subject = 'Designer Profile Creation Request';
   const text = ' Please wait while we review your profile';
 
@@ -32,10 +51,61 @@ const requestDesigner = async (req: Request, res: Response) => {
         .send({ message: 'User is already a registered Designer ' });
     }
     // eslint-disable-next-line new-cap
-    const newDesigner = new designer({ userId });
+    // Create a new designer and add the fields
+    // eslint-disable-next-line new-cap
+    const newDesigner = new designer({
+      userId,
+      fullname,
+      artistName,
+      description,
+      portfolioLinks,
+      cvLinks,
+    });
+
+    // Create a new address
+    // eslint-disable-next-line new-cap
+    const newAddress = new address({
+      address_line1,
+      address_line2,
+      city,
+      postal_code,
+      country,
+      address_type,
+      user_id: userId,
+    });
     checkUser.isDesigner = true;
-    await checkUser.save();
-    await newDesigner.save();
+    // eslint-disable-next-line no-underscore-dangle
+
+    // Handle profile photo and cover photo uploads
+    if (req.files.length >= 2) {
+      const profilePhoto = req.files[0];
+      const coverPhoto = req.files[1];
+
+      // Handle profile photo upload
+      const profilePhotoPath = profilePhoto.path;
+      const profilePhotoFilename = profilePhoto.filename;
+      newDesigner.profileImage = {
+        url: profilePhotoPath,
+        filename: profilePhotoFilename,
+      };
+
+      // Handle cover photo upload
+      const coverPhotoPath = coverPhoto.path;
+      const coverPhotoFilename = coverPhoto.filename;
+      newDesigner.coverImage = {
+        url: coverPhotoPath,
+        filename: coverPhotoFilename,
+      };
+    }
+    // @ts-nocheck
+    newDesigner.legal_address.push(newAddress._id);
+    // Save all changes
+    await Promise.all([
+      checkUser.save(),
+      newDesigner.save(),
+      newAddress.save(),
+    ]);
+
     return sendEmailMiddleware(req, res, email, subject, text);
   } catch (err) {
     res.status(httpStatus.INTERNAL_SERVER_ERROR);
