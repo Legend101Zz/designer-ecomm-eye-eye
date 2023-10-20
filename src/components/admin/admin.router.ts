@@ -4,7 +4,7 @@ import { createAdmin, loginAdmin } from './admin.controller';
 
 const router: Router = Router();
 
-router.get('/admin/create', [protectedByApiKey], createAdmin);
-router.get('/admin/login', [protectedByApiKey], loginAdmin);
+router.post('/admin/create', [protectedByApiKey], createAdmin);
+router.post('/admin/login', [protectedByApiKey], loginAdmin);
 
 export default router;
