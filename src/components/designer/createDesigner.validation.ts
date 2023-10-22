@@ -9,6 +9,37 @@ const createDesignerValidation: ValidationSchema = {
   }),
 };
 
+const fileValidationSchema = Joi.array().items(
+  Joi.object().keys({
+    path: Joi.string().required(),
+    filename: Joi.string().required(),
+    // Add validation for other properties of the file if needed
+  }),
+);
+
+const requestDesignerValidation: ValidationSchema = {
+  body: Joi.object().keys({
+    userId: Joi.string()
+      .regex(/^[0-9a-fA-F]{24}$/)
+      .required(),
+    fullname: Joi.string().required(),
+    artistName: Joi.string().required(),
+    description: Joi.string().required(),
+    portfolioLinks: Joi.array().items(Joi.string()),
+    cvLinks: Joi.array().items(Joi.string()),
+    address_line1: Joi.string().required(),
+    address_line2: Joi.string().allow(''),
+    city: Joi.string().required(),
+    state: Joi.string().required(),
+    postal_code: Joi.string().required(),
+    country: Joi.string().required(),
+    address_type: Joi.string().required(),
+
+    // Add validation for any other fields in req.body if needed
+  }),
+  files: fileValidationSchema,
+};
+
 const updateDesignerValidationSchema: ValidationSchema = {
   body: Joi.object().keys({
     designerId: Joi.string()
@@ -43,4 +74,5 @@ export {
   createDesignerValidation,
   updateDesignerValidationSchema,
   createDesignValidationSchema,
+  requestDesignerValidation,
 };

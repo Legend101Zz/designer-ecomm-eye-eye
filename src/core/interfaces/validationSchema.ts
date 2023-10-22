@@ -4,6 +4,7 @@ export interface ValidationSchema {
   body?: Schema;
   params?: Schema;
   query?: Schema;
+  files?: Schema;
 }
 
 export interface IModel {

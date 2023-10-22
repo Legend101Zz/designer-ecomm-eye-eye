@@ -113,6 +113,7 @@ const requestDesigner = async (req: CustomRequest, res: Response) => {
 
     return sendEmailMiddleware(req, res, email, subject, text);
   } catch (err) {
+    console.log(err);
     res.status(httpStatus.INTERNAL_SERVER_ERROR);
     return res.send({ message: 'Server Error', err });
   }
@@ -264,7 +265,7 @@ const publicData = async (req: Request, res: Response) => {
     return res.status(200).json(publicDesignerData);
   } catch (error) {
     logger.error(error);
-    return res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error', error });
   }
 };
 
@@ -293,7 +294,7 @@ const checkDesignerApproval = async (
     return next();
   } catch (error) {
     logger.error(error);
-    return res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error', error });
   }
 };
 

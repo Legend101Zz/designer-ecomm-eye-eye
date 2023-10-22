@@ -12,7 +12,7 @@ import {
   createDesign,
 } from './designer.controller';
 import {
-  createDesignerValidation,
+  requestDesignerValidation,
   updateDesignerValidationSchema,
   createDesignValidationSchema,
 } from './createDesigner.validation';
@@ -29,7 +29,11 @@ router.get(
 router.post(
   '/designer/request',
 
-  [protectedByApiKey, cloudinaryMiddleware],
+  [
+    protectedByApiKey,
+    cloudinaryMiddleware,
+    validation(requestDesignerValidation),
+  ],
 
   requestDesigner,
 );
