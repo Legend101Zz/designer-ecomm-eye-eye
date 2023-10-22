@@ -25,8 +25,10 @@ const requestDesignerValidation: ValidationSchema = {
     fullname: Joi.string().required(),
     artistName: Joi.string().required(),
     description: Joi.string().required(),
-    portfolioLinks: Joi.array().items(Joi.string()),
-    cvLinks: Joi.array().items(Joi.string()),
+    panCardNumber: Joi.string().required(),
+    phone: Joi.number().required(),
+    portfolioLinks: Joi.string().required(),
+    cvLinks: Joi.string().required(),
     address_line1: Joi.string().required(),
     address_line2: Joi.string().allow(''),
     city: Joi.string().required(),
@@ -37,7 +39,6 @@ const requestDesignerValidation: ValidationSchema = {
 
     // Add validation for any other fields in req.body if needed
   }),
-  files: fileValidationSchema,
 };
 
 const updateDesignerValidationSchema: ValidationSchema = {

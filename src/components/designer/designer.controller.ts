@@ -26,6 +26,9 @@ const requestDesigner = async (req: CustomRequest, res: Response) => {
     description,
     portfolioLinks,
     cvLinks,
+    phone,
+    panCardNumber,
+
     // eslint-disable-next-line @typescript-eslint/naming-convention
     address_line1,
     // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -63,6 +66,8 @@ const requestDesigner = async (req: CustomRequest, res: Response) => {
       description,
       portfolioLinks,
       cvLinks,
+      phone,
+      panCardNumber,
     });
 
     // Create a new address
