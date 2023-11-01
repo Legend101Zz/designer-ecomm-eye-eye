@@ -10,9 +10,8 @@ const ImageSchema: Schema<IModel> = new Schema({
 const DesignSchema: Schema<IDesign> = new Schema({
   title: {
     type: String,
-    required: true,
   },
-  description: { type: String, required: true },
+  description: { type: String },
   designImage: [ImageSchema],
   designer: {
     type: Schema.Types.ObjectId,

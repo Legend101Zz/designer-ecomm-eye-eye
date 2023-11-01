@@ -9,9 +9,9 @@ const createDesignerValidation: ValidationSchema = {
   }),
 };
 
-const imageValidationSchema = Joi.object().keys({
-  image: Joi.any().required().meta({ type: 'file' }),
-});
+// const imageValidationSchema = Joi.object().keys({
+//   image: Joi.any().required().meta({ type: 'file' }),
+// });
 
 const requestDesignerValidation: ValidationSchema = {
   body: Joi.object().keys({

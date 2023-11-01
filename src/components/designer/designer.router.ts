@@ -14,7 +14,7 @@ import {
 import {
   requestDesignerValidation,
   updateDesignerValidationSchema,
-  createDesignValidationSchema,
+  // createDesignValidationSchema,
 } from './createDesigner.validation';
 
 const router: Router = Router();
@@ -67,7 +67,7 @@ router.post(
 router.post(
   '/designer/createDesign',
   cloudinaryMiddleware,
-  [protectedByApiKey, validation(createDesignValidationSchema)],
+  [protectedByApiKey],
   checkDesignerApproval,
 
   createDesign,
