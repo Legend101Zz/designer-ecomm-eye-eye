@@ -307,7 +307,7 @@ const checkDesignerApproval = async (
 const createDesign = async (req: CustomRequest, res: Response) => {
   try {
     // Extract data from the request
-    const { title, description, designerId, productId } = req.body;
+    const { designerId } = req.body;
     const { path, filename } = req.files[0];
 
     // Check if the designer exists
@@ -316,22 +316,37 @@ const createDesign = async (req: CustomRequest, res: Response) => {
       return res.status(404).json({ message: 'Designer not found' });
     }
 
-    // Check if the product exists
-    const existingProduct = await product.findById(productId);
-    if (!existingProduct) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-
     // Create a new design
-
-    // eslint-disable-next-line new-cap
-    const newDesign = new design({
-      title,
-      description,
+    const newDesignData: {
+      designImage: { url: any; filename: any }[];
+      designer: any;
+      title?: string; // Make 'title' property optional
+      description?: string; // Make 'description' property optional
+      product?: any; // Make 'product' property optional
+    } = {
       designImage: [{ url: path, filename }],
       designer: designerId,
-      product: productId,
-    });
+    };
+
+    // Include title and description if provided in the request
+    if (req.body.title) {
+      newDesignData.title = req.body.title;
+    }
+    if (req.body.description) {
+      newDesignData.description = req.body.description;
+    }
+
+    // Include productId if provided in the request
+    if (req.body.productId) {
+      const existingProduct = await product.findById(req.body.productId);
+      if (!existingProduct) {
+        return res.status(404).json({ message: 'Product not found' });
+      }
+      newDesignData.product = req.body.productId;
+    }
+
+    // eslint-disable-next-line new-cap
+    const newDesign = new design(newDesignData);
 
     // Save the design
     const savedDesign = await newDesign.save();
