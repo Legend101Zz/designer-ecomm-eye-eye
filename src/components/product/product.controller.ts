@@ -108,7 +108,7 @@ const addProductImages = async (req: CustomRequest, res: Response) => {
 
     return res.status(200).json(updatedProduct);
   } catch (error) {
-    console.error(error); // You can use console.error instead of logger.error
+    logger.error(error); // You can use console.error instead of logger.error
     return res.status(500).json({ message: 'Internal server error' });
   }
 };

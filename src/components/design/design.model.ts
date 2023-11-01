@@ -18,10 +18,12 @@ const DesignSchema: Schema<IDesign> = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Designer',
   },
-  product: {
-    type: Schema.Types.ObjectId,
-    ref: 'Product',
-  },
+  product: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'Product',
+    },
+  ],
   isVerified: { type: Boolean, default: false },
 });
 
