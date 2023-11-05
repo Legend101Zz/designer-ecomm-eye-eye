@@ -38,8 +38,8 @@ router.get('/failed', (req, res: Response) => {
 });
 router.get('/success', (req: any, res: Response) => {
   logger.debug(req);
-
-  res.send(`Thank You for signing in`);
+  res.json(req.session.userData);
+  // res.send(`Thank You for signing in`);
 });
 
 router.get(
