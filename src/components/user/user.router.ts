@@ -58,7 +58,8 @@ router.get(
   (req: any, res: Response) => {
     req.session.userData = req.user;
 
-    res.redirect('/api/success');
+    // res.redirect('/api/success');
+    res.json(req.session.userData);
   },
 );
 

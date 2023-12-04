@@ -32,7 +32,7 @@ router.post(
   [
     protectedByApiKey,
     cloudinaryMiddleware,
-    validation(requestDesignerValidation),
+    // validation(requestDesignerValidation),
   ],
 
   requestDesigner,
