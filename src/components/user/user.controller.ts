@@ -109,9 +109,28 @@ const loginUser = async (req: Request, res: Response) => {
 
     if (passwordMatch) {
       // Passwords match, user is authenticated
-      // Remove the password field from the userRecord object
-      userRecord.password = 'TOP-SECRET 😛';
-      return res.status(200).json({ message: 'Success', data: userRecord });
+
+      // Clone the user data to avoid modifying the original object directly
+      const modifiedUserData = { ...userRecord.toObject() };
+
+      // Omit the password field
+      delete modifiedUserData.password;
+
+      // If the user is a designer, find the designerId
+      if (modifiedUserData.isDesigner) {
+        const designerCheck = await designer.findOne({
+          // eslint-disable-next-line no-underscore-dangle
+          userId: modifiedUserData._id,
+        });
+        if (designerCheck) {
+          // @ts-ignore
+          // eslint-disable-next-line no-underscore-dangle
+          modifiedUserData.designerId = designerCheck._id;
+        }
+      }
+      return res
+        .status(200)
+        .json({ message: 'Success', data: modifiedUserData });
     }
 
     return res.status(201).json({ message: 'Invalid Credentials' });
