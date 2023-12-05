@@ -4,6 +4,7 @@ import logger from '@core/utils/logger';
 import { isLoggedIn } from '@core/middlewares/userAuth.middleware';
 import protectedByApiKey from '@core/middlewares/apiKey.middleware';
 import validation from '@core/middlewares/validate.middleware';
+import { designer } from '@components/designer/designer.model';
 import {
   createUserValidation,
   createAddressValidation,
@@ -20,6 +21,7 @@ import {
   updateUser,
 } from './user.controller';
 import './auth';
+
 // import logger from '@core/utils/logger';
 
 const router: Router = Router();
@@ -55,10 +57,44 @@ router.get(
     failureMessage: 'Cannot Connect to Google Servers, Please try later ',
     failureRedirect: '/api/failed',
   }),
-  (req: any, res: Response) => {
-    req.session.userData = req.user;
+  async (req: any, res: Response) => {
+    // Clone the user data to avoid modifying the original object
+    const modifiedUserData = { ...req.user.toObject() };
 
-    // res.redirect('/api/success');
+    // Add logic to get the total quantity from the cart
+    const totalQuantity = modifiedUserData.cart.reduce(
+      (total, item) => total + item.quantity,
+      0,
+    );
+
+    // Omit sensitive or unnecessary fields
+    delete modifiedUserData.addresses;
+    delete modifiedUserData.following;
+    delete modifiedUserData.password;
+    delete modifiedUserData.googleId;
+
+    // Update the cart field with the total quantity
+    modifiedUserData.cart = totalQuantity;
+
+    // Add logic to set designerId if the user is a designer
+    if (modifiedUserData.isDesigner) {
+      const designerCheck = await designer.findOne({
+        // eslint-disable-next-line no-underscore-dangle
+        userId: modifiedUserData._id,
+      });
+      if (designerCheck) {
+        // eslint-disable-next-line no-underscore-dangle
+        modifiedUserData.designerId = designerCheck._id;
+      }
+    }
+
+    // Store the modified user data in the session
+    req.session.userData = modifiedUserData;
+
+    // Log the total quantity
+    console.log(totalQuantity, modifiedUserData);
+
+    // Return the modified user data in the response
     res.json(req.session.userData);
   },
 );

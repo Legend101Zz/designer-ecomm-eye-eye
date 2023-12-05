@@ -41,6 +41,7 @@ const googleStrategy = new GoogleStrategy(
       cb(null, checkUser);
     } else if (checkUser2) {
       checkUser2.googleId = profile.id;
+
       await checkUser2
         .save()
         .then((result: any) => {
@@ -68,7 +69,7 @@ const googleStrategy = new GoogleStrategy(
 passport.use(googleStrategy);
 
 passport.serializeUser((User: any, cb) => {
-  console.log('serialising User', User);
+  // console.log('serialising User', User);
   // eslint-disable-next-line no-underscore-dangle
   cb(null, User._id);
 });
