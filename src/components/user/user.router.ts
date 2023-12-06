@@ -31,9 +31,9 @@ router.get('/user', (req: Request, res: Response) => {
   res.json({ message: 'You are not logged in' });
 });
 
-router.get('/user/data', isLoggedIn, (req: any, res) => {
+router.get('/user/data', [protectedByApiKey, isLoggedIn], (req: any, res) => {
   console.log('hitted user data route', req.session.userData);
-  res.json(req.session.userData);
+  res.status(200).json(req.session.userData);
 });
 
 router.get('/failed', (req, res: Response) => {
@@ -95,8 +95,11 @@ router.get(
     // Log the total quantity
     // console.log(totalQuantity, modifiedUserData);
     console.log('hitted callback url', req.session.userData);
-
-    res.redirect('http://localhost:3000/auth/authentication-completed');
+    // res.json(req.session.userData);
+    res.redirect(
+      // eslint-disable-next-line max-len, no-underscore-dangle
+      `http://localhost:3000/auth/authentication-completed?designerId=${req.session.userData.designerId}&userId=${req.session.userData._id}`,
+    );
   },
 );
 
