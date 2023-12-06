@@ -35,7 +35,7 @@ const googleStrategy = new GoogleStrategy(
         cb(err, null);
       });
 
-    logger.debug(checkUser2);
+    // logger.debug(checkUser2);
 
     if (checkUser && checkUser2) {
       cb(null, checkUser);

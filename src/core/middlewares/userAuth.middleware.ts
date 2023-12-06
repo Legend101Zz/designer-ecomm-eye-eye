@@ -1,7 +1,7 @@
 import { NextFunction, Response } from 'express';
 
 const isLoggedIn = (req: any, res: Response, next: NextFunction) => {
-  console.log(req.session);
+  console.log('loggedIn middleware', req.session);
   if (req.session.userData) {
     next();
   } else {
