@@ -10,6 +10,7 @@ import {
   checkDesignerApproval,
   publicData,
   createDesign,
+  personalData,
 } from './designer.controller';
 import {
   requestDesignerValidation,
@@ -25,6 +26,13 @@ router.get(
   checkDesignerApproval,
   publicData,
 );
+
+// router.get(
+//   '/designer/personalProfile/:designerId',
+//   [protectedByApiKey],
+//   checkDesignerApproval,
+//   personalData,
+// );
 
 router.post(
   '/designer/request',

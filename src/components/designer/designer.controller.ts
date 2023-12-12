@@ -42,7 +42,7 @@ const requestDesigner = async (req: CustomRequest, res: Response) => {
     address_type,
   } = req.body;
 
-  console.log(req.body, req.files);
+  // console.log(req.body, req.files);
 
   const subject = 'Designer Profile Creation Request';
   const text = ' Please wait while we review your profile';
@@ -209,12 +209,14 @@ const updateDesignerProfile = async (req: Request, res: Response) => {
 const publicData = async (req: Request, res: Response) => {
   try {
     const { designerId } = req.params;
-
+    console.log(designerId);
     // Find the designer by ID
     const designerData = await designer.findById(designerId);
-    // console.log(designerData);
+
     if (!designerData) {
-      return res.status(404).json({ message: 'Designer not found' });
+      return res
+        .status(404)
+        .json({ message: 'Designer not found', data: req.params });
     }
     // designer's user id
     const userData = await user
@@ -266,6 +268,53 @@ const publicData = async (req: Request, res: Response) => {
     publicDesignerData.following = followingUsernames.map(
       (check) => check.username,
     );
+
+    return res.status(200).json(publicDesignerData);
+  } catch (error) {
+    logger.error(error);
+    return res.status(500).json({ message: 'Internal server error', error });
+  }
+};
+
+// controller for showing designer's own data
+const personalData = async (req: Request, res: Response) => {
+  try {
+    const { designerId } = req.params;
+    console.log('id_here', designerId);
+    // Find the designer by ID
+    const designerData = await designer.findById(designerId);
+    if (!designerData) {
+      return res.status(404).json({ message: 'Designer not found' });
+    }
+
+    // Designer's all designs
+    const designData = await design.find({ designer: designerId });
+
+    if (!designData) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Extract the desired fields for the public data
+    const publicDesignerData: any = {
+      profileImage: designerData.profileImage,
+      coverImage: designerData.coverImage,
+      legal_first_name: designerData.legal_first_name,
+      legal_last_name: designerData.legal_last_name,
+      fullname: designerData.fullname,
+      artistName: designerData.artistName,
+      description: designerData.description,
+      socialMedia: designerData.socialMedia,
+      phone: designerData.phone,
+      portfolioLinks: designerData.portfolioLinks,
+      cvLinks: designerData.cvLinks,
+      isApproved: designerData.isApproved,
+      designs: [],
+    };
+
+    // Populate designs with design images
+    publicDesignerData.designs = designData.map((des) => ({
+      designImage: des.designImage,
+    }));
 
     return res.status(200).json(publicDesignerData);
   } catch (error) {
@@ -372,4 +421,5 @@ export {
   checkDesignerApproval,
   publicData,
   createDesign,
+  personalData,
 };
