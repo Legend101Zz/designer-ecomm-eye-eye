@@ -98,7 +98,7 @@ router.get(
     // res.json(req.session.userData);
     res.redirect(
       // eslint-disable-next-line max-len, no-underscore-dangle
-      `http://localhost:3000/auth/authentication-completed?designerId=${req.session.userData.designerId}&userId=${req.session.userData._id}`,
+      `http://localhost:3000/auth/authentication-completed?designerId=${req.session.userData.designerId}&userId=${req.session.userData._id}&isDesigner=${req.session.userData.isDesigner}`,
     );
   },
 );

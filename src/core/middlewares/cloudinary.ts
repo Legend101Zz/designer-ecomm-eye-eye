@@ -43,7 +43,6 @@ const cloudinaryMiddleware = (
     logger.debug('here');
     // Handle parsing of form data and file uploads using bodyParser and multer
     bodyParser.urlencoded({ extended: false })(req, res, () => {
-      console.log('here2', req);
       upload.array('image')(req, res, (err) => {
         if (err) {
           return res

@@ -209,7 +209,7 @@ const updateDesignerProfile = async (req: Request, res: Response) => {
 const publicData = async (req: Request, res: Response) => {
   try {
     const { designerId } = req.params;
-    console.log(designerId);
+    console.log('noooocachasoc');
     // Find the designer by ID
     const designerData = await designer.findById(designerId);
 
@@ -330,6 +330,7 @@ const checkDesignerApproval = async (
   next: NextFunction,
 ) => {
   const { designerId } = req.body;
+  // logger.debug(designerId);
 
   try {
     // Find the designer document by ID
@@ -358,7 +359,8 @@ const createDesign = async (req: CustomRequest, res: Response) => {
     // Extract data from the request
     const { designerId } = req.body;
     const { path, filename } = req.files[0];
-
+    // logger.debug(req.body);
+    // logger.debug(req.files[0]);
     // Check if the designer exists
     const existingDesigner: any = await designer.findById(designerId);
     if (!existingDesigner) {

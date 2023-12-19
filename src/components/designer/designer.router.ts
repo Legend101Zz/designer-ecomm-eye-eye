@@ -27,12 +27,12 @@ router.get(
   publicData,
 );
 
-// router.get(
-//   '/designer/personalProfile/:designerId',
-//   [protectedByApiKey],
-//   checkDesignerApproval,
-//   personalData,
-// );
+router.get(
+  '/designer/personalProfile/:designerId',
+  [protectedByApiKey],
+  checkDesignerApproval,
+  personalData,
+);
 
 router.post(
   '/designer/request',
