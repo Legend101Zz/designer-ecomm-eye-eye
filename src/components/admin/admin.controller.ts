@@ -1,7 +1,12 @@
 import { Request, Response } from 'express';
 import logger from '@core/utils/logger';
+import { product } from '@components/product/product.model';
 import bcrypt from 'bcrypt';
 import { admin } from './admin.model';
+
+interface CustomRequest extends Request {
+  files: any; // Include the 'file' property with the MulterFile type
+}
 
 // creating a admin
 
@@ -41,7 +46,7 @@ const createAdmin = async (req: Request, res: Response) => {
 
 // login admin
 
-const loginAdmin = async (req, res) => {
+const loginAdmin = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
@@ -68,5 +73,42 @@ const loginAdmin = async (req, res) => {
   }
 };
 
+// add product
+
+const addProduct = async (req: CustomRequest, res: Response) => {
+  try {
+    // Retrieve form data from req.body and req.file
+    const { name, quantity, category, color } = req.body;
+
+    const images = req.files;
+
+    const updatedImages = [];
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const image of images) {
+      updatedImages.push({ url: image.path, filename: image.filename });
+    }
+
+    console.log(updatedImages);
+    // Create a new product using the Product model
+    // eslint-disable-next-line new-cap
+    const newProduct = new product({
+      name,
+      quantity,
+      category,
+      color: [color],
+      image: updatedImages,
+    });
+
+    // Save the product to the database
+    await newProduct.save();
+
+    res.send('Product added'); // Redirect to the product list page
+  } catch (error) {
+    logger.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
-export { createAdmin, loginAdmin };
+export { createAdmin, loginAdmin, addProduct };

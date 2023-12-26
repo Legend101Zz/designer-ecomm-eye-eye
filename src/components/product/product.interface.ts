@@ -14,6 +14,7 @@ export enum Color {
   black = 'black',
   white = 'white',
   yellow = 'yellow',
+  blue = 'blue',
 }
 
 enum Category {

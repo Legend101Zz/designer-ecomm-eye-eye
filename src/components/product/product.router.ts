@@ -22,6 +22,9 @@ const router: Router = Router();
 
 router.get('/product/read/:id', [protectedByApiKey], readProd);
 
+
+
+
 // post routes
 
 router.post(

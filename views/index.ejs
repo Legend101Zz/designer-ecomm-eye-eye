@@ -70,7 +70,7 @@
   </head>
   <body>
     <form
-      action="/admin/add-product"
+      action="/api/admin/add-product"
       method="post"
       enctype="multipart/form-data"
     >
@@ -96,7 +96,13 @@
         <option value="yellow">Yellow</option>
       </select>
 
-      <label for="image">Image:</label>
+      <label for="image">Image Front:</label>
+      <input type="file" id="image" name="image" accept="image/*" required />
+
+      <label for="image">Image Back:</label>
+      <input type="file" id="image" name="image" accept="image/*" required />
+
+      <label for="image">Other Image:</label>
       <input type="file" id="image" name="image" accept="image/*" required />
 
       <button type="submit">Submit</button>
