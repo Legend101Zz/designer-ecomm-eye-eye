@@ -1,4 +1,5 @@
 import express, { Application } from 'express';
+import ejs from 'ejs';
 import passport from 'passport';
 import session from 'express-session';
 import api from 'api';
@@ -27,6 +28,7 @@ app.use(
     extended: false,
   }),
 );
+app.set('view engine', 'ejs');
 app.use(cors());
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', 'http://localhost:3000');

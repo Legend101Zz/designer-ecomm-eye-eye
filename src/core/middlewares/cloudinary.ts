@@ -40,7 +40,7 @@ const cloudinaryMiddleware = (
   next: NextFunction,
 ) => {
   try {
-    logger.debug('here');
+    // logger.debug('here');
     // Handle parsing of form data and file uploads using bodyParser and multer
     bodyParser.urlencoded({ extended: false })(req, res, () => {
       upload.array('image')(req, res, (err) => {
@@ -49,6 +49,7 @@ const cloudinaryMiddleware = (
             .status(400)
             .json({ error: 'File upload failed', details: err.message });
         }
+        // console.log(req.files);
         return next();
       });
     });

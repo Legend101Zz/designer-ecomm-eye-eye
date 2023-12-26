@@ -74,9 +74,8 @@ router.post(
 
 router.post(
   '/designer/createDesign',
-  cloudinaryMiddleware,
-  [protectedByApiKey],
-  checkDesignerApproval,
+
+  [protectedByApiKey, cloudinaryMiddleware, checkDesignerApproval],
 
   createDesign,
 );

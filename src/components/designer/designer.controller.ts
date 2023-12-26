@@ -358,22 +358,24 @@ const createDesign = async (req: CustomRequest, res: Response) => {
   try {
     // Extract data from the request
     const { designerId } = req.body;
+
     const { path, filename } = req.files[0];
+    console.log(designerId, req.files[0]);
     // logger.debug(req.body);
-    // logger.debug(req.files[0]);
+
     // Check if the designer exists
     const existingDesigner: any = await designer.findById(designerId);
-    if (!existingDesigner) {
-      return res.status(404).json({ message: 'Designer not found' });
+    if (!existingDesigner.isApproved) {
+      return res.status(404).json({ message: 'Designer not Approved' });
     }
 
     // Create a new design
     const newDesignData: {
       designImage: { url: any; filename: any }[];
       designer: any;
-      title?: string; // Make 'title' property optional
-      description?: string; // Make 'description' property optional
-      product?: any; // Make 'product' property optional
+      title?: string; //  'title' property optional
+      description?: string; //  'description' property optional
+      product?: any; //  'product' property optional
     } = {
       designImage: [{ url: path, filename }],
       designer: designerId,

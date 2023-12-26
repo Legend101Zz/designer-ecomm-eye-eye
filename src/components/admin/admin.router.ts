@@ -6,5 +6,8 @@ const router: Router = Router();
 
 router.post('/admin/create', [protectedByApiKey], createAdmin);
 router.post('/admin/login', [protectedByApiKey], loginAdmin);
+router.get('/admin', (req, res) => {
+  res.render('index');
+});
 
 export default router;
