@@ -134,12 +134,15 @@ const getProductImages = async (req, res) => {
     }
     // Extract URLs from the matching products' images
 
-    const imageUrls = products
+    // Extract product ID and URLs from the matching products' images
+    const productImages = products.map((prod) => ({
+      // eslint-disable-next-line no-underscore-dangle
+      productId: prod._id,
       // @ts-ignore
-      .map((prod) => prod.image.map((img) => img.url))
-      .flat(); // flatten the array of arrays
+      imageUrls: prod.image.map((img) => img.url).flat(),
+    }));
 
-    return res.status(200).json(imageUrls);
+    return res.status(200).json(productImages);
   } catch (error) {
     logger.error(error);
     return res.status(500).json({ message: 'Internal Server Error' });
