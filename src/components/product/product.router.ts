@@ -9,6 +9,7 @@ import {
   deleteColor,
   readProd,
   addProductImages,
+  getProductImages,
 } from './product.controller';
 import {
   createQuantityValidation,
@@ -21,9 +22,7 @@ const router: Router = Router();
 // get routes
 
 router.get('/product/read/:id', [protectedByApiKey], readProd);
-
-
-
+router.get('/product/images', [protectedByApiKey], getProductImages);
 
 // post routes
 

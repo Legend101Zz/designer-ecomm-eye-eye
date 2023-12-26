@@ -113,6 +113,39 @@ const addProductImages = async (req: CustomRequest, res: Response) => {
   }
 };
 
+const getProductImages = async (req, res) => {
+  try {
+    const { color, category } = req.query;
+
+    // Construct the query based on color and category
+    const query: any = {};
+    if (color) {
+      query.color = color;
+    }
+    if (category) {
+      query.category = category;
+    }
+
+    // Find products that match the query
+    const products = await product.find(query);
+
+    if (!products || products.length === 0) {
+      return res.status(404).json({ message: 'No matching products found' });
+    }
+    // Extract URLs from the matching products' images
+
+    const imageUrls = products
+      // @ts-ignore
+      .map((prod) => prod.image.map((img) => img.url))
+      .flat(); // flatten the array of arrays
+
+    return res.status(200).json(imageUrls);
+  } catch (error) {
+    logger.error(error);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export {
   createProd,
@@ -121,4 +154,5 @@ export {
   addColor,
   deleteColor,
   addProductImages,
+  getProductImages,
 };
