@@ -104,6 +104,7 @@ router.get(
 );
 
 router.get('/logout', (req: any, res) => {
+  console.log('hitted');
   req.session = null;
   req.logout(() => {
     res.redirect('http://localhost:3000/');

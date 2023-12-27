@@ -358,9 +358,9 @@ const createDesign = async (req: CustomRequest, res: Response) => {
   try {
     // Extract data from the request
     const { designerId } = req.body;
-
+    console.log(req.body, req.files, designerId);
     const { path, filename } = req.files[0];
-    console.log(designerId, req.files[0]);
+
     // logger.debug(req.body);
 
     // Check if the designer exists

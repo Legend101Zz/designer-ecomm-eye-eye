@@ -22,6 +22,8 @@ app.use(httpContext.middleware);
 app.use(httpLogger.successHandler);
 app.use(httpLogger.errorHandler);
 app.use(uniqueReqId);
+app.use(cors());
+app.options('*', cors());
 app.use(bodyParser.json());
 app.use(
   bodyParser.urlencoded({
@@ -29,13 +31,13 @@ app.use(
   }),
 );
 app.set('view engine', 'ejs');
-app.use(cors());
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
-  next();
-});
+// Enable preflight for all routes
+// app.use((req, res, next) => {
+//   res.header('Access-Control-Allow-Origin', '*');
+//   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+//   // res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+//   next();
+// });
 app.use(
   session({
     secret: 'somethingsecretgoeshere',
@@ -46,6 +48,7 @@ app.use(
 );
 app.use(passport.initialize());
 app.use(passport.session());
+app.options('/api/logout', cors());
 app.use(consts.API_ROOT_PATH, api);
 app.use(swaggerApiDocs);
 app.use(http404);
