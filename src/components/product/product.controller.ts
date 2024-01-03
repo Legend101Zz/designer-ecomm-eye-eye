@@ -113,7 +113,7 @@ const addProductImages = async (req: CustomRequest, res: Response) => {
   }
 };
 
-const getProductImages = async (req, res) => {
+const getProductImages = async (req: Request, res: Response) => {
   try {
     const { color, category } = req.query;
 
@@ -149,6 +149,19 @@ const getProductImages = async (req, res) => {
   }
 };
 
+const getColorsByCategory = async (req: Request, res: Response) => {
+  const { category } = req.query;
+
+  try {
+    const colors = await product.distinct('color', { category });
+
+    res.status(200).json({ colors });
+  } catch (error) {
+    logger.error('Error fetching colors:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export {
   createProd,
@@ -158,4 +171,5 @@ export {
   deleteColor,
   addProductImages,
   getProductImages,
+  getColorsByCategory,
 };
