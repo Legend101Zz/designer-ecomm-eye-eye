@@ -11,6 +11,8 @@ import {
   publicData,
   createDesign,
   personalData,
+  getDesigns,
+  designByCategory,
 } from './designer.controller';
 import {
   requestDesignerValidation,
@@ -25,6 +27,18 @@ router.get(
   [protectedByApiKey],
   checkDesignerApproval,
   publicData,
+);
+
+router.get(
+  '/designer/design-images/:designerId',
+  [protectedByApiKey],
+  getDesigns,
+);
+
+router.get(
+  '/designer/design-images-category/:designerId',
+  [protectedByApiKey],
+  designByCategory,
 );
 
 router.get(

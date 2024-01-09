@@ -93,6 +93,7 @@ const requestDesigner = async (req: CustomRequest, res: Response) => {
       // Handle profile photo upload
       const profilePhotoPath = profilePhoto.path;
       const profilePhotoFilename = profilePhoto.filename;
+      // @ts-ignore
       newDesigner.profileImage = {
         url: profilePhotoPath,
         filename: profilePhotoFilename,
@@ -101,6 +102,7 @@ const requestDesigner = async (req: CustomRequest, res: Response) => {
       // Handle cover photo upload
       const coverPhotoPath = coverPhoto.path;
       const coverPhotoFilename = coverPhoto.filename;
+      // @ts-ignore
       newDesigner.coverImage = {
         url: coverPhotoPath,
         filename: coverPhotoFilename,
@@ -416,6 +418,92 @@ const createDesign = async (req: CustomRequest, res: Response) => {
   }
 };
 
+const getDesigns = async (req: Request, res: Response) => {
+  try {
+    const { designerId } = req.params;
+
+    // Check if the designer exists
+    const existingDesigner = await designer.findById(designerId);
+    if (!existingDesigner) {
+      return res.status(404).json({ error: 'Designer not found.' });
+    }
+
+    // Fetch designs of the specified designer
+    const designs = await design
+      .find({ designer: designerId })
+      .populate('designer', 'artistName');
+
+    if (!designs || designs.length === 0) {
+      return res.status(404).json({ error: 'Designer has no designs.' });
+    }
+
+    // Extract relevant information from designs
+    const formattedDesigns = designs.map((design1) => ({
+      title: design1.title,
+      description: design1.description,
+      // @ts-ignore
+      designImages: design1.designImage.map((image) => ({
+        url: image.url,
+      })),
+    }));
+
+    // Response with designer and design images
+    return res.json({
+      designs: formattedDesigns,
+    });
+  } catch (error) {
+    logger.error('Error fetching design images:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+const designByCategory = async (req: Request, res: Response) => {
+  try {
+    const { designerId } = req.params;
+    const { productCategory } = req.query;
+    // Find the designer by ID
+    const designerCheck = await designer.findById(designerId);
+    if (!designerCheck) {
+      return res.status(404).json({ message: 'Designer not found' });
+    }
+
+    // Find the product by category or fetch all products if the category is not specified
+    let products: any;
+    if (productCategory) {
+      products = await product.find({ category: productCategory });
+    } else {
+      products = await product.find();
+    }
+
+    if (products.length === 0) {
+      return res
+        .status(404)
+        .json({ message: 'No products found for the given category' });
+    }
+    console.log(products, 'nunu', designerId, productCategory);
+
+    // Find designs for the specified designer and product category
+    const designs = await design.find({
+      // eslint-disable-next-line no-underscore-dangle
+      designer: designerCheck._id,
+      // eslint-disable-next-line no-underscore-dangle
+      product: { $in: products.map((product1) => product1._id) },
+    });
+
+    // Extract relevant information from designs
+    const result = designs.map((design1) => ({
+      title: design1.title,
+      description: design1.description,
+      designImage: design1.designImage,
+    }));
+
+    return res.status(200).json(result);
+  } catch (error) {
+    logger.error(error);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export {
   requestDesigner,
@@ -426,4 +514,6 @@ export {
   publicData,
   createDesign,
   personalData,
+  getDesigns,
+  designByCategory,
 };

@@ -59,5 +59,37 @@ const updateDesign = async (req: Request, res: Response) => {
   }
 };
 
+const getDesignerDesigns = async (req: Request, res: Response) => {
+  try {
+    const { designerId } = req.params;
+
+    const designs = await design
+      .find({ designer: designerId })
+      .populate('designer', 'name'); // Assuming the designer model has a 'name' field
+
+    if (!designs || designs.length === 0) {
+      return res
+        .status(404)
+        .json({ error: 'Designer not found or has no designs.' });
+    }
+
+    // Extract relevant information from designs
+    const formattedDesigns = designs.map((design1) => ({
+      title: design1.title,
+      description: design1.description,
+      designer: design1.designer.name, // Assuming the designer model has a 'name' field
+      designImages: design1.designImage.map((image) => ({
+        url: image.url,
+        filename: image.filename,
+      })),
+    }));
+
+    res.json(formattedDesigns);
+  } catch (error) {
+    logger.error('Error fetching designs:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export { showDesigns, updateDesign };
