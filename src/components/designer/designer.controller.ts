@@ -480,7 +480,7 @@ const designByCategory = async (req: Request, res: Response) => {
         .status(404)
         .json({ message: 'No products found for the given category' });
     }
-    console.log(products, 'nunu', designerId, productCategory);
+
 
     // Find designs for the specified designer and product category
     const designs = await design.find({

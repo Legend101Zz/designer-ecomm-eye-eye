@@ -19,8 +19,11 @@ const DesignSchema: Schema<IDesign> = new Schema({
   },
   product: [
     {
-      type: Schema.Types.ObjectId,
-      ref: 'Product',
+      images: [ImageSchema],
+      productId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Product',
+      },
     },
   ],
   isVerified: { type: Boolean, default: false },

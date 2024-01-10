@@ -3,6 +3,10 @@ import logger from '@core/utils/logger';
 import { product } from '@components/product/product.model';
 import { design } from './design.model';
 
+interface CustomRequest extends Request {
+  files: any; // Include the 'file' property with the MulterFile type
+}
+
 const showDesigns = async (req: Request, res: Response) => {
   try {
     const verifiedDesigns = await design
@@ -84,12 +88,52 @@ const getDesignerDesigns = async (req: Request, res: Response) => {
       })),
     }));
 
-    res.json(formattedDesigns);
+    return res.json(formattedDesigns);
   } catch (error) {
     logger.error('Error fetching designs:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+const addProductsToDesign = async (req: CustomRequest, res: Response) => {
+  try {
+    const { designId } = req.params; // Assuming designId is passed as a parameter in the URL
+    const productsData = req.body.products; // Assuming products array is sent in the request body
+
+    // Find the design by its ID
+    const existingDesign = await design.findById(designId);
+
+    if (!existingDesign) {
+      return res.status(404).json({ message: 'Design not found' });
+    }
+
+    // Extract images from req.files
+    const images = req.files.map((file: any) => ({
+      url: file.path, // Assuming file.path contains the path to the uploaded image
+      filename: file.filename, // Assuming file.filename contains the filename of the uploaded image
+    }));
+
+    // Map product IDs to images
+    const products = productsData.map((product1: any, index: number) => ({
+      productId: product1.productId,
+      images: images.slice(index * 2, (index + 1) * 2), // Assuming each product has two images
+    }));
+
+    // Add products to the design
+    existingDesign.product.push(...products);
+
+    // Save the updated design
+    const updatedDesign = await existingDesign.save();
+
+    return res.status(200).json({
+      message: 'Products added to design successfully',
+      updatedDesign,
+    });
+  } catch (error) {
+    logger.error(error);
+    return res.status(500).json({ message: 'Internal Server Error' });
   }
 };
 
 // eslint-disable-next-line import/prefer-default-export
-export { showDesigns, updateDesign };
+export { showDesigns, updateDesign, addProductsToDesign };
