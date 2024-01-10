@@ -108,15 +108,44 @@ const addProductsToDesign = async (req: CustomRequest, res: Response) => {
     }
 
     // Extract images from req.files
-    const images = req.files.map((file: any) => ({
-      url: file.path, // Assuming file.path contains the path to the uploaded image
-      filename: file.filename, // Assuming file.filename contains the filename of the uploaded image
-    }));
+    const images = req.files.reduce((acc, file: any) => {
+      // Parse productId from the filename
+      const productIdMatch = file.filename.match(/product_(.+)_image/);
+      const productId = productIdMatch ? productIdMatch[1] : null;
+
+      // Find the product in the existing images array or create a new one
+      const productIndex = acc.findIndex(
+        (product1) => product1.productId === productId,
+      );
+      if (productIndex !== -1) {
+        // If the product already exists, add the image to it
+        // eslint-disable-next-line security/detect-object-injection
+        acc[productIndex].images.push({
+          url: file.path,
+          filename: file.filename,
+        });
+      } else {
+        // If the product does not exist, create a new product with the image
+        acc.push({
+          productId,
+          images: [
+            {
+              url: file.path,
+              filename: file.filename,
+            },
+          ],
+        });
+      }
+
+      return acc;
+    }, []);
 
     // Map product IDs to images
-    const products = productsData.map((product1: any, index: number) => ({
+    const products = productsData.map((product1: any) => ({
       productId: product1.productId,
-      images: images.slice(index * 2, (index + 1) * 2), // Assuming each product has two images
+      images:
+        images.find((product2) => product2.productId === product1.productId)
+          ?.images || [],
     }));
 
     // Add products to the design

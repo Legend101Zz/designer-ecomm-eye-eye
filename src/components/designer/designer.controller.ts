@@ -360,7 +360,7 @@ const createDesign = async (req: CustomRequest, res: Response) => {
   try {
     // Extract data from the request
     const { designerId } = req.body;
-    console.log(req.body, req.files, designerId);
+    console.log('nunu1', req.body, req.files, designerId);
     const { path, filename } = req.files[0];
 
     // logger.debug(req.body);
@@ -480,7 +480,6 @@ const designByCategory = async (req: Request, res: Response) => {
         .status(404)
         .json({ message: 'No products found for the given category' });
     }
-
 
     // Find designs for the specified designer and product category
     const designs = await design.find({
