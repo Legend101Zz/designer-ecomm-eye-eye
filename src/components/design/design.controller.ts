@@ -97,11 +97,11 @@ const getDesignerDesigns = async (req: Request, res: Response) => {
 
 const addProductsToDesign = async (req: CustomRequest, res: Response) => {
   try {
-    const { designId } = req.params; // Assuming designId is passed as a parameter in the URL
-    const productsData = req.body.products; // Assuming products array is sent in the request body
+    const { designImageUrl } = req.body; // Assuming designId is passed as a parameter in the URL
 
-    // Find the design by its ID
-    const existingDesign = await design.findById(designId);
+    const existingDesign = await design.findOne({
+      'designImage.url': designImageUrl,
+    });
 
     if (!existingDesign) {
       return res.status(404).json({ message: 'Design not found' });
@@ -140,16 +140,8 @@ const addProductsToDesign = async (req: CustomRequest, res: Response) => {
       return acc;
     }, []);
 
-    // Map product IDs to images
-    const products = productsData.map((product1: any) => ({
-      productId: product1.productId,
-      images:
-        images.find((product2) => product2.productId === product1.productId)
-          ?.images || [],
-    }));
-
     // Add products to the design
-    existingDesign.product.push(...products);
+    existingDesign.product.push(...images);
 
     // Save the updated design
     const updatedDesign = await existingDesign.save();

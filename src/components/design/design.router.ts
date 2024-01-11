@@ -11,10 +11,6 @@ const router: Router = Router();
 router.get('/designs/show', [protectedByApiKey], showDesigns);
 router.get('/designs/designer/:designId', [protectedByApiKey], showDesigns);
 router.get('/designs/update/:designId', [protectedByApiKey], updateDesign);
-router.post(
-  '/designs/add-products/:designId',
-  [protectedByApiKey],
-  addProductsToDesign,
-);
+router.post('/designs/add-products', [protectedByApiKey], addProductsToDesign);
 
 export default router;
