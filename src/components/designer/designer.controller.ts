@@ -16,6 +16,8 @@ interface CustomDesignerData extends Omit<IDesigner, 'userId'> {
   username: any;
   email: any;
   following: any;
+  coverImage: any;
+  profileImage: any;
 }
 
 const requestDesigner = async (req: CustomRequest, res: Response) => {
@@ -235,7 +237,9 @@ const publicData = async (req: Request, res: Response) => {
       username: userData.username,
       email: userData.email,
       following: userData.following,
-      isApproved: designerData.isApproved, // Assuming you have a "following" field in the User schema
+      isApproved: designerData.isApproved,
+      profileImage: designerData.profileImage.url,
+      coverImage: designerData.coverImage.url,
     };
 
     // Include non-empty fields from designerData
@@ -310,13 +314,7 @@ const personalData = async (req: Request, res: Response) => {
       portfolioLinks: designerData.portfolioLinks,
       cvLinks: designerData.cvLinks,
       isApproved: designerData.isApproved,
-      designs: [],
     };
-
-    // Populate designs with design images
-    publicDesignerData.designs = designData.map((des) => ({
-      designImage: des.designImage,
-    }));
 
     return res.status(200).json(publicDesignerData);
   } catch (error) {
@@ -332,7 +330,7 @@ const checkDesignerApproval = async (
   next: NextFunction,
 ) => {
   const { designerId } = req.body;
-  // logger.debug(designerId);
+  logger.debug(designerId);
 
   try {
     // Find the designer document by ID
@@ -475,6 +473,8 @@ const designByCategory = async (req: Request, res: Response) => {
       products = await product.find();
     }
 
+    console.log('products', products);
+
     if (products.length === 0) {
       return res
         .status(404)
@@ -482,21 +482,23 @@ const designByCategory = async (req: Request, res: Response) => {
     }
 
     // Find designs for the specified designer and product category
-    const designs = await design.find({
-      // eslint-disable-next-line no-underscore-dangle
-      designer: designerCheck._id,
-      // eslint-disable-next-line no-underscore-dangle
-      product: { $in: products.map((product1) => product1._id) },
-    });
+    const designs = await design
+      .find({
+        // eslint-disable-next-line no-underscore-dangle
+        designer: designerCheck._id,
+        // eslint-disable-next-line no-underscore-dangle
+        'product.productId': { $in: products.map((product1) => product1._id) },
+      })
+      .select('title description product.images.url -_id');
 
-    // Extract relevant information from designs
-    const result = designs.map((design1) => ({
-      title: design1.title,
-      description: design1.description,
-      designImage: design1.designImage,
-    }));
+    if (designs.length === 0) {
+      return res.status(404).json({
+        message:
+          'No products found for the given category made by this designer',
+      });
+    }
 
-    return res.status(200).json(result);
+    return res.status(200).json(designs);
   } catch (error) {
     logger.error(error);
     return res.status(500).json({ message: 'Internal Server Error' });

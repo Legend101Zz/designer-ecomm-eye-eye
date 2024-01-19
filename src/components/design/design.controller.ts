@@ -98,58 +98,64 @@ const getDesignerDesigns = async (req: Request, res: Response) => {
 const addProductsToDesign = async (req: CustomRequest, res: Response) => {
   try {
     const { designImageUrl } = req.body; // Assuming designId is passed as a parameter in the URL
-
+    console.log('in design', designImageUrl, req.body, req.files);
     const existingDesign = await design.findOne({
-      'designImage.url': designImageUrl,
+      designImage: {
+        $elemMatch: { url: designImageUrl },
+      },
     });
-
     if (!existingDesign) {
       return res.status(404).json({ message: 'Design not found' });
     }
 
-    // Extract images from req.files
-    const images = req.files.reduce((acc, file: any) => {
-      // Parse productId from the filename
-      const productIdMatch = file.filename.match(/product_(.+)_image/);
-      const productId = productIdMatch ? productIdMatch[1] : null;
+    if (req.files) {
+      // Extract images from req.files
+      const images = req.files.reduce((acc, file: any) => {
+        // Parse productId from the filename
+        const productIdMatch = file.originalname.match(/product_(.+)_image/);
+        const productId = productIdMatch ? productIdMatch[1] : null;
 
-      // Find the product in the existing images array or create a new one
-      const productIndex = acc.findIndex(
-        (product1) => product1.productId === productId,
-      );
-      if (productIndex !== -1) {
-        // If the product already exists, add the image to it
-        // eslint-disable-next-line security/detect-object-injection
-        acc[productIndex].images.push({
-          url: file.path,
-          filename: file.filename,
-        });
-      } else {
-        // If the product does not exist, create a new product with the image
-        acc.push({
-          productId,
-          images: [
-            {
-              url: file.path,
-              filename: file.filename,
-            },
-          ],
-        });
-      }
+        // Find the product in the existing images array or create a new one
+        const productIndex = acc.findIndex(
+          (product1) => product1.productId === productId,
+        );
+        if (productIndex !== -1) {
+          // // If the product already exists, add the image to it
+          // // eslint-disable-next-line security/detect-object-injection
+          // acc[productIndex].images.push({
+          //   url: file.path,
+          //   filename: file.filename,
+          // });
+          // ============NEW IMPLEMENTATION ============
+          // If the product already exists, skip adding it
+          return acc;
+        }
+        if (productIndex === -1) {
+          // If the product does not exist, create a new product with the image
+          acc.push({
+            productId,
+            images: [
+              {
+                url: file.path,
+                filename: file.filename,
+              },
+            ],
+          });
 
-      return acc;
-    }, []);
+          return acc;
+        }
+        return acc;
+      }, []);
+      // Add products to the design
+      existingDesign.product.push(...images);
+      // Save the updated design
+      const updatedDesign = await existingDesign.save();
 
-    // Add products to the design
-    existingDesign.product.push(...images);
-
-    // Save the updated design
-    const updatedDesign = await existingDesign.save();
-
-    return res.status(200).json({
-      message: 'Products added to design successfully',
-      updatedDesign,
-    });
+      return res.status(200).json({
+        message: 'Products added to design successfully',
+        updatedDesign,
+      });
+    }
   } catch (error) {
     logger.error(error);
     return res.status(500).json({ message: 'Internal Server Error' });

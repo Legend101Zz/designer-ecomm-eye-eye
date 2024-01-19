@@ -1,6 +1,7 @@
 import express, { Application } from 'express';
 import ejs from 'ejs';
 import passport from 'passport';
+import path from 'path';
 import session from 'express-session';
 import api from 'api';
 import bodyParser from 'body-parser';
@@ -30,7 +31,10 @@ app.use(
     extended: false,
   }),
 );
+
 app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, '../views'));
+app.use(express.static(path.join(__dirname, '../public')));
 // Enable preflight for all routes
 // app.use((req, res, next) => {
 //   res.header('Access-Control-Allow-Origin', '*');

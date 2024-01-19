@@ -22,12 +22,21 @@ import {
 
 const router: Router = Router();
 
+// TO GET DESIGNER DETAILS
 router.get(
   '/designer/viewProfile/:designerId',
   [protectedByApiKey],
-  checkDesignerApproval,
   publicData,
 );
+
+router.get(
+  '/designer/personalProfile/:designerId',
+  [protectedByApiKey],
+  // checkDesignerApproval,
+  personalData,
+);
+
+// GET DESIGN IMAGES
 
 router.get(
   '/designer/design-images/:designerId',
@@ -35,19 +44,14 @@ router.get(
   getDesigns,
 );
 
+// GET PRODUCTS BY CATEGORY
 router.get(
   '/designer/design-images-category/:designerId',
   [protectedByApiKey],
   designByCategory,
 );
 
-router.get(
-  '/designer/personalProfile/:designerId',
-  [protectedByApiKey],
-  checkDesignerApproval,
-  personalData,
-);
-
+// REGISTER DESIGNER
 router.post(
   '/designer/request',
 
