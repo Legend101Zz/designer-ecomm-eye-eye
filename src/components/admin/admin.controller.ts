@@ -110,5 +110,81 @@ const addProduct = async (req: CustomRequest, res: Response) => {
   }
 };
 
+const products = async (req: Request, res: Response) => {
+  try {
+    // Extract query parameters
+    const { search, category } = req.query;
+
+    // Construct the filter object based on query parameters
+    const filter: any = {};
+    if (search) {
+      // @ts-ignore
+      filter.name = { $regex: new RegExp(search, 'i') };
+    }
+    if (category) {
+      filter.category = category;
+    }
+
+    // Fetch filtered products from the database
+    const prod = await product.find(filter);
+
+    // Render the page with the filtered products
+    res.render('products', { products: prod });
+  } catch (error) {
+    logger.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
+const renderEditProductPage = async (req: Request, res: Response) => {
+  try {
+    // Extract the product ID from the route parameters
+    const { productId } = req.params;
+
+    const prod = await product.findById(productId);
+
+    if (!prod) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    return res.render('editProd', {
+      title: 'Edit Product',
+      productId,
+      prod,
+    });
+  } catch (error) {
+    logger.error(error);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
+const editProduct = async (req: Request, res: Response) => {
+  try {
+    const { productId, quantity } = req.body;
+
+    const updatedProduct = await product.findByIdAndUpdate(
+      productId,
+      { quantity },
+      { new: true },
+    );
+
+    if (!updatedProduct) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    return res.redirect('/api/admin/products');
+  } catch (error) {
+    logger.error(error);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
-export { createAdmin, loginAdmin, addProduct };
+export {
+  createAdmin,
+  loginAdmin,
+  addProduct,
+  products,
+  renderEditProductPage,
+  editProduct,
+};

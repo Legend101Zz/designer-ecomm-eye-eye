@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <style>
+      body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f5f5f5;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+
+      form {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        max-width: 400px;
+        width: 100%;
+      }
+
+      h1 {
+        text-align: center;
+        color: #333;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        color: #555;
+      }
+
+      input {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 16px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+
+      button {
+        background-color: #4caf50;
+        color: #fff;
+        padding: 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #45a049;
+      }
+
+      select {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 16px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+    </style>
+
+    <title>Edit Product</title>
+  </head>
+  <body>
+    <form action="/api/admin/edit-product" method="post">
+      <h1>Edit Product</h1>
+
+      <!-- Hidden input for Product ID -->
+      <input
+        type="hidden"
+        id="productId"
+        name="productId"
+        value="<%= productId %>"
+      />
+
+      <!-- Hidden inputs for other fields (assuming product is defined in your route/controller) -->
+      <input
+        type="hidden"
+        id="productName"
+        name="productName"
+        value="<%= prod.name %>"
+      />
+      <input
+        type="hidden"
+        id="productCategory"
+        name="productCategory"
+        value="<%= prod.category %>"
+      />
+      <!-- Add other hidden fields as needed -->
+
+      <label for="quantity">New Quantity:</label>
+      <input type="number" id="quantity" name="quantity" required />
+
+      <!-- Display existing values for other fields if needed -->
+      <p>Current Product Name: <%= prod.name %></p>
+      <p>Current Product Category: <%= prod.category %></p>
+      <!-- Add other display fields as needed -->
+
+      <button type="submit">Submit</button>
+    </form>
+  </body>
+</html>
