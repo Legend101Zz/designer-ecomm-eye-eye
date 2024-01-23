@@ -162,5 +162,48 @@ const addProductsToDesign = async (req: CustomRequest, res: Response) => {
   }
 };
 
+// Helper function to group products by category
+function groupProductsByCategory(products) {
+  const groupedProducts = {};
+
+  products.forEach((product1: any) => {
+    const { category } = product1;
+
+    if (!groupedProducts[category]) {
+      groupedProducts[category] = [];
+    }
+
+    groupedProducts[category].push(product1);
+  });
+
+  return groupedProducts;
+}
+
+const getProducts = async (req: Request, res: Response) => {
+  try {
+    // Fetch all designs with associated products
+    const designs = await design.find().populate('product.productId');
+
+    // Extract products from designs
+    const allProducts = designs.reduce((acc, design1) => {
+      // Extract products from the design and flatten the array
+      const designProducts = design1.product
+        .map((designProduct) => designProduct.productId)
+        .filter((productId) => productId); // Filter out null and undefined
+
+      acc.push(...designProducts);
+      return acc;
+    }, []);
+    console.log(allProducts);
+    // Group products by category
+    const groupedProducts = groupProductsByCategory(allProducts);
+
+    res.json(groupedProducts);
+  } catch (error) {
+    logger.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
-export { showDesigns, updateDesign, addProductsToDesign };
+export { showDesigns, updateDesign, addProductsToDesign, getProducts };
