@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Designer Details</title>
+  <!-- Include Bootstrap CSS -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Add your head content here -->
+</head>
+
+<body>
+  <div class="container mt-5">
+    <h1 class="mb-4">Designer Details</h1>
+
+    <div class="card">
+      <div class="card-body">
+        <h2 class="card-title"><%= designer.fullname %></h2>
+
+        <!-- Display Profile Image if available -->
+        <% if (designer.profileImage && designer.profileImage.url) { %>
+          <img src="<%= designer.profileImage.url %>" class="img-fluid mb-3" alt="<%= designer.fullname %>">
+        <% } %>
+
+        <!-- Add other details you want to display -->
+        <p><strong>Artist Name:</strong> <%= designer.artistName %></p>
+        <p><strong>Description:</strong> <%= designer.description %></p>
+        <p><strong>Phone:</strong> <%= designer.phone %></p>
+
+        <!-- Add more details based on your schema -->
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Include Bootstrap JS and Popper.js -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <!-- Add your script tags or additional scripts here -->
+</body>
+
+</html>

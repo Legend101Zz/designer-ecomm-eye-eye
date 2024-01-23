@@ -3,6 +3,7 @@ import logger from '@core/utils/logger';
 import { product } from '@components/product/product.model';
 import bcrypt from 'bcrypt';
 import { admin } from './admin.model';
+import { designer } from '@components/designer/designer.model';
 
 interface CustomRequest extends Request {
   files: any; // Include the 'file' property with the MulterFile type
@@ -179,6 +180,39 @@ const editProduct = async (req: Request, res: Response) => {
   }
 };
 
+// ============ DESIGNER ============
+const allDesigners = async (req: Request, res: Response) => {
+  try {
+    const approvedDesigners = await designer.find({ isApproved: true });
+    const notApprovedDesigners = await designer.find({
+      isApproved: false,
+    });
+
+    res.render('designer', {
+      approvedDesigners,
+      notApprovedDesigners,
+    });
+  } catch (e) {
+    logger.log(e);
+    res.status(500).send('Internal Server Error');
+  }
+};
+
+const getDesignerDetails = async (req: Request, res: Response) => {
+  try {
+    const designer1 = await designer.findById(req.params.id);
+
+    if (!designer1) {
+      return res.status(404).send('Designer not found');
+    }
+
+    return res.render('designerSingle', { designer: designer1 });
+  } catch (e) {
+    logger.error(e);
+    return res.status(500).send('Internal Server Error');
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export {
   createAdmin,
@@ -187,4 +221,6 @@ export {
   products,
   renderEditProductPage,
   editProduct,
+  allDesigners,
+  getDesignerDetails,
 };

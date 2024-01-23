@@ -8,6 +8,8 @@ import {
   products,
   renderEditProductPage,
   editProduct,
+  allDesigners,
+  getDesignerDetails
 } from './admin.controller';
 
 const router: Router = Router();
@@ -34,5 +36,9 @@ router.get('/admin/addProduct', (req, res) => {
   res.render('addProd');
 });
 router.get('/admin/editProduct/:productId', renderEditProductPage);
+
+// designer routes
+router.get('/admin/designer', allDesigners);
+router.get('/admin/designer/:id', getDesignerDetails);
 
 export default router;
