@@ -505,6 +505,55 @@ const designByCategory = async (req: Request, res: Response) => {
   }
 };
 
+// get random designer to be changed later
+
+const getRandomDesigners = async (req: Request, res: Response) => {
+  try {
+    // Get the count of all designers with a profile image and non-empty 'Designs' array
+    const count = await designer.countDocuments({
+      profileImage: { $exists: true },
+      Designs: { $exists: true, $ne: [] },
+    });
+
+    // Generate a random skip value
+    const randomSkip = Math.floor(Math.random() * count);
+
+    // Fetch a random set of designers with a profile image and non-empty 'Designs' array
+    const designers = await designer
+      .find({
+        profileImage: { $exists: true },
+        Designs: { $exists: true, $ne: [] },
+      })
+      .skip(randomSkip)
+      .limit(5)
+      .populate('Designs');
+
+    console.log(designers);
+
+    // Map the designers to the desired format
+    const randomDesigners = designers.map((designer1) => {
+      const profileImage = designer1.profileImage?.url || null;
+      const designImage =
+        // eslint-disable-next-line no-nested-ternary
+        designer1.Designs.length > 0
+          ? designer1.Designs[0].designImage.length > 0
+            ? designer1.Designs[0].designImage[0].url
+            : null
+          : null;
+
+      return {
+        profileImage,
+        designImage,
+      };
+    });
+
+    res.json(randomDesigners);
+  } catch (error) {
+    logger.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export {
   requestDesigner,
@@ -517,4 +566,5 @@ export {
   personalData,
   getDesigns,
   designByCategory,
+  getRandomDesigners,
 };

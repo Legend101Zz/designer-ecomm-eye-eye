@@ -13,6 +13,7 @@ import {
   personalData,
   getDesigns,
   designByCategory,
+  getRandomDesigners,
 } from './designer.controller';
 import {
   requestDesignerValidation,
@@ -21,6 +22,14 @@ import {
 } from './createDesigner.validation';
 
 const router: Router = Router();
+
+// TO GET RANDOM DESIGNERS
+
+router.get(
+  '/designer/getRandomDesigner',
+  [protectedByApiKey],
+  getRandomDesigners,
+);
 
 // TO GET DESIGNER DETAILS
 router.get(
