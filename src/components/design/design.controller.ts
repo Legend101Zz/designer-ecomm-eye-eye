@@ -161,42 +161,61 @@ const addProductsToDesign = async (req: CustomRequest, res: Response) => {
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 };
+// Helper function to group image URLs by category and design id
+function groupImagesByCategoryAndDesign(images) {
+  const groupedImages = {};
 
-// Helper function to group products by category
-function groupProductsByCategory(products) {
-  const groupedProducts = {};
+  images.forEach((image) => {
+    const { category, designId, images: imageArray } = image;
 
-  products.forEach((product1: any) => {
-    const { category } = product1;
-
-    if (!groupedProducts[category]) {
-      groupedProducts[category] = [];
+    if (!groupedImages[category]) {
+      groupedImages[category] = {};
     }
 
-    groupedProducts[category].push(product1);
+    if (!groupedImages[category][designId]) {
+      groupedImages[category][designId] = { images: [] };
+    }
+
+    // Extract URLs from each image and add them to the array
+    const imageUrls = imageArray.map((img) => img.url);
+    groupedImages[category][designId].images.push(...imageUrls);
   });
 
-  return groupedProducts;
+  return groupedImages;
 }
 
 const getProducts = async (req: Request, res: Response) => {
   try {
     // Fetch all designs with associated products
     const designs = await design.find().populate('product.productId');
-
+    console.log('designs', designs);
     // Extract products from designs
     const allProducts = designs.reduce((acc, design1) => {
       // Extract products from the design and flatten the array
       const designProducts = design1.product
-        .map((designProduct) => designProduct.productId)
-        .filter((productId) => productId); // Filter out null and undefined
+        .map((designProduct) => {
+          const { productId } = designProduct;
+          const { images } = designProduct;
+          console.log('designs', productId);
+          if (images.length > 0 && productId) {
+            return {
+              category: productId.category,
+              color: productId.color,
+              // eslint-disable-next-line no-underscore-dangle
+              designId: design1._id,
+              images,
+            };
+          }
+          return null;
+        })
+        .filter(Boolean);
 
       acc.push(...designProducts);
       return acc;
     }, []);
     console.log(allProducts);
     // Group products by category
-    const groupedProducts = groupProductsByCategory(allProducts);
+    const groupedProducts = groupImagesByCategoryAndDesign(allProducts);
 
     res.json(groupedProducts);
   } catch (error) {
