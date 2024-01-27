@@ -329,7 +329,7 @@ const checkDesignerApproval = async (
   res: Response,
   next: NextFunction,
 ) => {
-  const { designerId } = req.body;
+  const designerId = req.body.designerId || req.params.designerId;
   logger.debug(designerId);
 
   try {
@@ -554,6 +554,46 @@ const getRandomDesigners = async (req: Request, res: Response) => {
   }
 };
 
+// SETTINGS CONTROLLERS
+
+const updateSettings = async (req: Request, res: Response) => {
+  const { designerId } = req.params;
+
+  try {
+    const existingDesigner = await designer.findById(designerId);
+
+    // If the existing designer does not have a settings object, create one
+    if (!existingDesigner.settings) {
+      existingDesigner.settings = {};
+    }
+    // Update settings based on the request body
+    if (req.body.settings) {
+      const { settings } = req.body;
+      existingDesigner.settings = {
+        ...settings,
+      };
+    }
+
+    // Copy socialMedia and portfolioLinks if not provided in the request body
+    if (!req.body.settings?.socialMedia && existingDesigner.socialMedia) {
+      existingDesigner.settings.socialMedia = existingDesigner.socialMedia;
+    }
+
+    if (!req.body.settings?.portfolioLinks && existingDesigner.portfolioLinks) {
+      existingDesigner.settings.portfolioLinks =
+        existingDesigner.portfolioLinks;
+    }
+
+    // Save the updated designer
+    const updatedDesigner = await existingDesigner.save();
+
+    return res.json(updatedDesigner);
+  } catch (error) {
+    logger.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export {
   requestDesigner,
@@ -567,4 +607,5 @@ export {
   getDesigns,
   designByCategory,
   getRandomDesigners,
+  updateSettings,
 };

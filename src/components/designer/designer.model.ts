@@ -18,6 +18,7 @@ const SettingsSchema = new Schema({
       },
     ],
   },
+  showFollowers: { type: Boolean, default: true },
   showFullName: { type: Boolean, default: true },
   showPhone: { type: Boolean, default: true },
   showDescription: { type: Boolean, default: true },

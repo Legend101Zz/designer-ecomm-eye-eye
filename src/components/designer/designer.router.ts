@@ -14,6 +14,7 @@ import {
   getDesigns,
   designByCategory,
   getRandomDesigners,
+  updateSettings,
 } from './designer.controller';
 import {
   requestDesignerValidation,
@@ -73,6 +74,7 @@ router.post(
   requestDesigner,
 );
 
+// TO UPDATE PROFILE DESIGNER
 router.post(
   '/designer/updateProfile',
   [protectedByApiKey, validation(updateDesignerValidationSchema)],
@@ -99,12 +101,23 @@ router.post(
   addPanCard,
 );
 
+// TO ADD NEW DESIGN
 router.post(
   '/designer/createDesign',
 
   [protectedByApiKey, cloudinaryMiddleware, checkDesignerApproval],
 
   createDesign,
+);
+
+// DESIGNER PUBLIC PROFILE SETTINGS ROUTE
+
+router.post(
+  '/designer/update-settings/:designerId',
+
+  [protectedByApiKey, checkDesignerApproval],
+
+  updateSettings,
 );
 
 export default router;

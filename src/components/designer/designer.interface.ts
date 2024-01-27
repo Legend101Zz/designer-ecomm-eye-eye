@@ -32,6 +32,7 @@ export interface IDesigner {
       designIds?: mongoose.Schema.Types.ObjectId[];
     };
     showFullName?: boolean;
+    showFollowers?: boolean;
     isPrivate?: boolean;
     showPhone?: boolean;
     showDescription?: boolean;
