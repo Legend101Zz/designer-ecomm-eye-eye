@@ -35,13 +35,13 @@ router.get(
 // TO GET DESIGNER DETAILS
 router.get(
   '/designer/viewProfile/:designerId',
-  [protectedByApiKey],
+  [protectedByApiKey, checkDesignerApproval],
   publicData,
 );
 
 router.get(
   '/designer/personalProfile/:designerId',
-  [protectedByApiKey],
+  [protectedByApiKey, checkDesignerApproval],
   // checkDesignerApproval,
   personalData,
 );

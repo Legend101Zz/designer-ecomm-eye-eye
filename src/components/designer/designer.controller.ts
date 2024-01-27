@@ -209,71 +209,73 @@ const updateDesignerProfile = async (req: Request, res: Response) => {
 };
 
 // controller for showing designer's public data
-
 const publicData = async (req: Request, res: Response) => {
   try {
     const { designerId } = req.params;
-    console.log('noooocachasoc');
+
     // Find the designer by ID
-    const designerData = await designer.findById(designerId);
+    const designerData = await designer
+      .findById(designerId)
+      .populate('settings.showDesigns.designIds');
 
-    if (!designerData) {
-      return res
-        .status(404)
-        .json({ message: 'Designer not found', data: req.params });
-    }
-    // designer's user id
-    const userData = await user
-      .findById(designerData.userId)
-      .populate({ path: 'following', select: 'userId' })
-      .exec();
-
-    if (!userData) {
-      return res.status(404).json({ message: 'User not found' });
+    // Check if the profile is private
+    if (designerData.settings.isPrivate) {
+      return res.status(403).json({ message: 'Profile is private' });
     }
 
-    // Extract the desired fields for the public data
-    const publicDesignerData: CustomDesignerData = {
-      username: userData.username,
-      email: userData.email,
-      following: userData.following,
+    // Extract relevant data based on settings
+    const publicDesignerData: any = {
       isApproved: designerData.isApproved,
-      profileImage: designerData.profileImage.url,
-      coverImage: designerData.coverImage.url,
     };
 
-    // Include non-empty fields from designerData
-    if (designerData.legal_first_name) {
+    // Include fields based on settings
+    if (designerData.settings.showFullName) {
       publicDesignerData.legal_first_name = designerData.legal_first_name;
-    }
-    if (designerData.legal_last_name) {
       publicDesignerData.legal_last_name = designerData.legal_last_name;
     }
-    if (designerData.description) {
+
+    if (designerData.settings.showCoverPhoto) {
+      publicDesignerData.coverImage = designerData.coverImage.url;
+    }
+
+    if (designerData.settings.showProfilePhoto) {
+      publicDesignerData.profileImage = designerData.profileImage.url;
+    }
+
+    if (designerData.settings.showDescription) {
       publicDesignerData.description = designerData.description;
     }
-    if (designerData.socialMedia && designerData.socialMedia.length > 0) {
+
+    if (designerData.settings.socialMedia.length > 0) {
       publicDesignerData.socialMedia = designerData.socialMedia;
     }
-    if (designerData.portfolioLinks && designerData.portfolioLinks.length > 0) {
+
+    if (designerData.settings.portfolioLinks.length > 0) {
       publicDesignerData.portfolioLinks = designerData.portfolioLinks;
     }
 
-    // Now, let's populate the 'following' field manually
-    const followingUserIds = userData.following.map(
-      (followedUser: any) => followedUser.userId,
-    );
+    if (designerData.settings.showFollowers) {
+      // Now, let's populate the 'following' field manually
+      const userData = await user
+        .findById(designerData.userId)
+        .populate('following.userId', 'username');
+      const followingUsernames = userData.following.map(
+        (followedUser: any) => followedUser.userId.username,
+      );
+      publicDesignerData.following = followingUsernames;
+    }
 
-    // Query to retrieve usernames based on user IDs
-    const followingUsernames = await user.find(
-      { _id: { $in: followingUserIds } },
-      'username',
-    );
-
-    // Extract the usernames and add them to publicDesignerData
-    publicDesignerData.following = followingUsernames.map(
-      (check) => check.username,
-    );
+    if (
+      designerData.settings.showDesigns.enabled &&
+      designerData.settings.showDesigns.designIds.length > 0
+    ) {
+      publicDesignerData.designs =
+        designerData.settings.showDesigns.designIds.map((design1: any) => ({
+          title: design1.title,
+          description: design1.description,
+          designImage: design1.designImage.url,
+        }));
+    }
 
     return res.status(200).json(publicDesignerData);
   } catch (error) {
@@ -286,12 +288,9 @@ const publicData = async (req: Request, res: Response) => {
 const personalData = async (req: Request, res: Response) => {
   try {
     const { designerId } = req.params;
-    console.log('id_here', designerId);
+    // console.log('id_here', designerId);
     // Find the designer by ID
     const designerData = await designer.findById(designerId);
-    if (!designerData) {
-      return res.status(404).json({ message: 'Designer not found' });
-    }
 
     // Designer's all designs
     const designData = await design.find({ designer: designerId });
@@ -561,7 +560,7 @@ const updateSettings = async (req: Request, res: Response) => {
 
   try {
     const existingDesigner = await designer.findById(designerId);
-    console.log('Dessign', req.body);
+    // console.log('Dessign', req.body);
     // If the existing designer does not have a settings object, create one
     if (!existingDesigner.settings) {
       existingDesigner.settings = {};
@@ -587,11 +586,11 @@ const updateSettings = async (req: Request, res: Response) => {
       existingDesigner.settings.portfolioLinks =
         existingDesigner.portfolioLinks;
     }
-    console.log('Dessign', existingDesigner.settings);
+    // console.log('Dessign', existingDesigner.settings);
     // Save the updated designer
     const updatedDesigner = await existingDesigner.save();
 
-    return res.json(updatedDesigner);
+    return res.status(200).json(updatedDesigner);
   } catch (error) {
     logger.error(error);
     return res.status(500).json({ error: 'Internal Server Error' });
