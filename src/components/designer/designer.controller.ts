@@ -570,6 +570,7 @@ const updateSettings = async (req: Request, res: Response) => {
     if (req.body.settings) {
       const { settings } = req.body;
       existingDesigner.settings = {
+        ...existingDesigner.settings,
         ...settings,
       };
     }
