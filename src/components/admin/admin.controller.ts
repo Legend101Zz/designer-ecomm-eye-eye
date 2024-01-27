@@ -2,8 +2,9 @@ import { Request, Response } from 'express';
 import logger from '@core/utils/logger';
 import { product } from '@components/product/product.model';
 import bcrypt from 'bcrypt';
-import { admin } from './admin.model';
 import { designer } from '@components/designer/designer.model';
+import { design } from '@components/design/design.model';
+import { admin } from './admin.model';
 
 interface CustomRequest extends Request {
   files: any; // Include the 'file' property with the MulterFile type
@@ -188,7 +189,14 @@ const allDesigners = async (req: Request, res: Response) => {
       isApproved: false,
     });
 
+    const designs = await design
+      .find({ isVerified: false })
+      .select('title description designImage');
+
+    console.log(designs);
+
     res.render('designer', {
+      designs,
       approvedDesigners,
       notApprovedDesigners,
     });
@@ -213,6 +221,53 @@ const getDesignerDetails = async (req: Request, res: Response) => {
   }
 };
 
+const approveDesignerController = async (req: Request, res: Response) => {
+  try {
+    const { designerId } = req.params;
+
+    // Find the designer by ID and update the 'isApproved' field to true
+    const updatedDesigner = await designer.findByIdAndUpdate(
+      designerId,
+      { isApproved: true },
+      { new: true },
+    );
+
+    if (!updatedDesigner) {
+      return res.status(404).json({ error: 'Designer not found' });
+    }
+
+    return res.redirect('/api/admin/designer');
+  } catch (error) {
+    logger.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+const verifyDesignController = async (req: Request, res: Response) => {
+  const { designId } = req.params;
+
+  try {
+    // Find the design by ID
+    const foundDesign = await design.findById(designId);
+
+    if (!foundDesign) {
+      return res.status(404).json({ error: 'Design not found' });
+    }
+
+    // Update the 'isVerified' field to true
+    foundDesign.isVerified = true;
+
+    // Save the updated design
+    await foundDesign.save();
+
+    // Respond with a success message or the updated design
+    return res.redirect('/api/admin/designer');
+  } catch (error) {
+    logger.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export {
   createAdmin,
@@ -223,4 +278,6 @@ export {
   editProduct,
   allDesigners,
   getDesignerDetails,
+  approveDesignerController,
+  verifyDesignController,
 };

@@ -5,9 +5,12 @@ export interface IDesigner {
   userId: { type: mongoose.Schema.Types.ObjectId };
   profileImage?: IModel;
   coverImage?: IModel;
-  Designs?: [{
-    designImage: any; type: mongoose.Schema.Types.ObjectId 
-}];
+  Designs?: [
+    {
+      designImage: any;
+      type: mongoose.Schema.Types.ObjectId;
+    },
+  ];
   isApproved: Boolean;
   followers?: mongoose.Schema.Types.ObjectId[];
   legal_first_name?: String;
@@ -23,4 +26,18 @@ export interface IDesigner {
   panCard?: IModel;
   panCardNumber?: String;
   dateOfBirth?: Date;
+  settings?: {
+    showDesigns?: {
+      enabled: boolean;
+      designIds?: mongoose.Schema.Types.ObjectId[];
+    };
+    showFullName?: boolean;
+    isPrivate?: boolean;
+    showPhone?: boolean;
+    showDescription?: boolean;
+    showCoverPhoto?: boolean;
+    showProfilePhoto?: boolean;
+    socialMedia?: String[];
+    portfolioLinks?: String[];
+  };
 }

@@ -7,6 +7,26 @@ const ImageSchema: Schema<IModel> = new Schema({
   filename: String,
 });
 
+const SettingsSchema = new Schema({
+  isPrivate: { type: Boolean, default: false },
+  showDesigns: {
+    enabled: { type: Boolean, default: true },
+    designIds: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Design',
+      },
+    ],
+  },
+  showFullName: { type: Boolean, default: true },
+  showPhone: { type: Boolean, default: true },
+  showDescription: { type: Boolean, default: true },
+  showCoverPhoto: { type: Boolean, default: true },
+  showProfilePhoto: { type: Boolean, default: true },
+  socialMedia: [{ type: String }],
+  portfolioLinks: [{ type: String }],
+});
+
 const DesignerSchema: Schema<IDesigner> = new Schema({
   userId: {
     type: Schema.Types.ObjectId,
@@ -44,6 +64,7 @@ const DesignerSchema: Schema<IDesigner> = new Schema({
   ],
   panCard: ImageSchema,
   panCardNumber: String,
+  settings: SettingsSchema,
 });
 
 const designer = mongoose.model<IDesigner>('Designer', DesignerSchema);

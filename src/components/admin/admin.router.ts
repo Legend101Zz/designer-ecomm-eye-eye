@@ -9,7 +9,9 @@ import {
   renderEditProductPage,
   editProduct,
   allDesigners,
-  getDesignerDetails
+  getDesignerDetails,
+  approveDesignerController,
+  verifyDesignController,
 } from './admin.controller';
 
 const router: Router = Router();
@@ -39,6 +41,8 @@ router.get('/admin/editProduct/:productId', renderEditProductPage);
 
 // designer routes
 router.get('/admin/designer', allDesigners);
+router.get('/admin/designer/approve/:designerId', approveDesignerController);
+router.get('/admin/design/approve/:designId', verifyDesignController);
 router.get('/admin/designer/:id', getDesignerDetails);
 
 export default router;
