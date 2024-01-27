@@ -561,30 +561,33 @@ const updateSettings = async (req: Request, res: Response) => {
 
   try {
     const existingDesigner = await designer.findById(designerId);
-
+    console.log('Dessign', req.body);
     // If the existing designer does not have a settings object, create one
     if (!existingDesigner.settings) {
       existingDesigner.settings = {};
     }
-    // Update settings based on the request body
+
+    // Update settings based on the fields present in req.body.settings
     if (req.body.settings) {
       const { settings } = req.body;
-      existingDesigner.settings = {
-        ...existingDesigner.settings,
-        ...settings,
-      };
+
+      // Loop through each field in req.body.settings and update existingDesigner.settings
+      Object.keys(settings).forEach((field) => {
+        existingDesigner.settings[field] = settings[field];
+      });
     }
 
-    // Copy socialMedia and portfolioLinks if not provided in the request body
+    // Copy socialMedia if not provided in the request body
     if (!req.body.settings?.socialMedia && existingDesigner.socialMedia) {
       existingDesigner.settings.socialMedia = existingDesigner.socialMedia;
     }
 
+    // Copy portfolioLinks if not provided in the request body
     if (!req.body.settings?.portfolioLinks && existingDesigner.portfolioLinks) {
       existingDesigner.settings.portfolioLinks =
         existingDesigner.portfolioLinks;
     }
-
+    console.log('Dessign', existingDesigner.settings);
     // Save the updated designer
     const updatedDesigner = await existingDesigner.save();
 
