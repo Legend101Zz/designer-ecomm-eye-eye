@@ -19,6 +19,8 @@ import {
   addAddress,
   followDesigner,
   updateUser,
+  getAddress,
+  getUserInfo,
 } from './user.controller';
 import './auth';
 
@@ -111,14 +113,16 @@ router.get('/logout', (req: any, res) => {
   });
 });
 
-// other routes
-
+// addresses routes
 router.post(
-  '/user/addAddress',
+  '/user/addAddress/:userId',
   [protectedByApiKey, validation(createAddressValidation)],
   addAddress,
 );
 
+router.get('/user/address/:userId', [protectedByApiKey], getAddress);
+
+// other routes
 router.post(
   '/user/create',
   [protectedByApiKey, validation(createUserValidation)],
@@ -132,6 +136,8 @@ router.post('/user/follow', [protectedByApiKey], followDesigner);
 router.post('/user/login', [protectedByApiKey], loginUser);
 
 router.post('/user/profile', [protectedByApiKey], updateUser);
+
+router.get('/user/info/:userId', [protectedByApiKey], getUserInfo);
 
 // cart routes
 

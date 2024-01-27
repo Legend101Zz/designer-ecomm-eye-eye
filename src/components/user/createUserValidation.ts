@@ -14,6 +14,7 @@ const createAddressValidation: ValidationSchema = {
     address_line2: Joi.string(),
     city: Joi.string().required(),
     postal_code: Joi.string().required(),
+    state: Joi.string().required(),
     country: Joi.string().required(),
     address_type: Joi.string().required(),
     user_id: Joi.string()

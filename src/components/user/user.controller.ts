@@ -139,6 +139,8 @@ const loginUser = async (req: Request, res: Response) => {
     return res.status(500).json({ message: 'Server Error' });
   }
 };
+
+// Addresses Controllers
 const addAddress = async (req: Request, res: Response) => {
   const {
     address_line1,
@@ -151,33 +153,38 @@ const addAddress = async (req: Request, res: Response) => {
     user_id,
   } = req.body;
   try {
-    const duplicateAddresses = await address.aggregate([
-      {
-        $group: {
-          _id: {
-            address_line1,
-            address_line2,
-            state,
-            city,
-            postal_code,
-            country,
-            address_type,
-          },
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $match: { count: { $gt: 1 } },
-      },
-    ]);
+    // const duplicateAddresses = await address.aggregate([
+    //   {
+    //     $group: {
+    //       _id: {
+    //         address_line1,
+    //         address_line2,
+    //         state,
+    //         city,
+    //         postal_code,
+    //         country,
+    //         address_type,
+    //       },
+    //       count: { $sum: 1 },
+    //     },
+    //   },
+    //   {
+    //     $match: { count: { $gt: 1 } },
+    //   },
+    // ]);
 
-    if (duplicateAddresses.length > 0) {
-      return res.status(201).json({
-        message: 'Duplicate addresses found',
-        duplicates: duplicateAddresses,
-      });
-    }
+    // if (duplicateAddresses.length > 0) {
+    //   return res.status(201).json({
+    //     message: 'Duplicate addresses found',
+    //     duplicates: duplicateAddresses,
+    //   });
+    // }
     const userCheck = await user.findById(user_id);
+
+    if (!userCheck) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
     // eslint-disable-next-line new-cap
     const newAddress = new address({
       address_line1,
@@ -205,6 +212,29 @@ const addAddress = async (req: Request, res: Response) => {
   }
 };
 
+const getAddress = async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  const { type } = req.query;
+
+  try {
+    const userData = await user.findById(userId).populate({
+      path: 'addresses',
+      match: type ? { address_type: type } : {}, // Filter by address type if specified
+    });
+
+    if (!userData) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const addresses = userData.addresses || [];
+
+    return res.status(200).json({ addresses });
+  } catch (error) {
+    logger.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 const followDesigner = async (req: Request, res: Response) => {
   try {
     const { userId, designerId } = req.body;
@@ -215,6 +245,13 @@ const followDesigner = async (req: Request, res: Response) => {
 
     if (!CheckUser || !CheckDesigner) {
       return res.status(404).json({ message: 'User or designer not found' });
+    }
+
+    // Check if the designer's ID already exists in the user's following array
+    if (CheckUser.following.includes(designerId)) {
+      return res
+        .status(400)
+        .json({ message: 'User is already following the designer' });
     }
 
     // Add the designer's ID to the user's following array
@@ -375,6 +412,31 @@ const updateUser = async (req: Request, res: Response) => {
   }
 };
 
+// to get basic user info
+const getUserInfo = async (req: Request, res: Response) => {
+  const { userId } = req.params;
+
+  try {
+    const userData = await user.findById(userId, {
+      username: 1,
+      email: 1,
+      phone: 1,
+      name: 1,
+      description: 1,
+      _id: 0, // Exclude the _id field
+    });
+
+    if (!userData) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    return res.status(200).json(userData);
+  } catch (error) {
+    logger.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export {
   createUser,
@@ -386,4 +448,6 @@ export {
   changeCartQuantity,
   updatePassword,
   updateUser,
+  getAddress,
+  getUserInfo,
 };
