@@ -224,14 +224,15 @@ const publicData = async (req: Request, res: Response) => {
     }
 
     // Extract relevant data based on settings
-    const publicDesignerData: any = {
-      isApproved: designerData.isApproved,
-    };
+    const publicDesignerData: any = {};
 
     // Include fields based on settings
     if (designerData.settings.showFullName) {
-      publicDesignerData.legal_first_name = designerData.legal_first_name;
-      publicDesignerData.legal_last_name = designerData.legal_last_name;
+      publicDesignerData.fullname = designerData.artistName;
+    }
+
+    if (designerData.settings.showPhone) {
+      publicDesignerData.phone = designerData.phone;
     }
 
     if (designerData.settings.showCoverPhoto) {
@@ -273,7 +274,7 @@ const publicData = async (req: Request, res: Response) => {
         designerData.settings.showDesigns.designIds.map((design1: any) => ({
           title: design1.title,
           description: design1.description,
-          designImage: design1.designImage.url,
+          designImage: design1.designImage[0].url,
         }));
     }
 
