@@ -1,7 +1,7 @@
 import { IModel } from '@core/interfaces/validationSchema';
 
 export interface IDesign {
-  product: any;
+  finalProduct: any;
   designImage: IModel; // will there be multiple design images ?
   designer: any;
   likes: number;

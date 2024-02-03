@@ -2,6 +2,7 @@
 import { IModel } from '@core/interfaces/validationSchema';
 
 export interface IfinalProduct {
+  designerId: any;
   productId: any;
   designId: any;
   color: Color;

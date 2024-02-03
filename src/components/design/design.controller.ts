@@ -22,6 +22,7 @@ const showDesigns = async (req: Request, res: Response) => {
   }
 };
 
+// =========OF NO USE CURRENTLY ============
 // controller for updating a design
 const updateDesign = async (req: Request, res: Response) => {
   try {
@@ -49,7 +50,7 @@ const updateDesign = async (req: Request, res: Response) => {
       if (existingProducts.length !== productIds.length) {
         return res.status(404).json({ message: 'Some products not found' });
       }
-
+      // @ts-ignore
       existingDesign.product = productIds;
     }
 
@@ -95,134 +96,68 @@ const getDesignerDesigns = async (req: Request, res: Response) => {
   }
 };
 
-const addProductsToDesign = async (req: CustomRequest, res: Response) => {
-  try {
-    const { designImageUrl } = req.body; // Assuming designId is passed as a parameter in the URL
-    console.log('in design', designImageUrl, req.body, req.files);
-    const existingDesign = await design.findOne({
-      designImage: {
-        $elemMatch: { url: designImageUrl },
-      },
-    });
-    if (!existingDesign) {
-      return res.status(404).json({ message: 'Design not found' });
-    }
-
-    if (req.files) {
-      // Extract images from req.files
-      const images = req.files.reduce((acc, file: any) => {
-        // Parse productId from the filename
-        const productIdMatch = file.originalname.match(/product_(.+)_image/);
-        const productId = productIdMatch ? productIdMatch[1] : null;
-
-        // Find the product in the existing images array or create a new one
-        const productIndex = acc.findIndex(
-          (product1) => product1.productId === productId,
-        );
-        if (productIndex !== -1) {
-          // // If the product already exists, add the image to it
-          // // eslint-disable-next-line security/detect-object-injection
-          // acc[productIndex].images.push({
-          //   url: file.path,
-          //   filename: file.filename,
-          // });
-          // ============NEW IMPLEMENTATION ============
-          // If the product already exists, skip adding it
-          return acc;
-        }
-        if (productIndex === -1) {
-          // If the product does not exist, create a new product with the image
-          acc.push({
-            productId,
-            images: [
-              {
-                url: file.path,
-                filename: file.filename,
-              },
-            ],
-          });
-
-          return acc;
-        }
-        return acc;
-      }, []);
-      // Add products to the design
-      existingDesign.product.push(...images);
-      // Save the updated design
-      const updatedDesign = await existingDesign.save();
-
-      return res.status(200).json({
-        message: 'Products added to design successfully',
-        updatedDesign,
-      });
-    }
-  } catch (error) {
-    logger.error(error);
-    return res.status(500).json({ message: 'Internal Server Error' });
-  }
-};
 // Helper function to group image URLs by category and design id
-function groupImagesByCategoryAndDesign(images) {
-  const groupedImages = {};
+// function groupImagesByCategoryAndDesign(images) {
+//   const groupedImages = {};
 
-  images.forEach((image) => {
-    const { category, designId, images: imageArray } = image;
+//   images.forEach((image) => {
+//     const { category, designId, images: imageArray } = image;
 
-    if (!groupedImages[category]) {
-      groupedImages[category] = {};
-    }
+//     if (!groupedImages[category]) {
+//       groupedImages[category] = {};
+//     }
 
-    if (!groupedImages[category][designId]) {
-      groupedImages[category][designId] = { images: [] };
-    }
+//     if (!groupedImages[category][designId]) {
+//       groupedImages[category][designId] = { images: [] };
+//     }
 
-    // Extract URLs from each image and add them to the array
-    const imageUrls = imageArray.map((img) => img.url);
-    groupedImages[category][designId].images.push(...imageUrls);
-  });
+//     // Extract URLs from each image and add them to the array
+//     const imageUrls = imageArray.map((img) => img.url);
+//     groupedImages[category][designId].images.push(...imageUrls);
+//   });
 
-  return groupedImages;
-}
+//   return groupedImages;
+// }
 
-const getProducts = async (req: Request, res: Response) => {
-  try {
-    // Fetch all designs with associated products
-    const designs = await design.find().populate('product.productId');
-    console.log('designs', designs);
-    // Extract products from designs
-    const allProducts = designs.reduce((acc, design1) => {
-      // Extract products from the design and flatten the array
-      const designProducts = design1.product
-        .map((designProduct) => {
-          const { productId } = designProduct;
-          const { images } = designProduct;
-          console.log('designs', productId);
-          if (images.length > 0 && productId) {
-            return {
-              category: productId.category,
-              color: productId.color,
-              // eslint-disable-next-line no-underscore-dangle
-              designId: design1._id,
-              images,
-            };
-          }
-          return null;
-        })
-        .filter(Boolean);
+// const getProducts = async (req: Request, res: Response) => {
+//   try {
+//     // Fetch all designs with associated products
+//     const designs = await design.find().populate('product.productId');
+//     console.log('designs', designs);
+//     // Extract products from designs
+//     const allProducts = designs.reduce((acc, design1) => {
+//       // Extract products from the design and flatten the array
+//       const designProducts = design1.product
+//         .map((designProduct) => {
+//           const { productId } = designProduct;
+//           const { images } = designProduct;
+//           console.log('designs', productId);
+//           if (images.length > 0 && productId) {
+//             return {
+//               category: productId.category,
+//               color: productId.color,
+//               // eslint-disable-next-line no-underscore-dangle
+//               designId: design1._id,
+//               images,
+//             };
+//           }
+//           return null;
+//         })
+//         .filter(Boolean);
 
-      acc.push(...designProducts);
-      return acc;
-    }, []);
-    console.log(allProducts);
-    // Group products by category
-    const groupedProducts = groupImagesByCategoryAndDesign(allProducts);
+//       acc.push(...designProducts);
+//       return acc;
+//     }, []);
+//     console.log(allProducts);
+//     // Group products by category
+//     const groupedProducts = groupImagesByCategoryAndDesign(allProducts);
 
-    res.json(groupedProducts);
-  } catch (error) {
-    logger.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-};
+//     res.json(groupedProducts);
+//   } catch (error) {
+//     logger.error(error);
+//     res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// };
 
 // eslint-disable-next-line import/prefer-default-export
-export { showDesigns, updateDesign, addProductsToDesign, getProducts };
+export { showDesigns, updateDesign };

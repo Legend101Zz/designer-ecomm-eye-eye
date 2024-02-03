@@ -12,10 +12,12 @@ const FinalProductSchema: Schema<IfinalProduct> = new Schema({
   price: {
     type: Number,
     required: true,
+    default: 1000,
   },
   sales: {
     type: Number,
     required: true,
+    default: 0,
   },
   color: { type: String, required: true },
   category: {
@@ -26,6 +28,10 @@ const FinalProductSchema: Schema<IfinalProduct> = new Schema({
   designId: {
     type: Schema.Types.ObjectId,
     ref: 'Design',
+  },
+  designerId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Designer',
   },
   productId: {
     type: Schema.Types.ObjectId,

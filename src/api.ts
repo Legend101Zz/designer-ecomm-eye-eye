@@ -6,6 +6,7 @@ import designer from '@components/designer/designer.router';
 import wishlist from '@components/wishlist/wishlist.router';
 import design from '@components/design/design.router';
 import transactions from '@components/transcations/transcations.router';
+import finalProduct from '@components/finalProduct/finalprod.router';
 import admin from '@components/admin/admin.router';
 
 const router: Router = Router();
@@ -16,6 +17,7 @@ router.use(designer);
 router.use(wishlist);
 router.use(design);
 router.use(transactions);
+router.use(finalProduct);
 router.use(admin);
 
 export default router;
