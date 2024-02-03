@@ -15,9 +15,10 @@ import {
   designByCategory,
   getRandomDesigners,
   updateSettings,
+  getSettings,
 } from './designer.controller';
 import {
-  requestDesignerValidation,
+  // requestDesignerValidation,
   updateDesignerValidationSchema,
   // createDesignValidationSchema,
 } from './createDesigner.validation';
@@ -111,6 +112,14 @@ router.post(
 );
 
 // DESIGNER PUBLIC PROFILE SETTINGS ROUTE
+
+router.get(
+  '/designer/show-designer-settings/:designerId',
+
+  [protectedByApiKey, checkDesignerApproval],
+
+  getSettings,
+);
 
 router.post(
   '/designer/update-settings/:designerId',

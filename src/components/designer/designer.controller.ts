@@ -556,6 +556,21 @@ const getRandomDesigners = async (req: Request, res: Response) => {
 
 // SETTINGS CONTROLLERS
 
+const getSettings = async (req: Request, res: Response) => {
+  const { designerId } = req.params;
+
+  try {
+    const existingDesigner = await designer
+      .findById(designerId)
+      .select('settings');
+
+    return res.status(200).json(existingDesigner);
+  } catch (error) {
+    logger.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 const updateSettings = async (req: Request, res: Response) => {
   const { designerId } = req.params;
 
@@ -612,4 +627,5 @@ export {
   designByCategory,
   getRandomDesigners,
   updateSettings,
+  getSettings,
 };
