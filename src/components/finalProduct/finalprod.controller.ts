@@ -175,5 +175,75 @@ const getAllProductsByDesigner = async (req: Request, res: Response) => {
   }
 };
 
+const getCategoriesWithoutFinalProducts = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    const { designerId } = req.params;
+    const { designImageUrl } = req.body;
+
+    console.log('createFinalProduct', req.body, req.params);
+
+    // If req.body is empty or designImageUrl is empty, fetch categories without specifying designId
+    if (!designImageUrl) {
+      const categoriesWithProducts = await finalProduct
+        .distinct('category', { designerId })
+        .exec();
+
+      // Find all categories available in the system
+      const allCategories = ['hoodie', 'shirt', 'Tshirt', 'cup'];
+
+      // Calculate categories without final products
+      const categoriesWithoutProducts = allCategories.filter(
+        (category) => !categoriesWithProducts.includes(category),
+      );
+
+      return res.status(200).json({ categoriesWithoutProducts });
+    }
+
+    // Find the design using the designImageUrl
+    const existingDesign = await design.findOne({
+      designImage: {
+        $elemMatch: { url: designImageUrl },
+      },
+    });
+
+    console.log('createFinalProduct', req.params, existingDesign);
+
+    // If designImageUrl is not empty, proceed with the existing logic
+    if (!existingDesign) {
+      return res.status(404).json({ error: 'Design not found' });
+    }
+
+    // eslint-disable-next-line no-underscore-dangle
+    const designId = existingDesign._id;
+
+    // Find all categories associated with the designer's designs
+    const categoriesWithProducts = await finalProduct
+      .distinct('category', { designerId, designId })
+      .exec();
+
+    // Find all categories available in the system
+    const allCategories = ['hoodie', 'shirt', 'Tshirt', 'cup'];
+
+    // Calculate categories without final products
+    const categoriesWithoutProducts = allCategories.filter(
+      (category) => !categoriesWithProducts.includes(category),
+    );
+
+    return res.status(200).json({ categoriesWithoutProducts });
+  } catch (error) {
+    console.log('Error in createFinalProduct', error);
+    logger.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
-export { createFinalProduct, getAllProductsByDesign, getAllProductsByDesigner };
+export {
+  createFinalProduct,
+  getAllProductsByDesign,
+  getAllProductsByDesigner,
+  getCategoriesWithoutFinalProducts,
+};

@@ -12,7 +12,7 @@ import {
   createDesign,
   personalData,
   getDesigns,
-  designByCategory,
+  // designByCategory,
   getRandomDesigners,
   updateSettings,
   getSettings,
@@ -56,11 +56,11 @@ router.get(
 );
 
 // GET PRODUCTS BY CATEGORY
-router.get(
-  '/designer/design-images-category/:designerId',
-  [protectedByApiKey],
-  designByCategory,
-);
+// router.get(
+//   '/designer/design-images-category/:designerId',
+//   [protectedByApiKey],
+//   designByCategory,
+// );
 
 // REGISTER DESIGNER
 router.post(

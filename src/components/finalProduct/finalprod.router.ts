@@ -5,9 +5,16 @@ import {
   createFinalProduct,
   getAllProductsByDesign,
   getAllProductsByDesigner,
+  getCategoriesWithoutFinalProducts,
 } from './finalprod.controller';
 
 const router: Router = Router();
+
+router.post(
+  '/finalproduct/categories-without-products/:designerId',
+  [protectedByApiKey],
+  getCategoriesWithoutFinalProducts,
+);
 
 router.get(
   '/finalproduct/products/design/:designId',
@@ -21,6 +28,7 @@ router.get(
   getAllProductsByDesigner,
 );
 
+// create new design
 router.post(
   '/finalproduct/create-final-products',
   [protectedByApiKey],

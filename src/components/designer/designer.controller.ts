@@ -455,55 +455,55 @@ const getDesigns = async (req: Request, res: Response) => {
   }
 };
 
-const designByCategory = async (req: Request, res: Response) => {
-  try {
-    const { designerId } = req.params;
-    const { productCategory } = req.query;
-    // Find the designer by ID
-    const designerCheck = await designer.findById(designerId);
-    if (!designerCheck) {
-      return res.status(404).json({ message: 'Designer not found' });
-    }
+// const designByCategory = async (req: Request, res: Response) => {
+//   try {
+//     const { designerId } = req.params;
+//     const { productCategory } = req.query;
+//     // Find the designer by ID
+//     const designerCheck = await designer.findById(designerId);
+//     if (!designerCheck) {
+//       return res.status(404).json({ message: 'Designer not found' });
+//     }
 
-    // Find the product by category or fetch all products if the category is not specified
-    let products: any;
-    if (productCategory) {
-      products = await product.find({ category: productCategory });
-    } else {
-      products = await product.find();
-    }
+//     // Find the product by category or fetch all products if the category is not specified
+//     let products: any;
+//     if (productCategory) {
+//       products = await product.find({ category: productCategory });
+//     } else {
+//       products = await product.find();
+//     }
 
-    console.log('products', products);
+//     console.log('products', products);
 
-    if (products.length === 0) {
-      return res
-        .status(404)
-        .json({ message: 'No products found for the given category' });
-    }
+//     if (products.length === 0) {
+//       return res
+//         .status(404)
+//         .json({ message: 'No products found for the given category' });
+//     }
 
-    // Find designs for the specified designer and product category
-    const designs = await design
-      .find({
-        // eslint-disable-next-line no-underscore-dangle
-        designer: designerCheck._id,
-        // eslint-disable-next-line no-underscore-dangle
-        'product.productId': { $in: products.map((product1) => product1._id) },
-      })
-      .select('title description product.images.url -_id');
+//     // Find designs for the specified designer and product category
+//     const designs = await design
+//       .find({
+//         // eslint-disable-next-line no-underscore-dangle
+//         designer: designerCheck._id,
+//         // eslint-disable-next-line no-underscore-dangle
+//         'product.productId': { $in: products.map((product1) => product1._id) },
+//       })
+//       .select('title description product.images.url -_id');
 
-    if (designs.length === 0) {
-      return res.status(404).json({
-        message:
-          'No products found for the given category made by this designer',
-      });
-    }
+//     if (designs.length === 0) {
+//       return res.status(404).json({
+//         message:
+//           'No products found for the given category made by this designer',
+//       });
+//     }
 
-    return res.status(200).json(designs);
-  } catch (error) {
-    logger.error(error);
-    return res.status(500).json({ message: 'Internal Server Error' });
-  }
-};
+//     return res.status(200).json(designs);
+//   } catch (error) {
+//     logger.error(error);
+//     return res.status(500).json({ message: 'Internal Server Error' });
+//   }
+// };
 
 // get random designer to be changed later
 
@@ -624,7 +624,7 @@ export {
   createDesign,
   personalData,
   getDesigns,
-  designByCategory,
+  // designByCategory,
   getRandomDesigners,
   updateSettings,
   getSettings,
