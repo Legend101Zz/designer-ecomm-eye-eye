@@ -6,9 +6,12 @@ import {
   getAllProductsByDesign,
   getAllProductsByDesigner,
   getCategoriesWithoutFinalProducts,
+  getProducts,
 } from './finalprod.controller';
 
 const router: Router = Router();
+
+router.get('/finalproduct/products', [protectedByApiKey], getProducts);
 
 router.post(
   '/finalproduct/categories-without-products/:designerId',

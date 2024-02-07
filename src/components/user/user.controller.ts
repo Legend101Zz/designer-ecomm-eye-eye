@@ -11,6 +11,7 @@ import { create } from '@components/user/user.service';
 import { user } from '@components/user/user.model';
 import { design } from '@components/design/design.model';
 import { designer } from '@components/designer/designer.model';
+import { finalProduct } from '@components/finalProduct/finalprod.model';
 import { address } from './userAddress.model';
 
 function generateRandomPassword(length = 8) {
@@ -273,13 +274,14 @@ const followDesigner = async (req: Request, res: Response) => {
 
 // controllers for handling cart operations
 
+// =========!!! ADD CHECK FOR AVAILABLE QUANTITY ============
 // Add a product to the user's cart
 const addToCart = async (req: Request, res: Response) => {
   const { productId, quantity, userId } = req.body;
 
   try {
     // Find the user by ID
-    const checkProduct = await design.findById(productId);
+    const checkProduct = await finalProduct.findById(productId);
     const checkUser = await user.findById(userId);
 
     if (!(checkUser && checkProduct)) {
@@ -315,7 +317,7 @@ const changeCartQuantity = async (req: Request, res: Response) => {
 
   try {
     // Find the user by ID
-    const checkProduct = await design.findById(productId);
+    const checkProduct = await finalProduct.findById(productId);
     const checkUser = await user.findById(userId);
 
     if (!(checkUser && checkProduct)) {
@@ -350,7 +352,7 @@ const removeFromCart = async (req: Request, res: Response) => {
 
   try {
     // Find the user by ID
-    const checkProduct = await design.findById(productId);
+    const checkProduct = await finalProduct.findById(productId);
     const checkUser = await user.findById(userId);
 
     if (!(checkUser && checkProduct)) {

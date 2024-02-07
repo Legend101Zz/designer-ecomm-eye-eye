@@ -240,10 +240,55 @@ const getCategoriesWithoutFinalProducts = async (
   }
 };
 
+const getProducts = async (req: Request, res: Response) => {
+  try {
+    // Parse the 'page' query parameter or default to 1
+    const page = parseInt(req.query.page as string, 10) || 1;
+    const pageSize = 10;
+
+    // Calculate the number of documents to skip
+    const skip = (page - 1) * pageSize;
+
+    // Query the database to get the next 10 products
+    const products = await finalProduct
+      .find()
+      .skip(skip)
+      .limit(pageSize)
+      .exec();
+
+    // Extract relevant information from each product
+    const formattedProducts = products.map((product1) => ({
+      prodImageUrl:
+        product1.prodImages.length > 0 ? product1.prodImages[0].url : '',
+      price: product1.price,
+      category: product1.category,
+      color: product1.color,
+      // designId: product1.designId,
+      // eslint-disable-next-line no-underscore-dangle
+      productId: product1._id,
+    }));
+
+    // Get count of products for each color with the same designId and productId
+    // const colorCounts: Record<string, number> = {};
+
+    // products.forEach((product1) => {
+    //   const key = `${product1.designId}_${product1.productId}_${product1.color}`;
+    //   colorCounts[key] = (colorCounts[key] || 0) + 1;
+    // });
+
+    // return res.status(200).json({ products: formattedProducts, colorCounts });
+    return res.status(200).json({ products: formattedProducts });
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export {
   createFinalProduct,
   getAllProductsByDesign,
   getAllProductsByDesigner,
   getCategoriesWithoutFinalProducts,
+  getProducts,
 };

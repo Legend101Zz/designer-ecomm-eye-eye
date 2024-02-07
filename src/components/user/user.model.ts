@@ -37,7 +37,7 @@ const UserSchema: Schema<IUser> = new Schema({
     {
       product: {
         type: Schema.Types.ObjectId,
-        ref: 'Design',
+        ref: 'FinalProduct',
       },
       quantity: Number,
     },
