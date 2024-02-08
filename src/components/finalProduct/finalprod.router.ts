@@ -7,11 +7,18 @@ import {
   getAllProductsByDesigner,
   getCategoriesWithoutFinalProducts,
   getProducts,
+  getProductDetailSideView,
 } from './finalprod.controller';
 
 const router: Router = Router();
 
 router.get('/finalproduct/products', [protectedByApiKey], getProducts);
+
+router.post(
+  '/finalproduct/products/sideView',
+  [protectedByApiKey],
+  getProductDetailSideView,
+);
 
 router.post(
   '/finalproduct/categories-without-products/:designerId',

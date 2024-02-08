@@ -249,24 +249,55 @@ const getProducts = async (req: Request, res: Response) => {
     // Calculate the number of documents to skip
     const skip = (page - 1) * pageSize;
 
-    // Query the database to get the next 10 products
-    const products = await finalProduct
-      .find()
-      .skip(skip)
-      .limit(pageSize)
-      .exec();
+    let products: any;
+
+    // Check if category query parameter is provided
+    const { category } = req.query;
+
+    if (category) {
+      // If category is provided, filter products based on category
+      products = await finalProduct
+        .find({ category })
+        .skip(skip)
+        .limit(pageSize)
+        .populate({
+          path: 'productId',
+          model: 'Product',
+          select: 'image',
+        })
+        .exec();
+    } else {
+      // If no category is provided, fetch all products
+      products = await finalProduct
+        .find()
+        .skip(skip)
+        .limit(pageSize)
+        .populate({
+          path: 'productId',
+          model: 'Product',
+          select: 'image',
+        })
+        .exec();
+    }
 
     // Extract relevant information from each product
-    const formattedProducts = products.map((product1) => ({
-      prodImageUrl:
-        product1.prodImages.length > 0 ? product1.prodImages[0].url : '',
-      price: product1.price,
-      category: product1.category,
-      color: product1.color,
-      // designId: product1.designId,
-      // eslint-disable-next-line no-underscore-dangle
-      productId: product1._id,
-    }));
+    const formattedProducts = products.map((product1) => {
+      const productDetails: any = product1.productId;
+
+      // Extract image URLs from the 'image' array
+      const imageUrls = productDetails?.image.map((img) => img.url) || [];
+      return {
+        mainImageUrl:
+          product1.prodImages.length > 0 ? product1.prodImages[0].url : '',
+        otherImages: imageUrls,
+        price: product1.price,
+        category: product1.category,
+        color: product1.color,
+        // designId: product1.designId,
+        // eslint-disable-next-line no-underscore-dangle
+        productId: product1._id,
+      };
+    });
 
     // Get count of products for each color with the same designId and productId
     // const colorCounts: Record<string, number> = {};
@@ -279,7 +310,50 @@ const getProducts = async (req: Request, res: Response) => {
     // return res.status(200).json({ products: formattedProducts, colorCounts });
     return res.status(200).json({ products: formattedProducts });
   } catch (error) {
-    console.error('Error fetching products:', error);
+    logger.error('Error fetching products:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+const getProductDetailSideView = async (req: Request, res: Response) => {
+  try {
+    const { finalProductId } = req.body;
+
+    // Fetch final product details
+    const finalProduct1 = await finalProduct
+      .findById(finalProductId)
+      .populate({
+        path: 'designerId',
+        model: 'Designer',
+      })
+      .exec();
+
+    if (!finalProduct1) {
+      return res.status(404).json({ error: 'Final Product not found' });
+    }
+    console.log(finalProduct1);
+
+    // Extract relevant information
+    const productDetails = {
+      prodImageUrl:
+        finalProduct1.prodImages.length > 0
+          ? finalProduct1.prodImages[0].url
+          : '',
+      price: finalProduct1.price,
+      color: finalProduct1.color,
+      designer: {
+        name: finalProduct1.designerId.artistName,
+        image: finalProduct1.designerId.profileImage
+          ? finalProduct1.designerId.profileImage.url
+          : '',
+
+        // Include any other relevant designer details
+      },
+    };
+
+    return res.status(200).json(productDetails);
+  } catch (error) {
+    logger.error('Error fetching product details:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 };
@@ -291,4 +365,5 @@ export {
   getAllProductsByDesigner,
   getCategoriesWithoutFinalProducts,
   getProducts,
+  getProductDetailSideView,
 };
