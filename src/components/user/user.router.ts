@@ -12,6 +12,7 @@ import {
 import {
   addToCart,
   changeCartQuantity,
+  getUserCart,
   removeFromCart,
   createUser,
   updatePassword,
@@ -140,6 +141,7 @@ router.post('/user/profile', [protectedByApiKey], updateUser);
 router.get('/user/info/:userId', [protectedByApiKey], getUserInfo);
 
 // cart routes
+router.get('/user/getCart/:userId', [protectedByApiKey], getUserCart);
 
 router.post('/user/addToCart', [protectedByApiKey], addToCart);
 

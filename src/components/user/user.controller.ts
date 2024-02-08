@@ -439,12 +439,60 @@ const getUserInfo = async (req: Request, res: Response) => {
   }
 };
 
+const getUserCart = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params; // Assuming userId is passed as a parameter in the URL
+
+    // Fetch the user details with the cart populated
+    const userWithCart = await user
+      .findById(userId)
+      .populate({
+        path: 'cart.product',
+        model: 'FinalProduct',
+      })
+      .exec();
+
+    if (!userWithCart) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Extract relevant information from the user's cart
+    const cartDetails = userWithCart.cart.map((cartItem) => ({
+      product: {
+        // @ts-ignore
+        // eslint-disable-next-line no-underscore-dangle
+        productId: cartItem.product._id,
+        prodImageUrl:
+          // @ts-ignore
+          cartItem.product.prodImages.length > 0
+            ? // @ts-ignore
+              cartItem.product.prodImages[0].url
+            : '',
+        // @ts-ignore
+        price: cartItem.product.price,
+        // @ts-ignore
+        color: cartItem.product.color,
+        // @ts-ignore
+        category: cartItem.product.category,
+        // Include any other relevant product details
+      },
+      quantity: cartItem.quantity,
+    }));
+
+    return res.status(200).json(cartDetails);
+  } catch (error) {
+    logger.error('Error fetching user cart:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export {
   createUser,
   loginUser,
   addAddress,
   followDesigner,
+  getUserCart,
   addToCart,
   removeFromCart,
   changeCartQuantity,
