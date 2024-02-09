@@ -129,7 +129,9 @@ const getAllProductsByDesign = async (req: Request, res: Response) => {
       .find(productQuery)
       .select('price sales color category productId prodImages.url');
 
-    return res.status(200).json({ products });
+    return res
+      .status(200)
+      .json({ products, designUrl: designF.designImage[0].url });
   } catch (error) {
     logger.error('Error fetching products:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
