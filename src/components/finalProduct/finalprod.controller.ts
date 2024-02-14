@@ -267,6 +267,11 @@ const getProducts = async (req: Request, res: Response) => {
           model: 'Product',
           select: 'image',
         })
+        .populate({
+          path: 'designId',
+          model: 'Design',
+          select: 'title',
+        })
         .exec();
     } else {
       // If no category is provided, fetch all products
@@ -278,6 +283,11 @@ const getProducts = async (req: Request, res: Response) => {
           path: 'productId',
           model: 'Product',
           select: 'image',
+        })
+        .populate({
+          path: 'designId',
+          model: 'Design',
+          select: 'title',
         })
         .exec();
     }
@@ -295,7 +305,7 @@ const getProducts = async (req: Request, res: Response) => {
         price: product1.price,
         category: product1.category,
         color: product1.color,
-        // designId: product1.designId,
+        name: product1.designId.title,
         // eslint-disable-next-line no-underscore-dangle
         productId: product1._id,
       };
