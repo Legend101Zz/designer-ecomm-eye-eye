@@ -32,7 +32,11 @@ router.get('/product/getColor', [protectedByApiKey], getColorsByName);
 
 router.post(
   '/product/create',
-  [protectedByApiKey, validation(createProductValidation)],
+  [
+    protectedByApiKey,
+    cloudinaryMiddleware,
+    validation(createProductValidation),
+  ],
   createProd,
 );
 

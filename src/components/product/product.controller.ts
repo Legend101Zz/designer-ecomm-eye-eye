@@ -1,19 +1,26 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
+import { v2 as cloudinary } from 'cloudinary';
 import httpStatus from 'http-status';
 import logger from '@core/utils/logger';
+import AppError from '@core/utils/appError';
 import { create, read } from '@components/product/product.service';
 import { product } from '@components/product/product.model';
 import { Iproduct } from './product.interface';
 
 interface CustomRequest extends Request {
   files: any; // Include the 'file' property with the MulterFile type
+  uploadedImages?: Array<{ url: string; public_id: string }>;
 }
 
-const createProd = async (req: CustomRequest, res: Response) => {
+const createProd = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     // Retrieve form data from req.body
     const { name, quantity, category, color, sizes, basePrice } = req.body;
-
+    console.log(req.body, req.files);
     // Process images
     const images = req.files;
     const updatedImages = images.map((image, index) => {
@@ -33,12 +40,12 @@ const createProd = async (req: CustomRequest, res: Response) => {
     // Create a new product using the Product model
     const newProduct: Iproduct = {
       name,
-      quantity,
+      quantity: parseInt(quantity, 10),
       category,
       color,
       image: updatedImages,
       sizes,
-      basePrice,
+      basePrice: parseFloat(basePrice),
     };
 
     // Save the product to the database
@@ -47,10 +54,17 @@ const createProd = async (req: CustomRequest, res: Response) => {
       .status(httpStatus.CREATED)
       .json({ message: 'Product created successfully' });
   } catch (error) {
-    logger.error('Error creating product:', error);
-    res
-      .status(httpStatus.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Internal Server Error' });
+    logger.error(`Product creation error: %O`, error);
+
+    // Clean up uploaded images from Cloudinary
+    if (req.uploadedImages && req.uploadedImages.length > 0) {
+      const deletePromises = req.uploadedImages.map((image) =>
+        cloudinary.uploader.destroy(image.public_id),
+      );
+      await Promise.all(deletePromises);
+    }
+
+    next(new AppError(httpStatus.BAD_REQUEST, 'Product was not added!'));
   }
 };
 
