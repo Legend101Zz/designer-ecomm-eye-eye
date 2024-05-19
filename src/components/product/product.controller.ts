@@ -9,11 +9,49 @@ interface CustomRequest extends Request {
   files: any; // Include the 'file' property with the MulterFile type
 }
 
-const createProd = async (req: Request, res: Response) => {
-  const prod = req.body as Iproduct;
-  await create(prod);
-  res.status(httpStatus.CREATED);
-  return res.send({ message: 'Created' });
+const createProd = async (req: CustomRequest, res: Response) => {
+  try {
+    // Retrieve form data from req.body
+    const { name, quantity, category, color, sizes, basePrice } = req.body;
+
+    // Process images
+    const images = req.files;
+    const updatedImages = images.map((image, index) => {
+      let position = 'other';
+      if (index === 0) {
+        position = 'front';
+      } else if (index === 1) {
+        position = 'back';
+      }
+      return {
+        url: image.path,
+        filename: image.filename,
+        position,
+      };
+    });
+
+    // Create a new product using the Product model
+    const newProduct: Iproduct = {
+      name,
+      quantity,
+      category,
+      color,
+      image: updatedImages,
+      sizes,
+      basePrice,
+    };
+
+    // Save the product to the database
+    await create(newProduct);
+    res
+      .status(httpStatus.CREATED)
+      .json({ message: 'Product created successfully' });
+  } catch (error) {
+    logger.error('Error creating product:', error);
+    res
+      .status(httpStatus.INTERNAL_SERVER_ERROR)
+      .json({ error: 'Internal Server Error' });
+  }
 };
 
 const readProd = async (req: Request, res: Response) => {
@@ -162,7 +200,7 @@ const getColorsByCategory = async (req: Request, res: Response) => {
   }
 };
 
-const getUniqueColorProductsByName = async (req: Request, res: Response) => {
+const getColorsByName = async (req: Request, res: Response) => {
   const { name } = req.query;
 
   try {
@@ -184,5 +222,5 @@ export {
   addProductImages,
   getProductImages,
   getColorsByCategory,
-  getUniqueColorProductsByName,
+  getColorsByName,
 };
