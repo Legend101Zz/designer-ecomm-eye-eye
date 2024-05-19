@@ -47,7 +47,7 @@ const createProd = async (
       sizes,
       basePrice: parseFloat(basePrice),
     };
-
+    throw Error(`hehe`);
     // Save the product to the database
     await create(newProduct);
     res
@@ -62,6 +62,7 @@ const createProd = async (
         cloudinary.uploader.destroy(image.public_id),
       );
       await Promise.all(deletePromises);
+      console.log('udd gayi images hehe');
     }
 
     next(new AppError(httpStatus.BAD_REQUEST, 'Product was not added!'));

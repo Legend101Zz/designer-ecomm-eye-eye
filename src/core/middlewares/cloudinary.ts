@@ -50,6 +50,12 @@ const cloudinaryMiddleware = (
             .status(400)
             .json({ error: 'File upload failed', details: err.message });
         }
+
+        // Store uploaded images information in req
+        req.uploadedImages = req.files.map((file) => ({
+          url: file.path,
+          public_id: file.filename, // Assuming filename stores Cloudinary's public_id
+        }));
         // console.log(req.files);
         return next();
       });
