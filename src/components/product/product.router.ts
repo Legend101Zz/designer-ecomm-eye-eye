@@ -16,7 +16,7 @@ import {
   createQuantityValidation,
   createProductValidation,
   createColorValidation,
-} from './createProduct.validation';
+} from './product.validation';
 
 const router: Router = Router();
 

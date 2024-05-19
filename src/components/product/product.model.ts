@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import mongoose, { Schema } from 'mongoose';
 import { IModel } from '@core/interfaces/validationSchema';
-import { Iproduct, Color } from './product.interface';
+import { Iproduct, Color, Category, Size } from './product.interface';
 
 const ImageSchema: Schema<IModel> = new Schema({
   url: String,
@@ -17,24 +17,53 @@ const ProductSchema: Schema<Iproduct> = new Schema({
     type: Number,
     required: true,
   },
-  color: [{ type: String, required: true }],
+  color: [{ type: String, enum: Object.values(Color) }],
   category: {
     type: String,
     required: true,
+    enum: Object.values(Category),
   },
   image: [ImageSchema],
+  sizes: {
+    type: [String],
+    enum: Object.values(Size),
+    validate: {
+      validator(v: string[]) {
+        if (['shirt', 'Tshirt', 'hoodie'].includes(this.category)) {
+          return v && v.length > 0;
+        }
+        return true;
+      },
+      message:
+        'Sizes field is required for shirt, Tshirt, and hoodie categories',
+    },
+  },
+  basePrice: {
+    type: Number,
+    required: true,
+  },
 });
 
-// eslint-disable-next-line func-names
+// eslint-disable-next-line func-names, consistent-return
 ProductSchema.pre('save', function (next) {
-  // Access the category field of the current document
-  const { category } = this;
+  const { category, color, sizes } = this;
 
-  // Check if the category is 'shirt'
-  if (category === 'shirt' || category === 'Tshirt') {
-    this.color = Color.red;
+  if (['shirt', 'Tshirt', 'hoodie'].includes(category)) {
+    // Ensure color field is optional and can be undefined
+    if (!color || color.length === 0) {
+      this.color = [];
+    }
+    // Ensure sizes field is present
+    if (!sizes || sizes.length === 0) {
+      return next(
+        new Error(
+          'Sizes field is required for shirt, Tshirt, and hoodie categories',
+        ),
+      );
+    }
   } else {
-    this.color = undefined; // Remove the 'color' field
+    // Remove the sizes field if the category is not 'shirt', 'Tshirt', or 'hoodie'
+    this.sizes = [];
   }
 
   // Call next to continue with the save operation

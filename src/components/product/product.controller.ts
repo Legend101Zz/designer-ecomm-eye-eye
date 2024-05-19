@@ -162,6 +162,18 @@ const getColorsByCategory = async (req: Request, res: Response) => {
   }
 };
 
+const getUniqueColorProductsByName = async (req: Request, res: Response) => {
+  const { name } = req.query;
+
+  try {
+    const products = await product.find({ name }).distinct('color');
+    res.status(200).json({ products });
+  } catch (error) {
+    logger.error('Error fetching unique color products:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export {
   createProd,
@@ -172,4 +184,5 @@ export {
   addProductImages,
   getProductImages,
   getColorsByCategory,
+  getUniqueColorProductsByName,
 };

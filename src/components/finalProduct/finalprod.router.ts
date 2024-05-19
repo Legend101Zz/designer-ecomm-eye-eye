@@ -14,6 +14,12 @@ const router: Router = Router();
 
 router.get('/finalproduct/products', [protectedByApiKey], getProducts);
 
+router.get(
+  '/finalproduct/product/:finalProductId',
+  [protectedByApiKey],
+  getProducts,
+);
+
 router.post(
   '/finalproduct/products/sideView',
   [protectedByApiKey],

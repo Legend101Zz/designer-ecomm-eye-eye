@@ -4,9 +4,11 @@ import { IModel } from '@core/interfaces/validationSchema';
 export interface Iproduct {
   name: string;
   quantity: number;
-  color: Color;
+  color?: Color[];
   category: Category;
-  image: IModel;
+  image: IModel[];
+  sizes?: Size[];
+  basePrice: number;
 }
 
 export enum Color {
@@ -17,8 +19,18 @@ export enum Color {
   blue = 'blue',
 }
 
-enum Category {
+export enum Category {
   shirt = 'shirt',
   Tshirt = 'Tshirt',
+  hoodie = 'hoodie',
   Cup = 'cup',
+}
+
+export enum Size {
+  XS = 'XS',
+  S = 'S',
+  M = 'M',
+  L = 'L',
+  XL = 'XL',
+  XXL = 'XXL',
 }

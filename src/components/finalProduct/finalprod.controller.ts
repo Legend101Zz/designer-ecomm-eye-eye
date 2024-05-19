@@ -370,6 +370,50 @@ const getProductDetailSideView = async (req: Request, res: Response) => {
   }
 };
 
+const getSingelProductData = async (req: Request, res: Response) => {
+  try {
+    const { finalProductId } = req.params;
+
+    // Find the final product by ID
+    const finalProductData = await finalProduct
+      .findById(finalProductId)
+      .populate({
+        path: 'productId',
+        model: 'Product',
+        select: 'image',
+      })
+      .exec();
+
+    if (!finalProductData) {
+      return res.status(404).json({ message: 'Final product not found' });
+    }
+
+    // Extract relevant information
+    const productImages = finalProductData.prodImages.map((img) => img.url);
+    const mainImageUrl = productImages.length > 0 ? productImages[0] : '';
+    const otherImages = productImages.slice(1);
+
+    // Extract additional information from the 'Product' model
+    const { image, category } = finalProductData.productId;
+    const { price, color } = finalProductData;
+
+    // Construct the final response
+    const formattedData = {
+      mainImageUrl,
+      otherImages,
+      price,
+      color,
+      category,
+      productImages,
+    };
+
+    res.json(formattedData);
+  } catch (error) {
+    logger.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export {
   createFinalProduct,

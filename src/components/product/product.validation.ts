@@ -1,29 +1,29 @@
 import Joi from 'joi';
 import { ValidationSchema } from '@core/interfaces/validationSchema';
-
-enum Color {
-  red = 'red',
-  black = 'black',
-  white = 'white',
-  yellow = 'yellow',
-}
-
-enum Category {
-  shirt = 'shirt',
-  Tshirt = 'Tshirt',
-  Cup = 'cup',
-}
+import { Color, Category, Size } from './product.interface';
 
 const createProductValidation: ValidationSchema = {
   body: Joi.object().keys({
     name: Joi.string().required(),
     quantity: Joi.number().integer().min(0).required(),
-    color: Joi.string()
-      .valid(...Object.values(Color))
-      .required(),
+    color: Joi.array()
+      .items(Joi.string().valid(...Object.values(Color)))
+      .when('category', {
+        is: Joi.valid('shirt', 'Tshirt', 'hoodie'),
+        then: Joi.optional(),
+        otherwise: Joi.forbidden(),
+      }),
     category: Joi.string()
       .valid(...Object.values(Category))
       .required(),
+    sizes: Joi.array()
+      .items(Joi.string().valid(...Object.values(Size)))
+      .when('category', {
+        is: Joi.valid('shirt', 'Tshirt', 'hoodie'),
+        then: Joi.array().min(1).required(),
+        otherwise: Joi.forbidden(),
+      }),
+    basePrice: Joi.number().min(0).required(),
   }),
 };
 
@@ -46,7 +46,6 @@ const createColorValidation: ValidationSchema = {
       .required(),
   }),
 };
-
 export {
   createProductValidation,
   createQuantityValidation,
