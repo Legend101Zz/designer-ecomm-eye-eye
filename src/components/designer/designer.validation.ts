@@ -27,7 +27,7 @@ const designerValidationSchema: ValidationSchema = {
       .regex(/^\d{10}$/)
       .optional(),
     panCardNumber: Joi.string().optional(),
-    addressBody: userAddressValidation,
+    addressBody: userAddressValidation.addressValidationSchema,
   }),
 };
 

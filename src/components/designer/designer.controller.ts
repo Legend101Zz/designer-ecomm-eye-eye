@@ -50,6 +50,14 @@ const requestDesigner = async (
     const email = `${checkUser.email}`;
     // console.log(checkUser);
     if (checkUser.isDesigner) {
+      // Clean up uploaded images from Cloudinary
+      if (req.uploadedImages && req.uploadedImages.length > 0) {
+        const deletePromises = req.uploadedImages.map((image) =>
+          cloudinary.uploader.destroy(image.public_id),
+        );
+        await Promise.all(deletePromises);
+      }
+
       return res
         .status(201)
         .send({ message: 'User is already a registered Designer ' });
@@ -176,32 +184,58 @@ const updateDesignerProfile = async (req: Request, res: Response) => {
   const { designerId, updates } = req.body;
 
   try {
+    // Initialize the update object
+    const updateObj: any = {};
+
+    // Dynamically add fields to the update object if they exist in the updates
+    if (updates.legal_first_name !== undefined) {
+      updateObj.legal_first_name = updates.legal_first_name;
+    }
+    if (updates.legal_last_name !== undefined) {
+      updateObj.legal_last_name = updates.legal_last_name;
+    }
+    if (updates.description !== undefined) {
+      updateObj.description = updates.description;
+    }
+
+    // Handle legal_address directly as an array of ObjectIds
+    if (updates.legal_address !== undefined) {
+      updateObj.legal_address = updates.legal_address;
+    }
+
+    // Use $set for the update object
+    const setObj: any = {
+      $set: updateObj,
+    };
+
+    // Handle socialMedia and portfolioLinks separately to append new entries
+    if (updates.socialMedia) {
+      setObj.$push = {
+        socialMedia: { $each: updates.socialMedia },
+      };
+    }
+    if (updates.portfolioLinks) {
+      if (!setObj.$push) {
+        setObj.$push = {};
+      }
+      setObj.$push.portfolioLinks = { $each: updates.portfolioLinks };
+    }
+
     const updatedDesigner = await designer.findByIdAndUpdate(
-      { _id: designerId }, // Find the designer by userId
-      {
-        $set: {
-          legal_first_name: updates.legal_first_name || '',
-          legal_last_name: updates.legal_last_name || '',
-          description: updates.description || '',
-          legal_address: updates.legal_address || '',
-        },
-        $push: {
-          socialMedia: { $each: updates.socialMedia || [] },
-          portfolioLinks: { $each: updates.portfolioLinks || [] },
-        },
-      },
+      designerId, // Find the designer by userId
+      setObj,
       { new: true }, // Return the updated document
     );
 
     if (!updatedDesigner) {
       return res
-        .status(201)
+        .status(404)
         .send({ success: false, message: 'Designer not found' });
     }
 
     return res.status(200).send({ success: true, designer: updatedDesigner });
   } catch (error) {
-    logger.error(error); // You can use console.error instead of logger.error
+    logger.error(error);
     return res
       .status(500)
       .send({ success: false, message: 'Internal server error' });
@@ -613,9 +647,10 @@ const updateSettings = async (req: Request, res: Response) => {
   }
 };
 
-//middleware
+// middleware
 
 const transformToArray = (req: Request, res: Response, next: NextFunction) => {
+  // console.log('transform midd hitt', req.body);
   const { portfolioLinks, cvLinks } = req.body;
 
   if (typeof portfolioLinks === 'string') {
