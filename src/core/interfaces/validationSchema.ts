@@ -8,7 +8,8 @@ export interface ValidationSchema {
 }
 
 export interface IModel {
-  map(arg0: (image: any) => { url: any; filename: any; }): any;
+  map(arg0: (image: any) => { url: any; filename: any; position?: any }): any;
   url: string;
   filename: string;
+  position?: string;
 }

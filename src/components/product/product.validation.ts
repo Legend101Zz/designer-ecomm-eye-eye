@@ -1,6 +1,6 @@
 import Joi from 'joi';
 import { ValidationSchema } from '@core/interfaces/validationSchema';
-import { Color, Category, Size } from './product.interface';
+import { Color, Category, Size, Gender } from './product.interface';
 
 const createProductValidation: ValidationSchema = {
   body: Joi.object().keys({
@@ -64,6 +64,9 @@ const createProductValidation: ValidationSchema = {
         }
         return basePrice;
       }),
+    gender: Joi.string()
+      .valid(...Object.values(Gender))
+      .optional(),
   }),
 };
 

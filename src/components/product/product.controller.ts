@@ -19,8 +19,8 @@ const createProd = async (
 ) => {
   try {
     // Retrieve form data from req.body
-    const { name, quantity, category, color, sizes, basePrice } = req.body;
-    console.log(req.body, req.files);
+    const { name, quantity, category, color, sizes, basePrice, gender } =
+      req.body;
     // Process images
     const images = req.files;
     const updatedImages = images.map((image, index) => {
@@ -45,9 +45,10 @@ const createProd = async (
       color,
       image: updatedImages,
       sizes,
+      gender,
       basePrice: parseFloat(basePrice),
     };
-    throw Error(`hehe`);
+
     // Save the product to the database
     await create(newProduct);
     res
@@ -62,7 +63,6 @@ const createProd = async (
         cloudinary.uploader.destroy(image.public_id),
       );
       await Promise.all(deletePromises);
-      console.log('udd gayi images hehe');
     }
 
     next(new AppError(httpStatus.BAD_REQUEST, 'Product was not added!'));
@@ -214,19 +214,34 @@ const getColorsByCategory = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
-
-const getColorsByName = async (req: Request, res: Response) => {
-  const { name } = req.query;
+const getProductByName = async (req: Request, res: Response) => {
+  const { name, gender } = req.query;
 
   try {
-    const products = await product.find({ name }).distinct('color');
-    res.status(200).json({ products });
+    // Build the query object
+    const query: any = { name };
+
+    // Include gender in the query if provided
+    if (gender) {
+      query.gender = gender;
+    }
+
+    // Find all products matching the query
+    const products = await product.find(query);
+
+    // Check if products were found
+    if (products.length === 0) {
+      return res
+        .status(404)
+        .json({ message: 'No products found with the given name and gender' });
+    }
+
+    return res.status(200).json({ products });
   } catch (error) {
-    logger.error('Error fetching unique color products:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    logger.error('Error fetching products by name and gender:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 };
-
 // eslint-disable-next-line import/prefer-default-export
 export {
   createProd,
@@ -237,5 +252,5 @@ export {
   addProductImages,
   getProductImages,
   getColorsByCategory,
-  getColorsByName,
+  getProductByName,
 };

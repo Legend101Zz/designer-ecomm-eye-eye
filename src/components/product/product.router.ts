@@ -11,7 +11,7 @@ import {
   addProductImages,
   getProductImages,
   getColorsByCategory,
-  getColorsByName,
+  getProductByName,
 } from './product.controller';
 import {
   createQuantityValidation,
@@ -26,7 +26,7 @@ const router: Router = Router();
 router.get('/product/read/:id', [protectedByApiKey], readProd);
 router.get('/product/images', [protectedByApiKey], getProductImages);
 router.get('/product/getColor', [protectedByApiKey], getColorsByCategory);
-router.get('/product/getColor', [protectedByApiKey], getColorsByName);
+router.get('/product/getColorByName', [protectedByApiKey], getProductByName);
 
 // post routes
 

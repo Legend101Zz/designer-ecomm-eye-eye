@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import httpStatus from 'http-status';
+import { v2 as cloudinary } from 'cloudinary';
 import logger from '@core/utils/logger';
+import AppError from '@core/utils/appError';
 import { designer } from '@components/designer/designer.model';
 import { user } from '@components/user/user.model';
 import { product } from '@components/product/product.model';
@@ -11,6 +13,7 @@ import { IDesigner } from './designer.interface';
 
 interface CustomRequest extends Request {
   files: any; // Include the 'file' property with the MulterFile type
+  uploadedImages?: Array<{ url: string; public_id: string }>;
 }
 interface CustomDesignerData extends Omit<IDesigner, 'userId'> {
   username: any;
@@ -20,7 +23,11 @@ interface CustomDesignerData extends Omit<IDesigner, 'userId'> {
   profileImage: any;
 }
 
-const requestDesigner = async (req: CustomRequest, res: Response) => {
+const requestDesigner = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction,
+) => {
   const {
     userId,
     fullname,
@@ -30,18 +37,7 @@ const requestDesigner = async (req: CustomRequest, res: Response) => {
     cvLinks,
     phone,
     panCardNumber,
-
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    address_line1,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    address_line2,
-    city,
-    state,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    postal_code,
-    country,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    address_type,
+    addressBody,
   } = req.body;
 
   // console.log(req.body, req.files);
@@ -75,13 +71,7 @@ const requestDesigner = async (req: CustomRequest, res: Response) => {
     // Create a new address
     // eslint-disable-next-line new-cap
     const newAddress = new address({
-      address_line1,
-      address_line2,
-      city,
-      state,
-      postal_code,
-      country,
-      address_type,
+      ...addressBody,
       user_id: userId,
     });
     checkUser.isDesigner = true;
@@ -122,9 +112,19 @@ const requestDesigner = async (req: CustomRequest, res: Response) => {
 
     return sendEmailMiddleware(req, res, email, subject, text);
   } catch (err) {
-    console.log(err);
-    res.status(httpStatus.INTERNAL_SERVER_ERROR);
-    return res.send({ message: 'Server Error', err });
+    logger.error(`Designer creation error: %O`, err);
+
+    // Clean up uploaded images from Cloudinary
+    if (req.uploadedImages && req.uploadedImages.length > 0) {
+      const deletePromises = req.uploadedImages.map((image) =>
+        cloudinary.uploader.destroy(image.public_id),
+      );
+      await Promise.all(deletePromises);
+    }
+
+    return next(
+      new AppError(httpStatus.BAD_REQUEST, 'Designer was not created!'),
+    );
   }
 };
 
@@ -613,6 +613,24 @@ const updateSettings = async (req: Request, res: Response) => {
   }
 };
 
+//middleware
+
+const transformToArray = (req: Request, res: Response, next: NextFunction) => {
+  const { portfolioLinks, cvLinks } = req.body;
+
+  if (typeof portfolioLinks === 'string') {
+    req.body.portfolioLinks = portfolioLinks
+      .split(',')
+      .map((link) => link.trim());
+  }
+
+  if (typeof cvLinks === 'string') {
+    req.body.cvLinks = cvLinks.split(',').map((link) => link.trim());
+  }
+
+  next();
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export {
   requestDesigner,
@@ -628,4 +646,5 @@ export {
   getRandomDesigners,
   updateSettings,
   getSettings,
+  transformToArray,
 };

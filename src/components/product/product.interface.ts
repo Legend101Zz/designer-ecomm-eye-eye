@@ -9,6 +9,7 @@ export interface Iproduct {
   image: IModel[];
   sizes?: Size[];
   basePrice: number;
+  gender?: Gender;
 }
 
 export enum Color {
@@ -33,4 +34,10 @@ export enum Size {
   L = 'L',
   XL = 'XL',
   XXL = 'XXL',
+}
+
+export enum Gender {
+  male = 'male',
+  female = 'female',
+  unisex = 'unisex',
 }

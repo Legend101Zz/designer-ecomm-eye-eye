@@ -1,11 +1,11 @@
 /* eslint-disable no-unused-vars */
 import mongoose, { Schema } from 'mongoose';
-import { IModel } from '@core/interfaces/validationSchema';
-import { Iproduct, Color, Category, Size } from './product.interface';
+import { Iproduct, Color, Category, Size, Gender } from './product.interface';
 
-const ImageSchema: Schema<IModel> = new Schema({
+const ImageSchema = new Schema({
   url: String,
   filename: String,
+  position: String,
 });
 
 const ProductSchema: Schema<Iproduct> = new Schema({
@@ -41,6 +41,11 @@ const ProductSchema: Schema<Iproduct> = new Schema({
   basePrice: {
     type: Number,
     required: true,
+  },
+  gender: {
+    type: String,
+    enum: Object.values(Gender),
+    default: Gender.unisex,
   },
 });
 

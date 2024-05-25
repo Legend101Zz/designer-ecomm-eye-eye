@@ -16,12 +16,13 @@ import {
   getRandomDesigners,
   updateSettings,
   getSettings,
+  transformToArray,
 } from './designer.controller';
 import {
-  // requestDesignerValidation,
+  designerValidationSchema,
   updateDesignerValidationSchema,
   // createDesignValidationSchema,
-} from './createDesigner.validation';
+} from './designer.validation';
 
 const router: Router = Router();
 
@@ -69,7 +70,8 @@ router.post(
   [
     protectedByApiKey,
     cloudinaryMiddleware,
-    // validation(requestDesignerValidation),
+    transformToArray,
+    validation(designerValidationSchema),
   ],
 
   requestDesigner,

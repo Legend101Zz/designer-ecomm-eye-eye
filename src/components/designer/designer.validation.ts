@@ -1,5 +1,6 @@
 import Joi from 'joi';
 import { ValidationSchema } from '@core/interfaces/validationSchema';
+import userAddressValidation from '@components/user/userAddress.validation';
 
 const createDesignerValidation: ValidationSchema = {
   body: Joi.object().keys({
@@ -12,28 +13,21 @@ const createDesignerValidation: ValidationSchema = {
 // const imageValidationSchema = Joi.object().keys({
 //   image: Joi.any().required().meta({ type: 'file' }),
 // });
-
-const requestDesignerValidation: ValidationSchema = {
+const designerValidationSchema: ValidationSchema = {
   body: Joi.object().keys({
     userId: Joi.string()
       .regex(/^[0-9a-fA-F]{24}$/)
       .required(),
-    fullname: Joi.string().required(),
-    artistName: Joi.string().required(),
-    description: Joi.string().required(),
-    panCardNumber: Joi.string().required(),
-    phone: Joi.number().required(),
-    portfolioLinks: Joi.string().required(),
-    cvLinks: Joi.string().required(),
-    address_line1: Joi.string().required(),
-    address_line2: Joi.string().allow(''),
-    city: Joi.string().required(),
-    state: Joi.string().required(),
-    postal_code: Joi.string().required(),
-    country: Joi.string().required(),
-    address_type: Joi.string().required(),
-
-    // Add validation for any other fields in req.body if needed
+    fullname: Joi.string().optional(),
+    artistName: Joi.string().optional(),
+    description: Joi.string().optional(),
+    portfolioLinks: Joi.array().items(Joi.string().uri()).optional(),
+    cvLinks: Joi.array().items(Joi.string().uri()).optional(),
+    phone: Joi.string()
+      .regex(/^\d{10}$/)
+      .optional(),
+    panCardNumber: Joi.string().optional(),
+    addressBody: userAddressValidation,
   }),
 };
 
@@ -71,5 +65,5 @@ export {
   createDesignerValidation,
   updateDesignerValidationSchema,
   createDesignValidationSchema,
-  requestDesignerValidation,
+  designerValidationSchema,
 };
