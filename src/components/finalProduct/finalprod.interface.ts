@@ -1,15 +1,22 @@
 // what to do of prices
 import { IModel } from '@core/interfaces/validationSchema';
+import mongoose from 'mongoose';
+
+export interface IDesignApplication {
+  designId: mongoose.Types.ObjectId;
+  designerId: mongoose.Types.ObjectId;
+  position: 'front' | 'back';
+  appliedImage: IModel;
+}
 
 export interface IfinalProduct {
-  designerId: any;
-  productId: any;
-  designId: any;
-  color: Color;
-  category: Category;
-  sales: number;
-  prodImages: [IModel];
   price: number;
+  sales: number;
+  color: string;
+  category: string;
+  baseProductImages: IModel[];
+  appliedDesigns: IDesignApplication[];
+  productId: mongoose.Types.ObjectId;
 }
 
 export enum Category {

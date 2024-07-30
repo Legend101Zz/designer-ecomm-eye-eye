@@ -1,11 +1,16 @@
 /* eslint-disable no-unused-vars */
 import mongoose, { Schema } from 'mongoose';
+import { IModel } from '@core/interfaces/validationSchema';
 import { Iproduct, Color, Category, Size, Gender } from './product.interface';
 
-const ImageSchema = new Schema({
+const ImageSchema: Schema<IModel> = new Schema({
   url: String,
   filename: String,
-  position: String,
+  position: {
+    type: String,
+    enum: ['front', 'back'],
+    required: true,
+  },
 });
 
 const ProductSchema: Schema<Iproduct> = new Schema({

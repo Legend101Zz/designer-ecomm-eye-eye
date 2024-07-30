@@ -100,6 +100,7 @@ router.get(
     console.log('hitted callback url', req.session.userData);
     // res.json(req.session.userData);
     res.redirect(
+      // put localhost in env
       // eslint-disable-next-line max-len, no-underscore-dangle
       `http://localhost:3000/auth/authentication-completed?designerId=${req.session.userData.designerId}&userId=${req.session.userData._id}&isDesigner=${req.session.userData.isDesigner}`,
     );

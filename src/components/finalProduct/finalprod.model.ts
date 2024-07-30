@@ -1,11 +1,35 @@
 /* eslint-disable no-unused-vars */
 import mongoose, { Schema } from 'mongoose';
 import { IModel } from '@core/interfaces/validationSchema';
-import { IfinalProduct } from './finalprod.interface';
+import { IfinalProduct, IDesignApplication } from './finalprod.interface';
 
 const ImageSchema: Schema<IModel> = new Schema({
   url: String,
   filename: String,
+  position: {
+    type: String,
+    enum: ['front', 'back'],
+    required: true,
+  },
+});
+
+const DesignApplicationSchema: Schema<IDesignApplication> = new Schema({
+  designId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Design',
+    required: true,
+  },
+  designerId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Designer',
+    required: true,
+  },
+  position: {
+    type: String,
+    enum: ['front', 'back'],
+    required: true,
+  },
+  appliedImage: ImageSchema,
 });
 
 const FinalProductSchema: Schema<IfinalProduct> = new Schema({
@@ -24,18 +48,12 @@ const FinalProductSchema: Schema<IfinalProduct> = new Schema({
     type: String,
     required: true,
   },
-  prodImages: [ImageSchema],
-  designId: {
-    type: Schema.Types.ObjectId,
-    ref: 'Design',
-  },
-  designerId: {
-    type: Schema.Types.ObjectId,
-    ref: 'Designer',
-  },
+  baseProductImages: [ImageSchema],
+  appliedDesigns: [DesignApplicationSchema],
   productId: {
     type: Schema.Types.ObjectId,
     ref: 'Product',
+    required: true,
   },
 });
 

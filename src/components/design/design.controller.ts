@@ -6,16 +6,35 @@ import { design } from './design.model';
 interface CustomRequest extends Request {
   files: any; // Include the 'file' property with the MulterFile type
 }
-
 const showDesigns = async (req: Request, res: Response) => {
   try {
-    const verifiedDesigns = await design
-      .find() // Filter by designs with isVerified set to true
-      .populate('product', 'name')
+    // Fetch all designs
+    const allDesigns = await design
+      .find()
       .populate('designer', 'legal_first_name legal_last_name')
       .exec();
 
-    return res.status(200).json(verifiedDesigns);
+    // If there are no designs, return an empty array
+    if (!allDesigns) {
+      return res.status(200).json([]);
+    }
+
+    // Iterate over each design and replace missing fields with empty strings
+    const designsWithEmptyFields = allDesigns.map((design1) => {
+      return {
+        title: design1.title || '',
+        description: design1.description || '',
+        designImage: design1.designImage || [],
+        designer: design1.designer || {
+          legal_first_name: '',
+          legal_last_name: '',
+        }, // Assuming designer is always populated
+        finalProduct: design1.finalProduct || [],
+        isVerified: design1.isVerified || false,
+      };
+    });
+
+    return res.status(200).json(designsWithEmptyFields);
   } catch (error) {
     logger.error(error);
     return res.status(500).json({ message: 'Internal server error' });
@@ -70,7 +89,7 @@ const getDesignerDesigns = async (req: Request, res: Response) => {
 
     const designs = await design
       .find({ designer: designerId })
-      .populate('designer', 'name'); // Assuming the designer model has a 'name' field
+      .populate('designer', 'name');
 
     if (!designs || designs.length === 0) {
       return res
@@ -80,9 +99,9 @@ const getDesignerDesigns = async (req: Request, res: Response) => {
 
     // Extract relevant information from designs
     const formattedDesigns = designs.map((design1) => ({
-      title: design1.title,
-      description: design1.description,
-      designer: design1.designer.name, // Assuming the designer model has a 'name' field
+      title: design1.title || '',
+      description: design1.description || '',
+      designer: design1.designer.name,
       designImages: design1.designImage.map((image) => ({
         url: image.url,
         filename: image.filename,
@@ -160,4 +179,4 @@ const getDesignerDesigns = async (req: Request, res: Response) => {
 // };
 
 // eslint-disable-next-line import/prefer-default-export
-export { showDesigns, updateDesign };
+export { showDesigns, updateDesign, getDesignerDesigns };
