@@ -7,7 +7,7 @@ import {
   getAllProductsByDesigner,
   getCategoriesWithoutFinalProducts,
   getProducts,
-  getProductDetailSideView,
+  getSingleProductData,
 } from './finalprod.controller';
 
 const router: Router = Router();
@@ -17,14 +17,14 @@ router.get('/finalproduct/products', [protectedByApiKey], getProducts);
 router.get(
   '/finalproduct/product/:finalProductId',
   [protectedByApiKey],
-  getProducts,
+  getSingleProductData,
 );
 
-router.post(
-  '/finalproduct/products/sideView',
-  [protectedByApiKey],
-  getProductDetailSideView,
-);
+// router.post(
+//   '/finalproduct/products/sideView',
+//   [protectedByApiKey],
+//   getProductDetailSideView,
+// );
 
 router.post(
   '/finalproduct/categories-without-products/:designerId',

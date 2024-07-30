@@ -1,0 +1,1585 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "Eye-Eye-Tee",
+    "description": "Ecommerce for Designers",
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "basePath": "/",
+  "schemes": ["http", "https"],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "Endpoints related to user authentication"
+    },
+
+    {
+      "name": "Product Management",
+      "description": "Endpoints for managing products"
+    },
+    {
+      "name": "User Management",
+      "description": "Endpoints for managing users"
+    },
+    {
+      "name": "Designer",
+      "description": "Endpoints for managing designers"
+    },
+    {
+      "name": "Transactions",
+      "description": "Endpoints related to the product transactions by user"
+    },
+    {
+      "name": "Final Product",
+      "description": "Endpoints related to the final product"
+    },
+    {
+      "name": "Misc",
+      "description": "Misc Endpoints"
+    }
+  ],
+  "paths": {
+    "/api/health": {
+      "get": {
+        "tags": ["Misc"],
+        "summary": "Application service health check 💗",
+        "produces": ["application/json"],
+        "consumes": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/auth/google": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "Google auth strategy, creates a new user in db if no user exists, else logs the user in",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/user/data": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "API to fetch user data from the server after successful authentication",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "token",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK user data fetched"
+          },
+          "401": {
+            "description": "Access forbidden. Not logged in or Incorrect x-api-key!",
+            "error": {}
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
+    },
+    "/api/user/create": {
+      "post": {
+        "tags": ["Authentication"],
+        "description": "Create user without oauth , random password is generated and mail is sent",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "Provide API-key (ie. API_KEY_TOKEN from .env.locals file)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Input",
+            "in": "body",
+            "description": "Input data required to create a new user",
+            "schema": {
+              "$ref": "#/definitions/UserInput"
+            }
+          }
+        ],
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "User has been created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/definitions/ResponseWithMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access forbidden. Incorrect x-api-key!",
+            "error": {}
+          },
+          "201": {
+            "description": "OK User already exists"
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "message": {}
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
+    },
+    "/api/user/update-password": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Update user password",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "Provide API-key (ie. API_KEY_TOKEN from .env.locals file)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Input",
+            "in": "body",
+            "description": "Input data required to update the user's password",
+            "schema": {
+              "$ref": "#/definitions/UpdatePasswordInput"
+            }
+          }
+        ],
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "Password updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/definitions/ResponseWithMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access forbidden. Incorrect x-api-key!",
+            "error": {}
+          },
+          "404": {
+            "description": "User not found",
+            "error": {}
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "message": {}
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
+    },
+    "/api/user/login": {
+      "post": {
+        "tags": ["Authentication"],
+        "description": "Login user manually without oauth",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "Provide API-key (ie. API_KEY_TOKEN from .env.locals file)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Input",
+            "in": "body",
+            "description": "Input data required to create a new user",
+            "schema": {
+              "$ref": "#/definitions/UserLoginInput"
+            }
+          }
+        ],
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "User has been Logged In",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/definitions/ResponseWithMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access forbidden. Incorrect x-api-key!",
+            "error": {}
+          },
+          "201": {
+            "description": "OK Invalid Credentials"
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "message": {}
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
+    },
+    "/api/product/create": {
+      "post": {
+        "tags": ["Product Management"],
+        "description": "adding a new product to the inventory",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "Provide API-key (ie. API_KEY_TOKEN from .env.locals file)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Input",
+            "in": "body",
+            "description": "Input data required to create a new product",
+            "schema": {
+              "$ref": "#/definitions/ProductInput"
+            }
+          }
+        ],
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "Product added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/definitions/ResponseWithMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access forbidden. Incorrect x-api-key!",
+            "error": {}
+          },
+          "201": {
+            "description": "OK Invalid Credentials"
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "message": {}
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
+    },
+    "/api/product/read/{id}": {
+      "get": {
+        "tags": ["Product Management"],
+        "summary": "API to fetch product data from the server, requires a product ID in the URL.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Product ID"
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "token",
+            "schema": {
+              "type": "string"
+            },
+            "description": "API Key for authentication"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK - Product data fetched"
+          },
+          "401": {
+            "description": "Access forbidden - Not logged in or Incorrect x-api-key!",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Access forbidden"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/api/product/changeQuantity": {
+      "post": {
+        "tags": ["Product Management"],
+        "description": "Change the quantity of a product",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "Provide API-key (ie. API_KEY_TOKEN from .env.locals file)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Input",
+            "in": "body",
+            "description": "Input data required to change the quantity of a product",
+            "schema": {
+              "$ref": "#/definitions/ChangeQuantityInput"
+            }
+          }
+        ],
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "Product quantity changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/definitions/ResponseWithMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access forbidden. Incorrect x-api-key!",
+            "error": {}
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "message": {}
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
+    },
+    "/api/user/follow": {
+      "post": {
+        "tags": ["User Management"],
+        "description": "Follow a designer",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "Provide API-key (ie. API_KEY_TOKEN from .env.locals file)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Input",
+            "in": "body",
+            "description": "Input data required to follow a designer",
+            "schema": {
+              "$ref": "#/definitions/FollowDesignerInput"
+            }
+          }
+        ],
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "User is now following the designer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/definitions/ResponseWithMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access forbidden. Incorrect x-api-key!",
+            "error": {}
+          },
+          "404": {
+            "description": "User or designer not found",
+            "error": {}
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "message": {}
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
+    },
+    "/api/product/addColor": {
+      "post": {
+        "tags": ["Product Management"],
+        "description": "Add a color to a product",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "Provide API-key (ie. API_KEY_TOKEN from .env.locals file)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Input",
+            "in": "body",
+            "description": "Input data required to add a color to a product",
+            "schema": {
+              "$ref": "#/definitions/AddColorInput"
+            }
+          }
+        ],
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "Color added to the product",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/definitions/ResponseWithMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access forbidden. Incorrect x-api-key!",
+            "error": {}
+          },
+          "404": {
+            "description": "Product not found",
+            "error": {}
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "message": {}
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
+    },
+    "/api/product/deleteColor": {
+      "post": {
+        "tags": ["Product Management"],
+        "description": "Delete a color from a product",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "Provide API-key (ie. API_KEY_TOKEN from .env.locals file)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Input",
+            "in": "body",
+            "description": "Input data required to delete a color from a product",
+            "schema": {
+              "$ref": "#/definitions/DeleteColorInput"
+            }
+          }
+        ],
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "Color deleted from the product",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/definitions/ResponseWithMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access forbidden. Incorrect x-api-key!",
+            "error": {}
+          },
+          "404": {
+            "description": "Product not found",
+            "error": {}
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "message": {}
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
+    },
+    "/api/product/productPhotos": {
+      "post": {
+        "tags": ["Product Management"],
+        "description": "Add multiple photos of the product",
+        "consumes": "multipart/form-data",
+
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "Provide API-key (ie. API_KEY_TOKEN from .env.locals file)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Input",
+            "in": "body",
+            "description": "Input data required to delete a color from a product",
+            "schema": {
+              "$ref": "#/definitions/productImages"
+            }
+          },
+          {
+            "in": "formData",
+            "name": "image",
+            "type": "file"
+          }
+        ],
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "Images added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/definitions/ResponseWithMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access forbidden. Incorrect x-api-key!",
+            "error": {}
+          },
+          "404": {
+            "description": "Product not found",
+            "error": {}
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "message": {}
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
+    },
+    "/api/user/addAddress": {
+      "post": {
+        "tags": ["User Management"],
+        "description": "Add a addresses to user schema",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "Provide API-key (ie. API_KEY_TOKEN from .env.locals file)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Input",
+            "in": "body",
+            "description": "Input data required to add address",
+            "schema": {
+              "$ref": "#/definitions/userAddress"
+            }
+          }
+        ],
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "Address added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/definitions/ResponseWithMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access forbidden. Incorrect x-api-key!",
+            "error": {}
+          },
+          "201": {
+            "description": "Duplicate address",
+            "error": {}
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "message": {}
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
+    },
+    "/api/designer/request": {
+      "post": {
+        "tags": ["Designer"],
+        "description": "Request for upgradation of user to a designer ( mail is sent to user )",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "token",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Input",
+            "in": "body",
+            "description": "add user Id",
+            "schema": {
+              "user": {
+                "required": ["userId"],
+                "properties": {
+                  "userId": {
+                    "name": "userId",
+                    "type": "string",
+                    "description": "userID"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "mail sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/definitions/ResponseWithMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access forbidden. Incorrect x-api-key!",
+            "error": {}
+          },
+          "201": {
+            "description": "User is already a registered Designer",
+            "error": {}
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "message": {}
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
+    },
+    "/api/designer/updateProfile": {
+      "post": {
+        "tags": ["Designer"],
+        "description": "For updating legal_first_name ,legal_last_name ,description ,socialMedia links, legal_address,portfolioLinks",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "Provide API-key (ie. API_KEY_TOKEN from .env.locals file)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Input",
+            "in": "body",
+            "description": "Input data required to update designer profile",
+            "schema": {
+              "$ref": "#/definitions/designerProfile"
+            }
+          }
+        ],
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/definitions/ResponseWithMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access forbidden. Incorrect x-api-key!",
+            "error": {}
+          },
+          "201": {
+            "description": "Designer not found",
+            "error": {}
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "message": {}
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
+    },
+    "/api/user/addToCart": {
+      "post": {
+        "tags": ["User Management"],
+        "summary": "Add a product to the user's cart",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "token",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Input data required to add a product to the cart",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AddToCartInput"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product added to cart",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Product added to cart"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User or Product not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "User or Product not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
+    },
+    "/api/user/updateCart": {
+      "post": {
+        "tags": ["User Management"],
+        "summary": "Change the quantity of a product in the user's cart",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "token",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Input data required to change the cart quantity",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ChangeCartQuantityInput"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cart quantity updated",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Cart quantity updated"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User or Product not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "User or Product not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
+    },
+    "/api/transactions/initiate": {
+      "post": {
+        "tags": ["Transactions"],
+        "summary": "Initiate a new transaction",
+        "description": "Initiate a new transaction with user, delivery address, and products.",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "token",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Transaction"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Transaction initiated successfully"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
+    },
+    "/api/designs/show": {
+      "get": {
+        "summary": "Get a list of verified designs",
+        "description": "Retrieve a list of verified designs.",
+        "tags": ["Final Product"],
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "token",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Design"
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/user/deleteFromCart": {
+      "post": {
+        "tags": ["User Management"],
+        "summary": "Remove an item from the user's cart",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Input data required to remove a product from the cart",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RemoveFromCartInput"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product removed from cart",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Product removed from cart"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User or Product not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "User or Product not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": "$X_API_KEY"
+          }
+        ]
+      }
+    },
+    "/api/designer/viewProfile/{designerId}": {
+      "get": {
+        "tags": ["Designer"],
+        "summary": "View designer profile",
+        "description": "Get public information about a designer's profile.",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "token",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "designerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Designer profile retrieved successfully"
+          },
+          "401": {
+            "description": "Designer is not approved"
+          },
+          "404": {
+            "description": "Designer not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/designer/addProfilePhoto": {
+      "post": {
+        "tags": ["Designer"],
+        "summary": "Add profile photo",
+        "description": "Upload and add a profile photo for a designer.",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "token",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "designerId",
+            "in": "formData",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "image",
+            "in": "formData",
+            "required": true,
+            "type": "file"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profile photo added successfully"
+          },
+          "404": {
+            "description": "Designer not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/designer/addPanCard": {
+      "post": {
+        "tags": ["Designer"],
+        "summary": "Add PAN card",
+        "description": "Upload and add a PAN card image for a designer.",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "token",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "designerId",
+            "in": "formData",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "image",
+            "in": "formData",
+            "required": true,
+            "type": "file"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PAN card added successfully"
+          },
+          "404": {
+            "description": "Designer not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/designer/createDesign": {
+      "post": {
+        "tags": ["Designer"],
+        "summary": "Create design",
+        "description": "Create a new design for a designer.",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "default": "token",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "designerId",
+            "in": "formData",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Design created successfully"
+          },
+          "404": {
+            "description": "Designer not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Input": {
+      "required": ["input"],
+      "properties": {
+        "input": {
+          "type": "object",
+          "$ref": "#/definitions/InputBody"
+        }
+      }
+    },
+    "AddToCartInput": {
+      "type": "object",
+      "properties": {
+        "productId": {
+          "type": "string",
+          "description": "Product ID"
+        },
+        "quantity": {
+          "type": "number",
+          "description": "Quantity to add to the cart"
+        },
+        "userId": {
+          "type": "string",
+          "description": "User ID"
+        }
+      }
+    },
+    "ChangeCartQuantityInput": {
+      "type": "object",
+      "properties": {
+        "productId": {
+          "type": "string",
+          "description": "Product ID"
+        },
+        "quantity": {
+          "type": "number",
+          "description": "New quantity in the cart"
+        },
+        "userId": {
+          "type": "string",
+          "description": "User ID"
+        }
+      }
+    },
+    "RemoveFromCartInput": {
+      "type": "object",
+      "properties": {
+        "productId": {
+          "type": "string",
+          "description": "Product ID"
+        },
+        "userId": {
+          "type": "string",
+          "description": "User ID"
+        }
+      }
+    },
+    "UserInput": {
+      "required": ["name", "email"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "default": "John Doe"
+        },
+        "email": {
+          "type": "string",
+          "default": "john.d@example.net"
+        }
+      }
+    },
+    "UserLoginInput": {
+      "required": ["email", "password"],
+      "properties": {
+        "email": {
+          "type": "string",
+          "default": "john.d@example.net"
+        },
+        "password": {
+          "type": "string",
+          "default": "john@11$"
+        }
+      }
+    },
+    "ProductInput": {
+      "required": ["name", "quantity", "color", "category"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "default": "eye-eye-tee"
+        },
+        "quantity": {
+          "type": "number",
+          "default": "100"
+        },
+        "color": {
+          "type": "color",
+          "default": "red",
+          "$ref": "#/components/schemas/ColorEnum"
+        },
+        "category": {
+          "type": "category",
+          "default": "Tshirt",
+          "$ref": "#/components/schemas/CategoryEnum"
+        }
+      }
+    },
+    "ChangeQuantityInput": {
+      "required": ["productId", "quantity"],
+      "properties": {
+        "productId": {
+          "type": "string",
+          "description": "Product ID"
+        },
+        "quantity": {
+          "type": "number",
+          "description": "New quantity"
+        }
+      }
+    },
+    "Transaction": {
+      "type": "object",
+      "properties": {
+        "DeliveryAddress": {
+          "type": "string",
+          "description": "ID of the delivery address"
+        },
+        "productsBought": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "product": {
+                "type": "string",
+                "description": "ID of the product bought"
+              },
+              "quantity": {
+                "type": "integer",
+                "description": "Quantity of the product bought"
+              }
+            }
+          },
+          "description": "Array of products bought"
+        },
+        "transaction_id": {
+          "type": "string",
+          "description": "Transaction ID"
+        },
+        "user": {
+          "type": "string",
+          "description": "ID of the user initiating the transaction"
+        },
+        "isCompleted": {
+          "type": "boolean",
+          "description": "Flag indicating whether the transaction is completed"
+        }
+      }
+    },
+    "AddColorInput": {
+      "required": ["productId", "color"],
+      "properties": {
+        "productId": {
+          "type": "string",
+          "description": "Product ID"
+        },
+        "color": {
+          "type": "string",
+          "description": "Color to add"
+        }
+      }
+    },
+    "DeleteColorInput": {
+      "required": ["productId", "color"],
+      "properties": {
+        "productId": {
+          "type": "string",
+          "description": "Product ID"
+        },
+        "color": {
+          "type": "string",
+          "description": "Color to delete"
+        }
+      }
+    },
+    "designerProfile": {
+      "required": ["designerId"],
+      "properties": {
+        "designerId": {
+          "type": "string",
+          "description": "Product ID"
+        },
+        "legal_first_name": {
+          "type": "string",
+          "description": " legal_first_name"
+        },
+        "legal_last_name": {
+          "type": "string",
+          "description": "legal_last_name"
+        },
+        "description": {
+          "type": "string",
+          "description": "legal_last_name"
+        },
+        "socialMedia": {
+          "type": "string",
+          "description": "socialMedia links"
+        },
+        "legal_address": {
+          "type": "string",
+          "description": "legal_address"
+        },
+        "portfolioLinks": {
+          "type": "string",
+          "description": "portfolioLinks"
+        }
+      }
+    },
+    "FollowDesignerInput": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "User ID"
+        },
+        "designerId": {
+          "type": "string",
+          "description": "Designer ID"
+        }
+      },
+      "required": ["userId", "designerId"]
+    },
+
+    "UpdatePasswordInput": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "User ID"
+        },
+        "newPassword": {
+          "type": "string",
+          "description": "New Password"
+        }
+      },
+      "required": ["userId", "newPassword"]
+    },
+    "productImages": {
+      "required": ["productId", "image"],
+      "properties": {
+        "productId": {
+          "type": "string",
+          "description": "Product ID"
+        },
+        "image": {
+          "type": "file",
+          "description": "All files to be added must be under the post filed of image"
+        }
+      }
+    },
+    "Image": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "filename": {
+          "type": "string"
+        }
+      }
+    },
+    "Design": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "designImage": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Image"
+          }
+        },
+        "designer": {
+          "type": "string",
+          "description": "Designer's ID"
+        },
+        "product": {
+          "type": "string",
+          "description": "Product's ID"
+        },
+        "isVerified": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "userAddress": {
+      "required": [
+        "address_line1",
+        "address_line2",
+        "city",
+        "postal_code",
+        "country",
+        "address_type",
+        "user_id"
+      ],
+      "properties": {
+        "user_id": {
+          "type": "string",
+          "description": "user ID"
+        },
+        "address_line1": {
+          "type": "string",
+          "description": "address line1"
+        },
+        "address_line2": {
+          "type": "string",
+          "description": "address line2"
+        },
+        "city": {
+          "type": "string",
+          "description": "city"
+        },
+        "postal_code": {
+          "type": "string",
+          "description": "postal code"
+        },
+        "country": {
+          "type": "string",
+          "description": "country"
+        },
+        "address_type": {
+          "type": "string",
+          "description": "address type"
+        }
+      }
+    },
+    "ResponseWithMessage": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "x-api-key": {
+      "type": "apiKey",
+      "name": "x-api-key",
+      "in": "header"
+    }
+  },
+  "components": {
+    "schemas": {
+      "ColorEnum": {
+        "type": "string",
+        "enum": ["red", "black", "white", "yellow"]
+      },
+      "CategoryEnum": {
+        "type": "string",
+        "enum": ["shirt", "Tshirt", "Cup"]
+      }
+    }
+  }
+}
