@@ -3,10 +3,14 @@
   "info": {
     "version": "2.0.0",
     "title": "Eye-Eye-Tee API",
-    "description": "Complete API documentation for Eye-Eye-Tee, an ecommerce platform for designers",
+    "description": "API documentation for Eye-Eye-Tee, an ecommerce platform for designers",
     "contact": {
       "name": "API Support",
       "email": "support@eye-eye-tee.com"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
     }
   },
   "host": "api.eye-eye-tee.com",
@@ -23,36 +27,65 @@
   },
   "tags": [
     {
-      "name": "User",
-      "description": "User management and authentication"
+      "name": "Authentication",
+      "description": "User authentication endpoints"
     },
     {
-      "name": "Designer",
-      "description": "Designer-related operations"
+      "name": "Users",
+      "description": "User management endpoints"
     },
     {
-      "name": "Design",
-      "description": "Design management"
+      "name": "Designers",
+      "description": "Designer-related endpoints"
     },
     {
-      "name": "Product",
-      "description": "Product management"
+      "name": "Products",
+      "description": "Product management endpoints"
     },
     {
-      "name": "Final Product",
-      "description": "Final product operations"
+      "name": "Designs",
+      "description": "Design management endpoints"
+    },
+    {
+      "name": "Final Products",
+      "description": "Endpoints for managing final products (designs applied to products)"
+    },
+    {
+      "name": "Cart",
+      "description": "Shopping cart management endpoints"
     }
   ],
   "paths": {
+    "/auth/google": {
+      "get": {
+        "summary": "Initiate Google OAuth",
+        "tags": ["Authentication"],
+        "responses": {
+          "302": {
+            "description": "Redirect to Google login"
+          }
+        }
+      }
+    },
+    "/auth/google/callback": {
+      "get": {
+        "summary": "Google OAuth callback",
+        "tags": ["Authentication"],
+        "responses": {
+          "302": {
+            "description": "Redirect after successful authentication"
+          }
+        }
+      }
+    },
     "/user/create": {
       "post": {
         "summary": "Create a new user",
-        "tags": ["User"],
+        "tags": ["Users"],
         "parameters": [
           {
             "in": "body",
             "name": "user",
-            "required": true,
             "schema": {
               "$ref": "#/definitions/NewUser"
             }
@@ -60,10 +93,10 @@
         ],
         "responses": {
           "201": {
-            "description": "User created successfully",
-            "schema": {
-              "$ref": "#/definitions/UserResponse"
-            }
+            "description": "User created successfully"
+          },
+          "400": {
+            "description": "Invalid input"
           }
         }
       }
@@ -71,12 +104,11 @@
     "/user/login": {
       "post": {
         "summary": "User login",
-        "tags": ["User"],
+        "tags": ["Authentication"],
         "parameters": [
           {
             "in": "body",
             "name": "credentials",
-            "required": true,
             "schema": {
               "$ref": "#/definitions/LoginCredentials"
             }
@@ -88,6 +120,9 @@
             "schema": {
               "$ref": "#/definitions/LoginResponse"
             }
+          },
+          "401": {
+            "description": "Invalid credentials"
           }
         }
       }
@@ -95,12 +130,11 @@
     "/user/profile": {
       "post": {
         "summary": "Update user profile",
-        "tags": ["User"],
+        "tags": ["Users"],
         "parameters": [
           {
             "in": "body",
             "name": "profile",
-            "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateProfile"
             }
@@ -108,56 +142,10 @@
         ],
         "responses": {
           "200": {
-            "description": "Profile updated successfully",
-            "schema": {
-              "$ref": "#/definitions/UserResponse"
-            }
-          }
-        }
-      }
-    },
-    "/user/addToCart": {
-      "post": {
-        "summary": "Add item to cart",
-        "tags": ["User"],
-        "parameters": [
-          {
-            "in": "body",
-            "name": "cartItem",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/AddToCart"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Item added to cart successfully"
-          }
-        }
-      }
-    },
-    "/user/getCart/{userId}": {
-      "get": {
-        "summary": "Get user's cart",
-        "tags": ["User"],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "userId",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Cart retrieved successfully",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/CartItem"
-              }
-            }
+            "description": "Profile updated successfully"
+          },
+          "400": {
+            "description": "Invalid input"
           }
         }
       }
@@ -165,12 +153,11 @@
     "/designer/request": {
       "post": {
         "summary": "Request to become a designer",
-        "tags": ["Designer"],
+        "tags": ["Designers"],
         "parameters": [
           {
             "in": "body",
             "name": "designerRequest",
-            "required": true,
             "schema": {
               "$ref": "#/definitions/DesignerRequest"
             }
@@ -178,7 +165,10 @@
         ],
         "responses": {
           "200": {
-            "description": "Designer request submitted successfully"
+            "description": "Request submitted successfully"
+          },
+          "400": {
+            "description": "Invalid input"
           }
         }
       }
@@ -186,7 +176,7 @@
     "/designer/viewProfile/{designerId}": {
       "get": {
         "summary": "View designer's public profile",
-        "tags": ["Designer"],
+        "tags": ["Designers"],
         "parameters": [
           {
             "in": "path",
@@ -201,69 +191,9 @@
             "schema": {
               "$ref": "#/definitions/DesignerPublicProfile"
             }
-          }
-        }
-      }
-    },
-    "/designer/updateProfile": {
-      "post": {
-        "summary": "Update designer profile",
-        "tags": ["Designer"],
-        "parameters": [
-          {
-            "in": "body",
-            "name": "profile",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/UpdateDesignerProfile"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Designer profile updated successfully"
-          }
-        }
-      }
-    },
-    "/designs/show": {
-      "get": {
-        "summary": "Get all verified designs",
-        "tags": ["Design"],
-        "responses": {
-          "200": {
-            "description": "Designs retrieved successfully",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/Design"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/designs/designer/{designId}": {
-      "get": {
-        "summary": "Get designs by designer",
-        "tags": ["Design"],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "designId",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Designs retrieved successfully",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/Design"
-              }
-            }
+          },
+          "404": {
+            "description": "Designer not found"
           }
         }
       }
@@ -271,12 +201,11 @@
     "/product/create": {
       "post": {
         "summary": "Create a new product",
-        "tags": ["Product"],
+        "tags": ["Products"],
         "parameters": [
           {
             "in": "body",
             "name": "product",
-            "required": true,
             "schema": {
               "$ref": "#/definitions/NewProduct"
             }
@@ -284,10 +213,10 @@
         ],
         "responses": {
           "201": {
-            "description": "Product created successfully",
-            "schema": {
-              "$ref": "#/definitions/Product"
-            }
+            "description": "Product created successfully"
+          },
+          "400": {
+            "description": "Invalid input"
           }
         }
       }
@@ -295,7 +224,7 @@
     "/product/read/{id}": {
       "get": {
         "summary": "Get product details",
-        "tags": ["Product"],
+        "tags": ["Products"],
         "parameters": [
           {
             "in": "path",
@@ -310,6 +239,26 @@
             "schema": {
               "$ref": "#/definitions/Product"
             }
+          },
+          "404": {
+            "description": "Product not found"
+          }
+        }
+      }
+    },
+    "/designs/show": {
+      "get": {
+        "summary": "Get all verified designs",
+        "tags": ["Designs"],
+        "responses": {
+          "200": {
+            "description": "Designs retrieved successfully",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Design"
+              }
+            }
           }
         }
       }
@@ -317,12 +266,11 @@
     "/finalproduct/create-final-products": {
       "post": {
         "summary": "Create final products",
-        "tags": ["Final Product"],
+        "tags": ["Final Products"],
         "parameters": [
           {
             "in": "body",
             "name": "finalProduct",
-            "required": true,
             "schema": {
               "$ref": "#/definitions/NewFinalProduct"
             }
@@ -330,10 +278,10 @@
         ],
         "responses": {
           "201": {
-            "description": "Final product created successfully",
-            "schema": {
-              "$ref": "#/definitions/FinalProduct"
-            }
+            "description": "Final product created successfully"
+          },
+          "400": {
+            "description": "Invalid input"
           }
         }
       }
@@ -341,7 +289,7 @@
     "/finalproduct/products": {
       "get": {
         "summary": "Get all final products",
-        "tags": ["Final Product"],
+        "tags": ["Final Products"],
         "parameters": [
           {
             "in": "query",
@@ -368,6 +316,57 @@
           }
         }
       }
+    },
+    "/user/addToCart": {
+      "post": {
+        "summary": "Add item to cart",
+        "tags": ["Cart"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "cartItem",
+            "schema": {
+              "$ref": "#/definitions/AddToCart"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item added to cart successfully"
+          },
+          "400": {
+            "description": "Invalid input"
+          }
+        }
+      }
+    },
+    "/user/getCart/{userId}": {
+      "get": {
+        "summary": "Get user's cart",
+        "tags": ["Cart"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cart retrieved successfully",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CartItem"
+              }
+            }
+          },
+          "404": {
+            "description": "User not found"
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -376,34 +375,11 @@
       "required": ["username", "email"],
       "properties": {
         "username": {
-          "type": "string",
-          "example": "johndoe"
+          "type": "string"
         },
         "email": {
           "type": "string",
-          "format": "email",
-          "example": "john@example.com"
-        }
-      }
-    },
-    "UserResponse": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "example": "5f8d0f5b9d3e2a1b3c5d7e9f"
-        },
-        "username": {
-          "type": "string",
-          "example": "johndoe"
-        },
-        "email": {
-          "type": "string",
-          "example": "john@example.com"
-        },
-        "isDesigner": {
-          "type": "boolean",
-          "example": false
+          "format": "email"
         }
       }
     },
@@ -413,12 +389,10 @@
       "properties": {
         "email": {
           "type": "string",
-          "format": "email",
-          "example": "john@example.com"
+          "format": "email"
         },
         "password": {
-          "type": "string",
-          "example": "password123"
+          "type": "string"
         }
       }
     },
@@ -426,11 +400,28 @@
       "type": "object",
       "properties": {
         "token": {
-          "type": "string",
-          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          "type": "string"
         },
         "user": {
-          "$ref": "#/definitions/UserResponse"
+          "$ref": "#/definitions/User"
+        }
+      }
+    },
+    "User": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "isDesigner": {
+          "type": "boolean"
         }
       }
     },
@@ -438,69 +429,16 @@
       "type": "object",
       "properties": {
         "userId": {
-          "type": "string",
-          "example": "5f8d0f5b9d3e2a1b3c5d7e9f"
+          "type": "string"
         },
         "name": {
-          "type": "string",
-          "example": "John Doe"
+          "type": "string"
         },
         "phone": {
-          "type": "string",
-          "example": "+1234567890"
+          "type": "string"
         },
         "description": {
-          "type": "string",
-          "example": "I'm a passionate designer..."
-        }
-      }
-    },
-    "AddToCart": {
-      "type": "object",
-      "required": ["userId", "productId", "quantity"],
-      "properties": {
-        "userId": {
-          "type": "string",
-          "example": "5f8d0f5b9d3e2a1b3c5d7e9f"
-        },
-        "productId": {
-          "type": "string",
-          "example": "5f8d0f5b9d3e2a1b3c5d7e9g"
-        },
-        "quantity": {
-          "type": "integer",
-          "minimum": 1,
-          "example": 2
-        }
-      }
-    },
-    "CartItem": {
-      "type": "object",
-      "properties": {
-        "product": {
-          "type": "object",
-          "properties": {
-            "productId": {
-              "type": "string",
-              "example": "5f8d0f5b9d3e2a1b3c5d7e9g"
-            },
-            "name": {
-              "type": "string",
-              "example": "Artistic T-Shirt"
-            },
-            "price": {
-              "type": "number",
-              "example": 29.99
-            },
-            "imageUrl": {
-              "type": "string",
-              "example": "https://example.com/tshirt.jpg"
-            }
-          }
-        },
-        "quantity": {
-          "type": "integer",
-          "example": 2
+          "type": "string"
         }
       }
     },
@@ -509,27 +447,22 @@
       "required": ["userId", "fullname", "artistName"],
       "properties": {
         "userId": {
-          "type": "string",
-          "example": "5f8d0f5b9d3e2a1b3c5d7e9f"
+          "type": "string"
         },
         "fullname": {
-          "type": "string",
-          "example": "John Doe"
+          "type": "string"
         },
         "artistName": {
-          "type": "string",
-          "example": "JD Designs"
+          "type": "string"
         },
         "description": {
-          "type": "string",
-          "example": "I specialize in minimalist designs..."
+          "type": "string"
         },
         "portfolioLinks": {
           "type": "array",
           "items": {
             "type": "string"
-          },
-          "example": ["https://portfolio.com/johndoe"]
+          }
         }
       }
     },
@@ -537,16 +470,13 @@
       "type": "object",
       "properties": {
         "artistName": {
-          "type": "string",
-          "example": "JD Designs"
+          "type": "string"
         },
         "description": {
-          "type": "string",
-          "example": "Minimalist design specialist"
+          "type": "string"
         },
         "profileImage": {
-          "type": "string",
-          "example": "https://example.com/jd_profile.jpg"
+          "type": "string"
         },
         "designs": {
           "type": "array",
@@ -556,99 +486,32 @@
         }
       }
     },
-    "UpdateDesignerProfile": {
-      "type": "object",
-      "properties": {
-        "designerId": {
-          "type": "string",
-          "example": "5f8d0f5b9d3e2a1b3c5d7e9h"
-        },
-        "description": {
-          "type": "string",
-          "example": "Updated designer bio..."
-        },
-        "socialMedia": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "example": [
-            "https://twitter.com/jddesigns",
-            "https://instagram.com/jddesigns"
-          ]
-        },
-        "portfolioLinks": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "example": [
-            "https://behance.net/jddesigns",
-            "https://dribbble.com/jddesigns"
-          ]
-        }
-      }
-    },
-    "Design": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "example": "5f8d0f5b9d3e2a1b3c5d7e9i"
-        },
-        "title": {
-          "type": "string",
-          "example": "Abstract Minimalism"
-        },
-        "description": {
-          "type": "string",
-          "example": "A minimalist design with abstract shapes"
-        },
-        "designerId": {
-          "type": "string",
-          "example": "5f8d0f5b9d3e2a1b3c5d7e9h"
-        },
-        "imageUrl": {
-          "type": "string",
-          "example": "https://example.com/abstract_minimalism.jpg"
-        },
-        "isVerified": {
-          "type": "boolean",
-          "example": true
-        }
-      }
-    },
     "NewProduct": {
       "type": "object",
       "required": ["name", "category", "basePrice"],
       "properties": {
         "name": {
-          "type": "string",
-          "example": "Classic T-Shirt"
+          "type": "string"
         },
         "category": {
           "type": "string",
-          "enum": ["shirt", "Tshirt", "hoodie", "Cup"],
-          "example": "Tshirt"
+          "enum": ["shirt", "Tshirt", "hoodie", "Cup"]
         },
         "basePrice": {
-          "type": "number",
-          "example": 19.99
+          "type": "number"
         },
         "colors": {
           "type": "array",
           "items": {
             "type": "string"
-          },
-          "example": ["white", "black", "red"]
+          }
         },
         "sizes": {
           "type": "array",
           "items": {
             "type": "string",
             "enum": ["XS", "S", "M", "L", "XL", "XXL"]
-          },
-          "example": ["S", "M", "L", "XL"]
+          }
         }
       }
     },
@@ -656,44 +519,57 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string",
-          "example": "5f8d0f5b9d3e2a1b3c5d7e9j"
+          "type": "string"
         },
         "name": {
-          "type": "string",
-          "example": "Classic T-Shirt"
+          "type": "string"
         },
         "category": {
-          "type": "string",
-          "example": "Tshirt"
+          "type": "string"
         },
         "basePrice": {
-          "type": "number",
-          "example": 19.99
+          "type": "number"
         },
         "colors": {
           "type": "array",
           "items": {
             "type": "string"
-          },
-          "example": ["white", "black", "red"]
+          }
         },
         "sizes": {
           "type": "array",
           "items": {
             "type": "string"
-          },
-          "example": ["S", "M", "L", "XL"]
+          }
         },
         "images": {
           "type": "array",
           "items": {
             "type": "string"
-          },
-          "example": [
-            "https://example.com/tshirt_front.jpg",
-            "https://example.com/tshirt_back.jpg"
-          ]
+          }
+        }
+      }
+    },
+    "Design": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "designerId": {
+          "type": "string"
+        },
+        "imageUrl": {
+          "type": "string"
+        },
+        "isVerified": {
+          "type": "boolean"
         }
       }
     },
@@ -702,8 +578,7 @@
       "required": ["productId", "designApplications"],
       "properties": {
         "productId": {
-          "type": "string",
-          "example": "5f8d0f5b9d3e2a1b3c5d7e9j"
+          "type": "string"
         },
         "designApplications": {
           "type": "array",
@@ -711,13 +586,11 @@
             "type": "object",
             "properties": {
               "designImageUrl": {
-                "type": "string",
-                "example": "https://example.com/abstract_minimalism.jpg"
+                "type": "string"
               },
               "position": {
                 "type": "string",
-                "enum": ["front", "back"],
-                "example": "front"
+                "enum": ["front", "back"]
               }
             }
           }
@@ -728,28 +601,22 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string",
-          "example": "5f8d0f5b9d3e2a1b3c5d7e9k"
+          "type": "string"
         },
         "baseProductName": {
-          "type": "string",
-          "example": "Classic T-Shirt"
+          "type": "string"
         },
         "price": {
-          "type": "number",
-          "example": 29.99
+          "type": "number"
         },
         "category": {
-          "type": "string",
-          "example": "Tshirt"
+          "type": "string"
         },
         "color": {
-          "type": "string",
-          "example": "white"
+          "type": "string"
         },
         "mainImageUrl": {
-          "type": "string",
-          "example": "https://example.com/final_tshirt_front.jpg"
+          "type": "string"
         },
         "designs": {
           "type": "array",
@@ -757,25 +624,72 @@
             "type": "object",
             "properties": {
               "designName": {
-                "type": "string",
-                "example": "Abstract Minimalism"
+                "type": "string"
               },
               "designerName": {
-                "type": "string",
-                "example": "JD Designs"
+                "type": "string"
               },
               "position": {
                 "type": "string",
-                "example": "front"
+                "enum": ["front", "back"]
               },
               "appliedImageUrl": {
-                "type": "string",
-                "example": "https://example.com/applied_design_front.jpg"
+                "type": "string"
               }
             }
           }
         }
       }
+    },
+    "AddToCart": {
+      "type": "object",
+      "required": ["userId", "productId", "quantity"],
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "productId": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "CartItem": {
+      "type": "object",
+      "properties": {
+        "product": {
+          "type": "object",
+          "properties": {
+            "productId": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "price": {
+              "type": "number"
+            },
+            "imageUrl": {
+              "type": "string"
+            }
+          }
+        },
+        "quantity": {
+          "type": "integer"
+        }
+      }
     }
+  },
+  "externalDocs": {
+    "description": "Eye-Eye-Tee API Documentation",
+    "url": "https://docs.eye-eye-tee.com"
+  },
+  "x-logo": {
+    "url": "https://eye-eye-tee.com/logo.png",
+    "backgroundColor": "#FFFFFF",
+    "altText": "Eye-Eye-Tee Logo"
   }
 }

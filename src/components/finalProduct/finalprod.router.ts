@@ -7,6 +7,7 @@ import {
   getAllProductsByDesigner,
   getCategoriesWithoutFinalProducts,
   getProducts,
+  dummyProductsCreate,
   getSingleProductData,
 } from './finalprod.controller';
 
@@ -50,6 +51,14 @@ router.post(
   [protectedByApiKey],
   cloudinaryMiddleware,
   createFinalProduct,
+);
+
+// create dummy data
+
+router.get(
+  '/finalproduct/createDummy',
+  // [protectedByApiKey],
+  dummyProductsCreate,
 );
 
 export default router;

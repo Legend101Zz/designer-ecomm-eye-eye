@@ -32,30 +32,33 @@ const DesignApplicationSchema: Schema<IDesignApplication> = new Schema({
   appliedImage: ImageSchema,
 });
 
-const FinalProductSchema: Schema<IfinalProduct> = new Schema({
-  price: {
-    type: Number,
-    required: true,
-    default: 1000,
+const FinalProductSchema: Schema<IfinalProduct> = new Schema(
+  {
+    price: {
+      type: Number,
+      required: true,
+      default: 1000,
+    },
+    sales: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+    color: { type: String, required: true },
+    category: {
+      type: String,
+      required: true,
+    },
+    baseProductImages: [ImageSchema],
+    appliedDesigns: [DesignApplicationSchema],
+    productId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Product',
+      required: true,
+    },
   },
-  sales: {
-    type: Number,
-    required: true,
-    default: 0,
-  },
-  color: { type: String, required: true },
-  category: {
-    type: String,
-    required: true,
-  },
-  baseProductImages: [ImageSchema],
-  appliedDesigns: [DesignApplicationSchema],
-  productId: {
-    type: Schema.Types.ObjectId,
-    ref: 'Product',
-    required: true,
-  },
-});
+  { timestamps: true },
+);
 
 const finalProduct = mongoose.model<IfinalProduct>(
   'FinalProduct',

@@ -9,6 +9,23 @@ export interface IDesignApplication {
   appliedImage: IModel;
 }
 
+export interface IFinalProductResponse {
+  productId: string;
+  baseProductName: string;
+  mainImageUrl: string;
+  otherImages: string[];
+  price: number;
+  category: string;
+  color: string;
+  sales: number;
+  designs: {
+    designName: string;
+    designerName: string;
+    position: 'front' | 'back';
+    appliedImageUrl: string;
+  }[];
+}
+
 export interface IfinalProduct {
   price: number;
   sales: number;
