@@ -115,6 +115,66 @@ const getDesignerDesigns = async (req: Request, res: Response) => {
   }
 };
 
+const getRandomDesigns = async (req: Request, res: Response) => {
+  try {
+    const count = await design.countDocuments({ isVerified: true });
+    let randomDesigns = [];
+
+    if (count <= 5) {
+      // If we have 5 or fewer designs, return all of them
+      randomDesigns = await design.aggregate([
+        { $match: { isVerified: true } },
+        { $sample: { size: count } },
+        {
+          $lookup: {
+            from: 'designers',
+            localField: 'designer',
+            foreignField: '_id',
+            as: 'designerInfo',
+          },
+        },
+        { $unwind: '$designerInfo' },
+        {
+          $project: {
+            designPhotoUrl: { $arrayElemAt: ['$designImage.url', 0] },
+            designName: '$title',
+            designerId: '$designer',
+            designerName: '$designerInfo.artistName',
+          },
+        },
+      ]);
+    } else {
+      // If we have more than 5 designs, get 5 random ones
+      randomDesigns = await design.aggregate([
+        { $match: { isVerified: true } },
+        { $sample: { size: 5 } },
+        {
+          $lookup: {
+            from: 'designers',
+            localField: 'designer',
+            foreignField: '_id',
+            as: 'designerInfo',
+          },
+        },
+        { $unwind: '$designerInfo' },
+        {
+          $project: {
+            designPhotoUrl: { $arrayElemAt: ['$designImage.url', 0] },
+            designName: '$title',
+            designerId: '$designer',
+            designerName: '$designerInfo.artistName',
+          },
+        },
+      ]);
+    }
+
+    res.json(randomDesigns);
+  } catch (error) {
+    console.error('Error fetching random designs:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 // Helper function to group image URLs by category and design id
 // function groupImagesByCategoryAndDesign(images) {
 //   const groupedImages = {};
@@ -179,4 +239,4 @@ const getDesignerDesigns = async (req: Request, res: Response) => {
 // };
 
 // eslint-disable-next-line import/prefer-default-export
-export { showDesigns, updateDesign, getDesignerDesigns };
+export { showDesigns, updateDesign, getDesignerDesigns, getRandomDesigns };

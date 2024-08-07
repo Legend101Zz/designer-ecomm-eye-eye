@@ -9,6 +9,7 @@ import {
   getProducts,
   dummyProductsCreate,
   getSingleProductData,
+  getLatestProducts,
 } from './finalprod.controller';
 
 const router: Router = Router();
@@ -44,6 +45,8 @@ router.get(
   [protectedByApiKey],
   getAllProductsByDesigner,
 );
+
+router.get('/finalproduct/latest', [protectedByApiKey], getLatestProducts);
 
 // create new design
 router.post(

@@ -143,7 +143,7 @@ const addProfilePhoto = async (req: CustomRequest, res: Response) => {
   try {
     const updatedDesigner = await designer.findByIdAndUpdate(
       designerId,
-      { $push: { profileImage: { url: path, filename } } },
+      { profileImage: { url: path, filename } }, // Set the profileImage directly
       { new: true }, // Return the updated document
     );
 
@@ -153,7 +153,7 @@ const addProfilePhoto = async (req: CustomRequest, res: Response) => {
 
     return res.status(200).json(updatedDesigner);
   } catch (error) {
-    logger.error(error); // You can use console.error instead of logger.error
+    logger.error(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -269,11 +269,11 @@ const publicData = async (req: Request, res: Response) => {
       publicDesignerData.phone = designerData.phone;
     }
 
-    if (designerData.settings.showCoverPhoto) {
+    if (designerData.settings.showCoverPhoto && designerData.coverImage) {
       publicDesignerData.coverImage = designerData.coverImage.url;
     }
 
-    if (designerData.settings.showProfilePhoto) {
+    if (designerData.settings.showProfilePhoto && designerData.profileImage) {
       publicDesignerData.profileImage = designerData.profileImage.url;
     }
 
@@ -289,16 +289,16 @@ const publicData = async (req: Request, res: Response) => {
       publicDesignerData.portfolioLinks = designerData.portfolioLinks;
     }
 
-    if (designerData.settings.showFollowers) {
-      // Now, let's populate the 'following' field manually
-      const userData = await user
-        .findById(designerData.userId)
-        .populate('following.userId', 'username');
-      const followingUsernames = userData.following.map(
-        (followedUser: any) => followedUser.userId.username,
-      );
-      publicDesignerData.following = followingUsernames;
-    }
+    // if (designerData.settings.showFollowers) {
+    //   // Now, let's populate the 'following' field manually
+    //   const userData = await user
+    //     .findById(designerData.userId)
+    //     .populate('following.userId', 'username');
+    //   const followingUsernames = userData.following.map(
+    //     (followedUser: any) => followedUser.userId.username,
+    //   );
+    //   publicDesignerData.following = followingUsernames;
+    // }
 
     if (
       designerData.settings.showDesigns.enabled &&
@@ -543,16 +543,13 @@ const getDesigns = async (req: Request, res: Response) => {
 
 const getRandomDesigners = async (req: Request, res: Response) => {
   try {
-    // Get the count of all designers with a profile image and non-empty 'Designs' array
     const count = await designer.countDocuments({
       profileImage: { $exists: true },
       Designs: { $exists: true, $ne: [] },
     });
 
-    // Generate a random skip value
     const randomSkip = Math.floor(Math.random() * count);
 
-    // Fetch a random set of designers with a profile image and non-empty 'Designs' array
     const designers = await designer
       .find({
         profileImage: { $exists: true },
@@ -562,24 +559,22 @@ const getRandomDesigners = async (req: Request, res: Response) => {
       .limit(5)
       .populate('Designs');
 
-    console.log(designers);
+    const randomDesigners = designers.map((designer2) => ({
+      profileImage: designer2.profileImage?.url || null,
+      designImage:
+        designer2.Designs.length > 0 &&
+        designer2.Designs[0].designImage.length > 0
+          ? designer2.Designs[0].designImage[0].url
+          : null,
+      totalDesigns: designer2.Designs.length,
+      designerFollowers: designer2.followers.length,
 
-    // Map the designers to the desired format
-    const randomDesigners = designers.map((designer1) => {
-      const profileImage = designer1.profileImage?.url || null;
-      const designImage =
-        // eslint-disable-next-line no-nested-ternary
-        designer1.Designs.length > 0
-          ? designer1.Designs[0].designImage.length > 0
-            ? designer1.Designs[0].designImage[0].url
-            : null
-          : null;
-
-      return {
-        profileImage,
-        designImage,
-      };
-    });
+      designName:
+        // @ts-ignore
+        designer2.Designs.length > 0 ? designer2.Designs[0].title : '',
+      designerId: designer2._id.toString(),
+      designerName: designer2.artistName || designer2.fullname || '',
+    }));
 
     res.json(randomDesigners);
   } catch (error) {

@@ -34,6 +34,10 @@ const DesignApplicationSchema: Schema<IDesignApplication> = new Schema({
 
 const FinalProductSchema: Schema<IfinalProduct> = new Schema(
   {
+    productName: {
+      type: String,
+      required: true,
+    },
     price: {
       type: Number,
       required: true,

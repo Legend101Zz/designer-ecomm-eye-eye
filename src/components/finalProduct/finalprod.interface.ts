@@ -2,6 +2,10 @@
 import { IModel } from '@core/interfaces/validationSchema';
 import mongoose from 'mongoose';
 
+export interface GroupedProduct extends Omit<IFinalProductResponse, 'color'> {
+  colors: Array<{ color: string; productId: string }>;
+}
+
 export interface IDesignApplication {
   designId: mongoose.Types.ObjectId;
   designerId: mongoose.Types.ObjectId;
@@ -9,7 +13,13 @@ export interface IDesignApplication {
   appliedImage: IModel;
 }
 
+export interface DesignApplication {
+  designImageUrl: string;
+  position: 'front' | 'back';
+}
+
 export interface IFinalProductResponse {
+  productName: string;
   productId: string;
   baseProductName: string;
   mainImageUrl: string;
@@ -27,6 +37,7 @@ export interface IFinalProductResponse {
 }
 
 export interface IfinalProduct {
+  productName: string;
   price: number;
   sales: number;
   color: string;

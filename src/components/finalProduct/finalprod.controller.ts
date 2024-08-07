@@ -1,49 +1,90 @@
 import { Request, Response } from 'express';
 import logger from '@core/utils/logger';
+import { cleanupCloudinaryImages } from '@core/middlewares/cloudinary';
 import { product } from '@components/product/product.model';
 import { design } from '@components/design/design.model';
 import { designer } from '@components/designer/designer.model';
-import { IFinalProductResponse } from './finalprod.interface';
+import {
+  IFinalProductResponse,
+  DesignApplication,
+  GroupedProduct,
+} from './finalprod.interface';
 import { finalProduct } from './finalprod.model';
-
 interface CustomRequest extends Request {
   files: any; // Include the 'file' property with the MulterFile type
 }
 
-interface DesignApplication {
-  designImageUrl: string;
-  position: 'front' | 'back';
+function groupProductsByDesignAndCategory(
+  finalProducts: any[],
+): GroupedProduct[] {
+  const groupedMap = new Map<string, GroupedProduct>();
+
+  finalProducts.forEach((finalProd) => {
+    const key = `${finalProd.productName}-${
+      finalProd.category
+    }-${finalProd.designs.map((d) => d.designId).join('-')}`;
+
+    if (!groupedMap.has(key)) {
+      const { color, productId, mainImageUrl, otherImages, price, ...rest } =
+        finalProd;
+      groupedMap.set(key, {
+        ...rest,
+        colors: [
+          {
+            color,
+            productId,
+            mainImageUrl,
+            otherImages,
+            price,
+          },
+        ],
+      });
+    } else {
+      const group = groupedMap.get(key)!;
+      group.colors.push({
+        color: finalProd.color,
+        productId: finalProd.productId,
+        // @ts-ignore
+        mainImageUrl: finalProd.mainImageUrl,
+        otherImages: finalProd.otherImages,
+        price: finalProd.price,
+      });
+    }
+  });
+
+  return Array.from(groupedMap.values());
 }
 
-const formatFinalProduct = (product2: any): IFinalProductResponse => {
+const formatFinalProduct = (finalProd: any): IFinalProductResponse => {
   const mainImage =
-    product2.baseProductImages.find((img: any) => img.position === 'front') ||
-    product2.baseProductImages[0];
+    finalProd.baseProductImages.find((img: any) => img.position === 'front') ||
+    finalProd.baseProductImages[0];
 
   return {
-    productId: product2._id.toString(), // eslint-disable-line no-underscore-dangle
-    baseProductName: product2.productId
-      ? product2.productId.name
+    productId: finalProd._id.toString(),
+    productName: finalProd.productName,
+    baseProductName: finalProd.productId
+      ? finalProd.productId.name
       : 'Unknown Product',
     mainImageUrl: mainImage ? mainImage.url : '',
-    otherImages: product2.baseProductImages
-      .filter((img) => img !== mainImage)
-      .map((img) => img.url),
-    price: product2.price,
-    category: product2.category,
-    color: product2.color,
-    sales: product2.sales,
-    designs: product2.appliedDesigns.map((design2) => ({
-      designName: design2.designId ? design2.designId.title : 'Unknown Design',
-      designerName: design2.designerId
-        ? design2.designerId.artistName
+    otherImages: finalProd.baseProductImages
+      .filter((img: any) => img !== mainImage)
+      .map((img: any) => img.url),
+    price: finalProd.price,
+    category: finalProd.category,
+    color: finalProd.color,
+    sales: finalProd.sales,
+    designs: finalProd.appliedDesigns.map((design: any) => ({
+      designId: design.designId._id.toString(),
+      designName: design.designId ? design.designId.title : 'Unknown Design',
+      designerName: design.designerId
+        ? design.designerId.artistName
         : 'Unknown Designer',
-      position: design2.position,
-      appliedImageUrl: design2.appliedImage.url,
+      position: design.position,
+      appliedImageUrl: design.appliedImage.url,
     })),
   };
 };
-
 //                    === LEGACY CODE ===
 
 // const createFinalProduct = async (req: CustomRequest, res: Response) => {
@@ -137,7 +178,6 @@ const formatFinalProduct = (product2: any): IFinalProductResponse => {
 //
 //
 
-// NOTE WILL NEED TO CHANGE TO STORE IN CLOUDINARY
 /**
  * Create a new final product
  * @route POST /finalproduct/create-final-products
@@ -153,22 +193,25 @@ const formatFinalProduct = (product2: any): IFinalProductResponse => {
  *       designImageUrl: string,
  *       position: 'front' | 'back'
  *     }
+ *   - images: Array of image files (multipart/form-data)
  * @output
- *   - 201: { finalProduct: object } (Created final product details)
- *   - 400: { error: string } (No valid designs provided)
+ *   - 201: { finalProduct: IFinalProductResponse } (Created final product details)
+ *   - 400: { error: string } (No valid designs provided or invalid input)
  *   - 404: { error: string } (Product or Design not found)
  *   - 500: { error: string } (Internal server error)
  */
-
 const createFinalProduct = async (req: CustomRequest, res: Response) => {
+  const uploadedPublicIds: string[] = [];
   try {
-    const { productId, designApplications } = req.body;
-    // console.log('createFinalProduct', req.body, req.files);
+    const { productId, designApplications, productName, price, color } =
+      req.body;
+    console.log('createFinalProduct', req.body, req.files);
 
     // Find the associated product using the productId
     const productF = await product.findById(productId);
-
     if (!productF) {
+      // Clean up uploaded images from Cloudinary
+      await cleanupCloudinaryImages(uploadedPublicIds);
       return res.status(404).json({ error: 'Product not found' });
     }
 
@@ -187,32 +230,52 @@ const createFinalProduct = async (req: CustomRequest, res: Response) => {
         }
 
         return {
-          designId: existingDesign._id, // eslint-disable-line no-underscore-dangle
+          // eslint-disable-line no-underscore-dangle
+          designId: existingDesign._id,
           designerId: existingDesign.designer,
           position: app.position,
           appliedImage: {
             url: app.designImageUrl,
             filename: existingDesign.designImage[0].filename,
+            position: app.position,
           },
         };
       }),
     );
-
+    console.log('createFinalProduct2', appliedDesigns);
     // Filter out any null results (from designs not found)
     const validAppliedDesigns = appliedDesigns.filter(Boolean);
-
     if (validAppliedDesigns.length === 0) {
+      // Clean up uploaded images from Cloudinary
+      await cleanupCloudinaryImages(uploadedPublicIds);
       return res.status(400).json({ error: 'No valid designs provided' });
     }
+
+    // Process uploaded images
+    if (!req.files || req.files.length === 0) {
+      // Clean up uploaded images from Cloudinary
+      await cleanupCloudinaryImages(uploadedPublicIds);
+      return res.status(400).json({ error: 'No images uploaded' });
+    }
+
+    const processedImages = req.files.map((image, index) => {
+      uploadedPublicIds.push(image.filename);
+      return {
+        url: image.path,
+        filename: image.filename,
+        position: index === 0 ? 'front' : 'back', // Assume first image is front, rest are back
+      };
+    });
 
     // Create a new FinalProduct instance
     // eslint-disable-next-line new-cap
     const newFinalProduct = new finalProduct({
-      price: 1000, // will change this
+      productName,
+      price, // You may want to calculate this based on the base product and designs
       sales: 0,
-      color: productF.color[0],
+      color,
       category: productF.category,
-      baseProductImages: productF.image, // Use the base product images
+      baseProductImages: processedImages,
       appliedDesigns: validAppliedDesigns,
       productId,
     });
@@ -220,10 +283,25 @@ const createFinalProduct = async (req: CustomRequest, res: Response) => {
     // Save the FinalProduct instance to the database
     const savedFinalProduct = await newFinalProduct.save();
 
+    // Populate the saved product with related data
+    const populatedProduct = await finalProduct
+      // eslint-disable-next-line no-underscore-dangle
+      .findById(savedFinalProduct._id)
+      .populate('productId', 'name')
+      .populate('appliedDesigns.designId', 'title')
+      .populate('appliedDesigns.designerId', 'artistName');
+
+    // Format the product for the response
+    const formattedProduct = formatFinalProduct(populatedProduct);
+
     // Respond with the created FinalProduct instance
-    return res.status(201).json({ finalProduct: savedFinalProduct });
+    return res.status(201).json({ finalProduct: formattedProduct });
   } catch (error) {
-    logger.error('Error creating final product:', error);
+    logger.error('Error creating final product:');
+    logger.error(error);
+    // Clean up uploaded images from Cloudinary
+    await cleanupCloudinaryImages(uploadedPublicIds);
+
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 };
@@ -285,25 +363,7 @@ const getAllProductsByDesign = async (req: Request, res: Response) => {
       .lean()
       .exec();
 
-    // Format the products data
-    const formattedProducts = products.map((product2) => {
-      const relevantDesign = product2.appliedDesigns.find(
-        (d) => d.designId.toString() === designId,
-      );
-      return {
-        finalProductId: product2._id, // eslint-disable-line no-underscore-dangle
-        baseProductName: (product2.productId as any).name,
-        price: product2.price,
-        sales: product2.sales,
-        color: product2.color,
-        category: product2.category,
-        mainImage: product2.baseProductImages[0]?.url || '',
-        designApplication: {
-          position: relevantDesign?.position,
-          appliedImageUrl: relevantDesign?.appliedImage.url,
-        },
-      };
-    });
+    const formattedProducts = products.map(formatFinalProduct);
 
     return res.status(200).json({
       products: formattedProducts,
@@ -372,29 +432,11 @@ const getAllProductsByDesigner = async (req: Request, res: Response) => {
       .lean()
       .exec();
 
-    // Format the products data
-    const formattedProducts = products.map((product2) => {
-      const designerDesigns = product2.appliedDesigns.filter(
-        (d) => d.designerId.toString() === designerId,
-      );
-      return {
-        finalProductId: product2._id, // eslint-disable-line no-underscore-dangle
-        baseProductName: (product2.productId as any).name,
-        price: product2.price,
-        sales: product2.sales,
-        color: product2.color,
-        category: product2.category,
-        mainImage: product2.baseProductImages[0]?.url || '',
-        designApplications: designerDesigns.map((design2) => ({
-          designName: (design2.designId as any).title,
-          position: design2.position,
-          appliedImageUrl: design2.appliedImage.url,
-        })),
-      };
-    });
+    const formattedProducts = products.map(formatFinalProduct);
+    const groupedProducts = groupProductsByDesignAndCategory(formattedProducts);
 
     return res.status(200).json({
-      products: formattedProducts,
+      products: groupedProducts,
       designerName: designerF.artistName || designerF.fullname,
     });
   } catch (error) {
@@ -427,7 +469,7 @@ const getCategoriesWithoutFinalProducts = async (
     const { designerId } = req.params;
     const { designImageUrl } = req.body;
 
-    console.log('getCategoriesWithoutFinalProducts', req.body, req.params);
+    // console.log('getCategoriesWithoutFinalProducts', req.body, req.params);
 
     // Find all categories available in the system
     const allCategories = ['hoodie', 'shirt', 'Tshirt', 'cup'];
@@ -533,37 +575,13 @@ const getProducts = async (req: Request, res: Response) => {
       .lean()
       .exec();
 
-    const formattedProducts = products.map((product_2) => {
-      const mainImage =
-        product_2.baseProductImages.find((img) => img.position === 'front') ||
-        product_2.baseProductImages[0];
+    const formattedProducts = products.map(formatFinalProduct);
 
-      return {
-        productId: product_2._id, // eslint-disable-line no-underscore-dangle
-        baseProductName: product_2.productId
-          ? (product_2.productId as any).name
-          : 'Unknown Product',
-        mainImageUrl: mainImage ? mainImage.url : '',
-        otherImages: product_2.baseProductImages
-          .filter((img) => img !== mainImage)
-          .map((img) => img.url),
-        price: product_2.price,
-        category: product_2.category,
-        color: product_2.color,
-        designs: product_2.appliedDesigns.map((design_2) => ({
-          designName: design_2.designId
-            ? (design_2.designId as any).title
-            : 'Unknown Design',
-          designerName: design_2.designerId
-            ? (design_2.designerId as any).artistName
-            : 'Unknown Designer',
-          position: design_2.position,
-          appliedImageUrl: design_2.appliedImage.url,
-        })),
-      };
-    });
+    const groupedProducts = groupProductsByDesignAndCategory(formattedProducts);
 
-    return res.status(200).json({ products: formattedProducts });
+    return res
+      .status(200)
+      .json({ products: groupedProducts.slice(0, pageSize) });
   } catch (error) {
     logger.error('Error fetching products:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
@@ -653,42 +671,9 @@ const getSingleProductData = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Final product not found' });
     }
 
-    // Extract base product images
-    const baseProductImages = finalProductData.baseProductImages.map(
-      (img) => img.url,
-    );
-    const mainImageUrl =
-      baseProductImages.length > 0 ? baseProductImages[0] : '';
-    const otherImages = baseProductImages.slice(1);
+    const formattedProduct = formatFinalProduct(finalProductData);
 
-    // Extract applied designs information
-    const appliedDesigns = finalProductData.appliedDesigns.map((design_2) => ({
-      designName: design_2.designId // eslint-disable-line no-underscore-dangle
-        ? (design_2.designId as any).title
-        : 'Unknown Design',
-      designerName: design_2.designerId
-        ? (design_2.designerId as any).artistName
-        : 'Unknown Designer',
-      position: design_2.position,
-      appliedImageUrl: design_2.appliedImage ? design_2.appliedImage.url : '',
-    }));
-
-    // Construct the final response
-    const formattedData = {
-      productId: finalProductData._id, // eslint-disable-line no-underscore-dangle
-      baseProductName: finalProductData.productId
-        ? (finalProductData.productId as any).name
-        : 'Unknown Product',
-      category: finalProductData.category,
-      price: finalProductData.price,
-      color: finalProductData.color,
-      mainImageUrl,
-      otherImages,
-      baseProductImages,
-      appliedDesigns,
-    };
-
-    return res.json(formattedData);
+    return res.json(formattedProduct);
   } catch (error) {
     logger.error('Error fetching single product data:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
@@ -720,10 +705,10 @@ const getLatestProducts = async (req: Request, res: Response) => {
       .lean()
       .exec();
 
-    const formattedProducts: IFinalProductResponse[] =
-      latestProducts.map(formatFinalProduct);
+    const formattedProducts = latestProducts.map(formatFinalProduct);
 
-    return res.status(200).json({ products: formattedProducts });
+    const groupedProducts = groupProductsByDesignAndCategory(formattedProducts);
+    return res.status(200).json({ products: groupedProducts.slice(0, 5) });
   } catch (error) {
     logger.error('Error fetching latest products:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
@@ -780,6 +765,7 @@ const dummyProductsCreate = async (req: Request, res: Response) => {
 
     const dummyFinalProducts = [
       {
+        productName: 'White T-Shirt with Abstract Art',
         price: 29.99,
         sales: 0,
         color: 'white',
@@ -811,13 +797,14 @@ const dummyProductsCreate = async (req: Request, res: Response) => {
         productId: baseProduct._id, // eslint-disable-line no-underscore-dangle
       },
       {
+        productName: 'White T-Shirt with Abstract Art',
         price: 29.99,
         sales: 0,
         color: 'black',
         category: 'Tshirt',
         baseProductImages: [
           {
-            url: 'https://example.com/tshirt_front_black.jpg',
+            url: 'https://res.cloudinary.com/dmqzhgy0i/image/upload/v1716656679/Eye-Eye-Tee/fpluxubcjboxzpqibumj.jpg',
             filename: 'tshirt_front_black.jpg',
             position: 'front',
           },
@@ -842,6 +829,7 @@ const dummyProductsCreate = async (req: Request, res: Response) => {
         productId: baseProduct._id, // eslint-disable-line no-underscore-dangle
       },
       {
+        productName: 'White T-Shirt with Abstract Art',
         price: 29.99,
         sales: 0,
         color: 'red',
@@ -873,6 +861,7 @@ const dummyProductsCreate = async (req: Request, res: Response) => {
         productId: baseProduct._id, // eslint-disable-line no-underscore-dangle
       },
       {
+        productName: 'White T-Shirt with Abstract Art',
         price: 34.99,
         sales: 0,
         color: 'white',
@@ -914,6 +903,7 @@ const dummyProductsCreate = async (req: Request, res: Response) => {
         productId: baseProduct._id, // eslint-disable-line no-underscore-dangle
       },
       {
+        productName: 'White T-Shirt with Abstract Art',
         price: 24.99,
         sales: 0,
         color: 'white',
@@ -968,5 +958,6 @@ export {
   getCategoriesWithoutFinalProducts,
   getProducts,
   dummyProductsCreate,
+  getLatestProducts,
   // getProductDetailSideView,
 };

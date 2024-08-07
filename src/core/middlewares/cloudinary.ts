@@ -65,4 +65,26 @@ const cloudinaryMiddleware = (
   }
 };
 
+/**
+ * Cleans up uploaded images from Cloudinary
+ * @param {string[]} publicIds - Array of Cloudinary public IDs to be deleted
+ * @returns {Promise<void>}
+ */
+export const cleanupCloudinaryImages = async (
+  publicIds: string[],
+): Promise<void> => {
+  await Promise.all(
+    publicIds.map(async (publicId) => {
+      try {
+        await cloudinary.uploader.destroy(publicId);
+        logger.info(`Cleaned up image: `);
+        logger.info(`${publicId}`);
+        console.log(`Cleaned up image: ${publicId}`);
+      } catch (cleanupError) {
+        logger.error(`Failed to clean up image ${publicId}:`, cleanupError);
+      }
+    }),
+  );
+};
+
 export default cloudinaryMiddleware;
