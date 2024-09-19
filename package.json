@@ -1,5 +1,5 @@
 {
-  "name": "net.ts",
+  "name": "eye-eye-tee",
   "version": "1.0.1",
   "description": "eye-eye tee",
   "main": "src/server.ts",
@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "tsc && tsc-alias",
+    "start": "node dist/server.js",
     "server:prod": "node dist/server.js",
     "server:dev": "ts-node-dev --inspect=0.0.0.0:9229 --exit-child --respawn -r tsconfig-paths/register src/server.ts",
     "test": "jest -c jest.config.js --env=node",
