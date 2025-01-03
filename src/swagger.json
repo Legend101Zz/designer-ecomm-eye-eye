@@ -1,21 +1,13 @@
 {
   "swagger": "2.0",
   "info": {
-    "version": "2.0.0",
-    "title": "Eye-Eye-Tee API",
-    "description": "API documentation for Eye-Eye-Tee, an ecommerce platform for designers",
-    "contact": {
-      "name": "API Support",
-      "email": "support@eye-eye-tee.com"
-    },
-    "license": {
-      "name": "MIT",
-      "url": "https://opensource.org/licenses/MIT"
-    }
+    "version": "1.0.0",
+    "title": "Deauth API",
+    "description": "API documentation for Deauth Backend services"
   },
-  "host": "api.eye-eye-tee.com",
+  "host": "localhost:8080",
   "basePath": "/api",
-  "schemes": ["https"],
+  "schemes": ["http"],
   "consumes": ["application/json"],
   "produces": ["application/json"],
   "securityDefinitions": {
@@ -25,277 +17,125 @@
       "name": "x-api-key"
     }
   },
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
   "tags": [
     {
-      "name": "Authentication",
-      "description": "User authentication endpoints"
+      "name": "Admin",
+      "description": "Admin management endpoints"
     },
     {
-      "name": "Users",
+      "name": "User",
       "description": "User management endpoints"
     },
     {
-      "name": "Designers",
-      "description": "Designer-related endpoints"
+      "name": "Designer",
+      "description": "Designer management endpoints"
     },
     {
-      "name": "Products",
-      "description": "Product management endpoints"
-    },
-    {
-      "name": "Designs",
+      "name": "Design",
       "description": "Design management endpoints"
     },
     {
-      "name": "Final Products",
-      "description": "Endpoints for managing final products (designs applied to products)"
+      "name": "Product",
+      "description": "Product management endpoints"
     },
     {
-      "name": "Cart",
-      "description": "Shopping cart management endpoints"
+      "name": "Final Product",
+      "description": "Final product management endpoints"
+    },
+    {
+      "name": "Authentication",
+      "description": "Authentication endpoints"
     }
   ],
   "paths": {
-    "/auth/google": {
-      "get": {
-        "summary": "Initiate Google OAuth",
-        "tags": ["Authentication"],
-        "responses": {
-          "302": {
-            "description": "Redirect to Google login"
-          }
-        }
-      }
-    },
-    "/auth/google/callback": {
-      "get": {
-        "summary": "Google OAuth callback",
-        "tags": ["Authentication"],
-        "responses": {
-          "302": {
-            "description": "Redirect after successful authentication"
-          }
-        }
-      }
-    },
-    "/user/create": {
+    "/admin/create": {
       "post": {
-        "summary": "Create a new user",
-        "tags": ["Users"],
+        "tags": ["Admin"],
+        "summary": "Create new admin",
         "parameters": [
           {
             "in": "body",
-            "name": "user",
-            "schema": {
-              "$ref": "#/definitions/NewUser"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "User created successfully"
-          },
-          "400": {
-            "description": "Invalid input"
-          }
-        }
-      }
-    },
-    "/user/login": {
-      "post": {
-        "summary": "User login",
-        "tags": ["Authentication"],
-        "parameters": [
-          {
-            "in": "body",
-            "name": "credentials",
-            "schema": {
-              "$ref": "#/definitions/LoginCredentials"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Login successful",
-            "schema": {
-              "$ref": "#/definitions/LoginResponse"
-            }
-          },
-          "401": {
-            "description": "Invalid credentials"
-          }
-        }
-      }
-    },
-    "/user/profile": {
-      "post": {
-        "summary": "Update user profile",
-        "tags": ["Users"],
-        "parameters": [
-          {
-            "in": "body",
-            "name": "profile",
-            "schema": {
-              "$ref": "#/definitions/UpdateProfile"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Profile updated successfully"
-          },
-          "400": {
-            "description": "Invalid input"
-          }
-        }
-      }
-    },
-    "/designer/request": {
-      "post": {
-        "summary": "Request to become a designer",
-        "tags": ["Designers"],
-        "parameters": [
-          {
-            "in": "body",
-            "name": "designerRequest",
-            "schema": {
-              "$ref": "#/definitions/DesignerRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Request submitted successfully"
-          },
-          "400": {
-            "description": "Invalid input"
-          }
-        }
-      }
-    },
-    "/designer/viewProfile/{designerId}": {
-      "get": {
-        "summary": "View designer's public profile",
-        "tags": ["Designers"],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "designerId",
+            "name": "body",
             "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Designer profile retrieved successfully",
             "schema": {
-              "$ref": "#/definitions/DesignerPublicProfile"
-            }
-          },
-          "404": {
-            "description": "Designer not found"
-          }
-        }
-      }
-    },
-    "/product/create": {
-      "post": {
-        "summary": "Create a new product",
-        "tags": ["Products"],
-        "parameters": [
-          {
-            "in": "body",
-            "name": "product",
-            "schema": {
-              "$ref": "#/definitions/NewProduct"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Product created successfully"
-          },
-          "400": {
-            "description": "Invalid input"
-          }
-        }
-      }
-    },
-    "/product/read/{id}": {
-      "get": {
-        "summary": "Get product details",
-        "tags": ["Products"],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Product details retrieved successfully",
-            "schema": {
-              "$ref": "#/definitions/Product"
-            }
-          },
-          "404": {
-            "description": "Product not found"
-          }
-        }
-      }
-    },
-    "/designs/show": {
-      "get": {
-        "summary": "Get all verified designs",
-        "tags": ["Designs"],
-        "responses": {
-          "200": {
-            "description": "Designs retrieved successfully",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/Design"
+              "type": "object",
+              "required": ["email", "password"],
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "password": {
+                  "type": "string",
+                  "format": "password"
+                }
               }
             }
           }
+        ],
+        "responses": {
+          "201": {
+            "description": "Admin created successfully"
+          },
+          "400": {
+            "description": "Admin with this email already exists"
+          }
         }
       }
     },
-    "/finalproduct/create-final-products": {
+    "/admin/login": {
       "post": {
-        "summary": "Create final products",
-        "tags": ["Final Products"],
+        "tags": ["Admin"],
+        "summary": "Admin login",
         "parameters": [
           {
             "in": "body",
-            "name": "finalProduct",
+            "name": "body",
+            "required": true,
             "schema": {
-              "$ref": "#/definitions/NewFinalProduct"
+              "type": "object",
+              "required": ["email", "password"],
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "password": {
+                  "type": "string",
+                  "format": "password"
+                }
+              }
             }
           }
         ],
         "responses": {
-          "201": {
-            "description": "Final product created successfully"
+          "200": {
+            "description": "Admin logged in successfully"
           },
-          "400": {
-            "description": "Invalid input"
+          "401": {
+            "description": "Incorrect password"
+          },
+          "404": {
+            "description": "Admin not found"
           }
         }
       }
     },
-    "/finalproduct/products": {
+    "/admin/products": {
       "get": {
-        "summary": "Get all final products",
-        "tags": ["Final Products"],
+        "tags": ["Admin"],
+        "summary": "Get all products",
         "parameters": [
           {
             "in": "query",
-            "name": "page",
-            "type": "integer",
-            "description": "Page number for pagination"
+            "name": "search",
+            "type": "string",
+            "description": "Search by product name"
           },
           {
             "in": "query",
@@ -306,44 +146,317 @@
         ],
         "responses": {
           "200": {
-            "description": "Final products retrieved successfully",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/FinalProduct"
-              }
-            }
+            "description": "Products retrieved successfully"
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       }
     },
-    "/user/addToCart": {
+    "/admin/add-product": {
       "post": {
-        "summary": "Add item to cart",
-        "tags": ["Cart"],
+        "tags": ["Admin"],
+        "summary": "Add a new product",
+        "consumes": ["multipart/form-data"],
+        "parameters": [
+          {
+            "in": "formData",
+            "name": "name",
+            "type": "string",
+            "required": true
+          },
+          {
+            "in": "formData",
+            "name": "quantity",
+            "type": "integer",
+            "required": true
+          },
+          {
+            "in": "formData",
+            "name": "category",
+            "type": "string",
+            "required": true
+          },
+          {
+            "in": "formData",
+            "name": "color",
+            "type": "string",
+            "required": true
+          },
+          {
+            "in": "formData",
+            "name": "image",
+            "type": "file",
+            "required": true,
+            "description": "Product image"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product added successfully"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/admin/designer": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Get all designers",
+        "responses": {
+          "200": {
+            "description": "Designers retrieved successfully"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/designer/request": {
+      "post": {
+        "tags": ["Designer"],
+        "summary": "Request to become a designer",
+        "consumes": ["multipart/form-data"],
+        "parameters": [
+          {
+            "in": "formData",
+            "name": "userId",
+            "type": "string",
+            "required": true
+          },
+          {
+            "in": "formData",
+            "name": "fullname",
+            "type": "string",
+            "required": true
+          },
+          {
+            "in": "formData",
+            "name": "artistName",
+            "type": "string",
+            "required": true
+          },
+          {
+            "in": "formData",
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "in": "formData",
+            "name": "portfolioLinks",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "formData",
+            "name": "image",
+            "type": "file",
+            "required": true,
+            "description": "Profile and cover photos"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Designer request submitted successfully"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/designer/createDesign": {
+      "post": {
+        "tags": ["Designer"],
+        "summary": "Create a new design",
+        "consumes": ["multipart/form-data"],
+        "parameters": [
+          {
+            "in": "formData",
+            "name": "designerId",
+            "type": "string",
+            "required": true
+          },
+          {
+            "in": "formData",
+            "name": "title",
+            "type": "string",
+            "required": true
+          },
+          {
+            "in": "formData",
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "in": "formData",
+            "name": "image",
+            "type": "file",
+            "required": true,
+            "description": "Design image"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Design created successfully"
+          },
+          "404": {
+            "description": "Designer not found or not approved"
+          }
+        }
+      }
+    },
+    "/designs/show": {
+      "get": {
+        "tags": ["Design"],
+        "summary": "Get all designs",
+        "responses": {
+          "200": {
+            "description": "Designs retrieved successfully"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/finalproduct/create-final-products": {
+      "post": {
+        "tags": ["Final Product"],
+        "summary": "Create final products",
+        "consumes": ["multipart/form-data"],
+        "parameters": [
+          {
+            "in": "formData",
+            "name": "productId",
+            "type": "string",
+            "required": true
+          },
+          {
+            "in": "formData",
+            "name": "designApplications",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "designImageUrl": {
+                  "type": "string"
+                },
+                "position": {
+                  "type": "string",
+                  "enum": ["front", "back"]
+                }
+              }
+            }
+          },
+          {
+            "in": "formData",
+            "name": "image",
+            "type": "file",
+            "required": true,
+            "description": "Product images with applied designs"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Final product created successfully"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/user/create": {
+      "post": {
+        "tags": ["User"],
+        "summary": "Create new user",
         "parameters": [
           {
             "in": "body",
-            "name": "cartItem",
+            "name": "body",
+            "required": true,
             "schema": {
-              "$ref": "#/definitions/AddToCart"
+              "type": "object",
+              "required": ["username", "email"],
+              "properties": {
+                "username": {
+                  "type": "string"
+                },
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "User created successfully"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/user/login": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "User login",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": ["email", "password"],
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "password": {
+                  "type": "string",
+                  "format": "password"
+                }
+              }
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Item added to cart successfully"
+            "description": "Login successful"
           },
-          "400": {
-            "description": "Invalid input"
+          "201": {
+            "description": "Invalid credentials"
           }
         }
       }
     },
-    "/user/getCart/{userId}": {
+    "/auth/google": {
       "get": {
+        "tags": ["Authentication"],
+        "summary": "Google OAuth login",
+        "responses": {
+          "302": {
+            "description": "Redirect to Google authentication"
+          }
+        }
+      }
+    },
+    "/user/cart/{userId}": {
+      "get": {
+        "tags": ["User"],
         "summary": "Get user's cart",
-        "tags": ["Cart"],
         "parameters": [
           {
             "in": "path",
@@ -354,13 +467,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Cart retrieved successfully",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/CartItem"
-              }
-            }
+            "description": "Cart retrieved successfully"
           },
           "404": {
             "description": "User not found"
@@ -370,81 +477,25 @@
     }
   },
   "definitions": {
-    "NewUser": {
-      "type": "object",
-      "required": ["username", "email"],
-      "properties": {
-        "username": {
-          "type": "string"
-        },
-        "email": {
-          "type": "string",
-          "format": "email"
-        }
-      }
-    },
-    "LoginCredentials": {
-      "type": "object",
-      "required": ["email", "password"],
-      "properties": {
-        "email": {
-          "type": "string",
-          "format": "email"
-        },
-        "password": {
-          "type": "string"
-        }
-      }
-    },
-    "LoginResponse": {
-      "type": "object",
-      "properties": {
-        "token": {
-          "type": "string"
-        },
-        "user": {
-          "$ref": "#/definitions/User"
-        }
-      }
-    },
     "User": {
       "type": "object",
       "properties": {
-        "id": {
-          "type": "string"
-        },
         "username": {
           "type": "string"
         },
         "email": {
-          "type": "string",
-          "format": "email"
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
         },
         "isDesigner": {
           "type": "boolean"
         }
       }
     },
-    "UpdateProfile": {
+    "Designer": {
       "type": "object",
-      "properties": {
-        "userId": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "phone": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        }
-      }
-    },
-    "DesignerRequest": {
-      "type": "object",
-      "required": ["userId", "fullname", "artistName"],
       "properties": {
         "userId": {
           "type": "string"
@@ -458,238 +509,10 @@
         "description": {
           "type": "string"
         },
-        "portfolioLinks": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "DesignerPublicProfile": {
-      "type": "object",
-      "properties": {
-        "artistName": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "profileImage": {
-          "type": "string"
-        },
-        "designs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Design"
-          }
-        }
-      }
-    },
-    "NewProduct": {
-      "type": "object",
-      "required": ["name", "category", "basePrice"],
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "category": {
-          "type": "string",
-          "enum": ["shirt", "Tshirt", "hoodie", "Cup"]
-        },
-        "basePrice": {
-          "type": "number"
-        },
-        "colors": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "sizes": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "enum": ["XS", "S", "M", "L", "XL", "XXL"]
-          }
-        }
-      }
-    },
-    "Product": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "category": {
-          "type": "string"
-        },
-        "basePrice": {
-          "type": "number"
-        },
-        "colors": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "sizes": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "images": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "Design": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "title": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "designerId": {
-          "type": "string"
-        },
-        "imageUrl": {
-          "type": "string"
-        },
-        "isVerified": {
+        "isApproved": {
           "type": "boolean"
         }
       }
-    },
-    "NewFinalProduct": {
-      "type": "object",
-      "required": ["productId", "designApplications"],
-      "properties": {
-        "productId": {
-          "type": "string"
-        },
-        "designApplications": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "designImageUrl": {
-                "type": "string"
-              },
-              "position": {
-                "type": "string",
-                "enum": ["front", "back"]
-              }
-            }
-          }
-        }
-      }
-    },
-    "FinalProduct": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "baseProductName": {
-          "type": "string"
-        },
-        "price": {
-          "type": "number"
-        },
-        "category": {
-          "type": "string"
-        },
-        "color": {
-          "type": "string"
-        },
-        "mainImageUrl": {
-          "type": "string"
-        },
-        "designs": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "designName": {
-                "type": "string"
-              },
-              "designerName": {
-                "type": "string"
-              },
-              "position": {
-                "type": "string",
-                "enum": ["front", "back"]
-              },
-              "appliedImageUrl": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    "AddToCart": {
-      "type": "object",
-      "required": ["userId", "productId", "quantity"],
-      "properties": {
-        "userId": {
-          "type": "string"
-        },
-        "productId": {
-          "type": "string"
-        },
-        "quantity": {
-          "type": "integer",
-          "minimum": 1
-        }
-      }
-    },
-    "CartItem": {
-      "type": "object",
-      "properties": {
-        "product": {
-          "type": "object",
-          "properties": {
-            "productId": {
-              "type": "string"
-            },
-            "name": {
-              "type": "string"
-            },
-            "price": {
-              "type": "number"
-            },
-            "imageUrl": {
-              "type": "string"
-            }
-          }
-        },
-        "quantity": {
-          "type": "integer"
-        }
-      }
     }
-  },
-  "externalDocs": {
-    "description": "Eye-Eye-Tee API Documentation",
-    "url": "https://docs.eye-eye-tee.com"
-  },
-  "x-logo": {
-    "url": "https://eye-eye-tee.com/logo.png",
-    "backgroundColor": "#FFFFFF",
-    "altText": "Eye-Eye-Tee Logo"
   }
 }
