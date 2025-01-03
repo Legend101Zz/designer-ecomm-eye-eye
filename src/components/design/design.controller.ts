@@ -3,9 +3,9 @@ import logger from '@core/utils/logger';
 import { product } from '@components/product/product.model';
 import { design } from './design.model';
 
-interface CustomRequest extends Request {
-  files: any; // Include the 'file' property with the MulterFile type
-}
+// interface CustomRequest extends Request {
+//   files: any; // Include the 'file' property with the MulterFile type
+// }
 const showDesigns = async (req: Request, res: Response) => {
   try {
     // Fetch all designs
@@ -101,7 +101,7 @@ const getDesignerDesigns = async (req: Request, res: Response) => {
     const formattedDesigns = designs.map((design1) => ({
       title: design1.title || '',
       description: design1.description || '',
-      designer: design1.designer.name,
+      designer: design1.designer,
       designImages: design1.designImage.map((image) => ({
         url: image.url,
         filename: image.filename,

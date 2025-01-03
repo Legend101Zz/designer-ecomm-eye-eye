@@ -9,7 +9,6 @@ import { sendEmailMiddleware } from '@core/middlewares/nodemailer';
 import { IUser } from '@components/user/user.interface';
 import { create } from '@components/user/user.service';
 import { user } from '@components/user/user.model';
-import { design } from '@components/design/design.model';
 import { designer } from '@components/designer/designer.model';
 import { finalProduct } from '@components/finalProduct/finalprod.model';
 import { address } from './userAddress.model';
@@ -272,6 +271,44 @@ const followDesigner = async (req: Request, res: Response) => {
   }
 };
 
+const unfollowDesigner = async (req: Request, res: Response) => {
+  try {
+    const { userId, designerId } = req.body;
+
+    // Check if the user and designer exist
+    const CheckUser = await user.findById(userId);
+    const CheckDesigner = await designer.findById(designerId);
+
+    if (!CheckUser || !CheckDesigner) {
+      return res.status(404).json({ message: 'User or designer not found' });
+    }
+
+    // Check if the designer's ID exists in the user's following array
+    if (!CheckUser.following.includes(designerId)) {
+      return res
+        .status(400)
+        .json({ message: 'User is not following the designer' });
+    }
+
+    // Remove the designer's ID from the user's following array
+    CheckUser.following = CheckUser.following.filter((id) => id !== designerId);
+    await CheckUser.save();
+
+    // Remove the user's ID from the designer's followers array
+    CheckDesigner.followers = CheckDesigner.followers.filter(
+      (id) => id !== userId,
+    );
+    await CheckDesigner.save();
+
+    return res
+      .status(200)
+      .json({ message: 'User has unfollowed the designer' });
+  } catch (error) {
+    logger.error(error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 // controllers for handling cart operations
 
 // =========!!! ADD CHECK FOR AVAILABLE QUANTITY ============
@@ -492,6 +529,7 @@ export {
   loginUser,
   addAddress,
   followDesigner,
+  unfollowDesigner,
   getUserCart,
   addToCart,
   removeFromCart,

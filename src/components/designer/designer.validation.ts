@@ -3,7 +3,7 @@ import { ValidationSchema } from '@core/interfaces/validationSchema';
 import userAddressValidation from '@components/user/userAddress.validation';
 
 const createDesignerValidation: ValidationSchema = {
-  body: Joi.object().keys({
+  body: Joi.object().keys({ 
     userId: Joi.string()
       .regex(/^[0-9a-fA-F]{24}$/)
       .required(),

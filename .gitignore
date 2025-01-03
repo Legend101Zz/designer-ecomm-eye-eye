@@ -40,3 +40,4 @@ dist/
 # Generated source-code #
 src/**/*.js.map
 coverage/
+.vercel

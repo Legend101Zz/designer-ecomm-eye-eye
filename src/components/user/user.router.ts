@@ -19,6 +19,7 @@ import {
   loginUser,
   addAddress,
   followDesigner,
+  unfollowDesigner,
   updateUser,
   getAddress,
   getUserInfo,
@@ -134,6 +135,8 @@ router.post(
 router.post('/user/update-password', [protectedByApiKey], updatePassword);
 
 router.post('/user/follow', [protectedByApiKey], followDesigner);
+
+router.post('/user/unfollow', [protectedByApiKey], unfollowDesigner);
 
 router.post('/user/login', [protectedByApiKey], loginUser);
 

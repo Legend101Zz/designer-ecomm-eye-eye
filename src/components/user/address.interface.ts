@@ -2,13 +2,19 @@ import mongoose from 'mongoose';
 
 export interface IAddress {
   _id: string;
-  username: String;
+  username: string;
   user_id: { type: mongoose.Schema.Types.ObjectId };
-  address_line1: String;
-  address_line2: String;
-  city: String;
-  state: String;
-  postal_code: String;
-  country: String;
-  address_type: String;
+  address_line1: string;
+  address_line2: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+  address_type: AddressType;
+}
+
+export enum AddressType {
+  HOME = 'home',
+  WORK = 'work',
+  OTHER = 'other',
 }

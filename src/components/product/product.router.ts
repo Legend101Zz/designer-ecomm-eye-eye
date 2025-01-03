@@ -26,7 +26,7 @@ const router: Router = Router();
 router.get('/product/read/:id', [protectedByApiKey], readProd);
 router.get('/product/images', [protectedByApiKey], getProductImages);
 router.get('/product/getColor', [protectedByApiKey], getColorsByCategory);
-router.get('/product/getColorByName', [protectedByApiKey], getProductByName);
+router.get('/product/getProductByName', [protectedByApiKey], getProductByName);
 
 // post routes
 

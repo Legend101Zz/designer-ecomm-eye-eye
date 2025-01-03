@@ -7,24 +7,30 @@ const ImageSchema: Schema<IModel> = new Schema({
   filename: String,
 });
 
-const DesignSchema: Schema<IDesign> = new Schema({
-  title: {
-    type: String,
-  },
-  description: { type: String },
-  designImage: [ImageSchema],
-  designer: {
-    type: Schema.Types.ObjectId,
-    ref: 'Designer',
-  },
-  finalProduct: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: 'Product',
+const DesignSchema: Schema<IDesign> = new Schema(
+  {
+    title: {
+      type: String,
     },
-  ],
-  isVerified: { type: Boolean, default: false },
-});
+    description: { type: String },
+    designImage: [ImageSchema],
+    designer: {
+      type: Schema.Types.ObjectId,
+      ref: 'Designer',
+    },
+    finalProduct: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Product',
+      },
+    ],
+    isVerified: { type: Boolean, default: false },
+    likes: { type: Number, default: 0 },
+    appliedCount: { type: Number, default: 0 },
+    tags: { type: [String], default: [] },
+  },
+  { timestamps: true },
+);
 
 const design = mongoose.model<IDesign>('Design', DesignSchema);
 // eslint-disable-next-line import/prefer-default-export

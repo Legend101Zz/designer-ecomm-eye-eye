@@ -18,6 +18,6 @@ router.get(
   [protectedByApiKey],
   getDesignerDesigns,
 );
-router.get('/designs/update/:designId', [protectedByApiKey], updateDesign);
+router.post('/designs/update/:designId', [protectedByApiKey], updateDesign);
 
 export default router;

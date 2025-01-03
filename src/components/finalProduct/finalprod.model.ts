@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars */
 import mongoose, { Schema } from 'mongoose';
 import { IModel } from '@core/interfaces/validationSchema';
+import { design } from '@components/design/design.model';
 import { IfinalProduct, IDesignApplication } from './finalprod.interface';
 
 const ImageSchema: Schema<IModel> = new Schema({
@@ -63,6 +64,24 @@ const FinalProductSchema: Schema<IfinalProduct> = new Schema(
   },
   { timestamps: true },
 );
+
+FinalProductSchema.post('save', async function (doc, next) {
+  try {
+    // Iterate over each applied design and update its appliedCount
+    await Promise.all(
+      doc.appliedDesigns.map(async (application) => {
+        if (application.designId) {
+          await design.findByIdAndUpdate(application.designId, {
+            $inc: { appliedCount: 1 },
+          });
+        }
+      }),
+    );
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
 const finalProduct = mongoose.model<IfinalProduct>(
   'FinalProduct',

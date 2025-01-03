@@ -60,7 +60,10 @@ const loginAdmin = async (req: Request, res: Response) => {
     }
 
     // Compare the provided password with the stored hashed password
-    const passwordMatch = await bcrypt.compare(password, foundAdmin.password);
+    const passwordMatch = await bcrypt.compare(
+      password,
+      foundAdmin.password as string,
+    );
 
     if (!passwordMatch) {
       return res.status(401).json({ message: 'Incorrect password' });

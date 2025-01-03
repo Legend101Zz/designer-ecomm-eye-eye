@@ -1,11 +1,14 @@
+import mongoose from 'mongoose';
 import { IModel } from '@core/interfaces/validationSchema';
 
 export interface IDesign {
-  finalProduct: any;
   designImage: IModel; // will there be multiple design images ?
-  designer: any;
+  designer: mongoose.Schema.Types.ObjectId;
+  finalProduct: mongoose.Schema.Types.ObjectId[];
   likes: number;
-  title: String;
-  description: String;
-  isVerified: Boolean;
+  title: string;
+  description: string;
+  isVerified: boolean;
+  appliedCount: number;
+  tags: string[];
 }

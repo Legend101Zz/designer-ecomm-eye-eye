@@ -13,46 +13,49 @@ const ImageSchema: Schema<IModel> = new Schema({
   },
 });
 
-const ProductSchema: Schema<Iproduct> = new Schema({
-  name: {
-    type: String,
-    required: true,
-  },
-  quantity: {
-    type: Number,
-    required: true,
-  },
-  color: [{ type: String, enum: Object.values(Color) }],
-  category: {
-    type: String,
-    required: true,
-    enum: Object.values(Category),
-  },
-  image: [ImageSchema],
-  sizes: {
-    type: [String],
-    enum: Object.values(Size),
-    validate: {
-      validator(v: string[]) {
-        if (['shirt', 'Tshirt', 'hoodie'].includes(this.category)) {
-          return v && v.length > 0;
-        }
-        return true;
+const ProductSchema: Schema<Iproduct> = new Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+    },
+    quantity: {
+      type: Number,
+      required: true,
+    },
+    color: [{ type: String, enum: Object.values(Color) }],
+    category: {
+      type: String,
+      required: true,
+      enum: Object.values(Category),
+    },
+    image: [ImageSchema],
+    sizes: {
+      type: [String],
+      enum: Object.values(Size),
+      validate: {
+        validator(v: string[]) {
+          if (['shirt', 'Tshirt', 'hoodie'].includes(this.category)) {
+            return v && v.length > 0;
+          }
+          return true;
+        },
+        message:
+          'Sizes field is required for shirt, Tshirt, and hoodie categories',
       },
-      message:
-        'Sizes field is required for shirt, Tshirt, and hoodie categories',
+    },
+    basePrice: {
+      type: Number,
+      required: true,
+    },
+    gender: {
+      type: String,
+      enum: Object.values(Gender),
+      default: Gender.unisex,
     },
   },
-  basePrice: {
-    type: Number,
-    required: true,
-  },
-  gender: {
-    type: String,
-    enum: Object.values(Gender),
-    default: Gender.unisex,
-  },
-});
+  { timestamps: true },
+);
 
 // eslint-disable-next-line func-names, consistent-return
 ProductSchema.pre('save', function (next) {
