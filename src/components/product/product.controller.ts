@@ -7,8 +7,8 @@ import { product } from '@components/product/product.model';
 import {
   ProductType,
   IProductImage,
-  Color,
   ProductDocument,
+  Color,
 } from './product.interface';
 import { createProduct, readProduct, updateProduct } from './product.service';
 
@@ -39,9 +39,9 @@ const createProd = async (
       basePrice,
       gender,
       description,
-      deviceVariants,
-      dimensions,
-      measurements,
+      deviceVariants, // not compulsory
+      dimensions, // not compulsory
+      measurements, // not compulsory
     } = req.body;
 
     // Process images with proper metadata
@@ -49,9 +49,9 @@ const createProd = async (
       return {
         url: file.path,
         filename: file.filename,
+        color: colors.split(',')[0] || Color.WHITE,
         // eslint-disable-next-line no-nested-ternary
         position: index === 0 ? 'front' : index === 1 ? 'back' : 'detail',
-        color: file.color || Color.WHITE, // Default color if not specified
         variant: file.variant,
       };
     });
@@ -230,15 +230,28 @@ const removeColorVariant = async (req: Request, res: Response) => {
  */
 const getProductVariants = async (req: Request, res: Response) => {
   try {
-    const { name, gender } = req.query;
-    const query: any = { name };
+    const { name, gender, fields } = req.query;
 
-    if (gender) {
-      query.gender = { $in: [gender] };
+    // Base query
+    const query: any = {};
+    if (name) query.name = name;
+    if (gender) query.gender = { $in: [gender] };
+
+    // Fields projection
+    let projection: any = null;
+    if (fields) {
+      projection = fields
+        .toString()
+        .split(',')
+        .reduce((acc: Record<string, 1>, field: string) => {
+          acc[field.trim()] = 1;
+          return acc;
+        }, {});
     }
 
-    const products = await product.find(query);
+    const products = await product.find(query, projection); // Pass projection here
 
+    // Check if products exist
     if (!products.length) {
       return res.status(httpStatus.NOT_FOUND).json({
         message: 'No products found',

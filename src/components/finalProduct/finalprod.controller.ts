@@ -1,498 +1,755 @@
-import { NextFunction, Request, Response } from 'express';
-import { v2 as cloudinary } from 'cloudinary';
+import { Request, Response, NextFunction } from 'express';
+import { Multer } from 'multer';
 import httpStatus from 'http-status';
-import logger from '@core/utils/logger';
-import AppError from '@core/utils/appError';
+import { v2 as cloudinary } from 'cloudinary';
 import mongoose from 'mongoose';
-import { product } from '@components/product/product.model';
-import { design } from '@components/design/design.model';
+import AppError from '@core/utils/appError';
+import logger from '@core/utils/logger';
+import { product } from '../product/product.model';
+import { design } from '../design/design.model';
 import { finalProduct } from './finalprod.model';
-import {
-  IDesignApplication,
-  IProductVariant,
-  IDesignGroup,
-  IFinalProduct,
-} from './finalprod.interface';
+import { Gender, Size, Color } from '../product/product.interface';
+import { IDesignPlacement, IProductVariant } from './finalprod.interface';
+
+/**
+ * Types for request/response data structures
+ */
+interface ProcessedImage {
+  baseProductId: string;
+  color: Color;
+  front: string; // base64 or file path
+  back: string; // base64 or file path
+}
+
+interface ProductVariantRequest {
+  baseProductId: string;
+  color: Color;
+}
+
+interface DesignPlacementRequest {
+  designId: string;
+  position: 'front' | 'back';
+  coordinates: {
+    x: number;
+    y: number;
+  };
+  scale?: number;
+  rotation?: number;
+}
+
+interface CreateProductRequest {
+  productName: string;
+  gender: Gender;
+  designPrice: number;
+  designs: DesignPlacementRequest[];
+  variants: ProductVariantRequest[];
+  processedImages: ProcessedImage[];
+}
 
 interface CustomRequest extends Request {
-  files: any[];
-  uploadedImages?: Array<{ url: string; public_id: string }>;
+  files: Multer.File[];
 }
 
 /**
- * Helper function to create a properly typed design group
+ * Helper function to handle Cloudinary image upload
+ * @param imageData - Base64 or path to image
+ * @param folder - Cloudinary folder path
+ * @returns Promise resolving to upload result
  */
-const createDesignGroup = (data: {
-  name: string;
-  designs: Partial<IDesignApplication>[];
-  variants: Partial<IProductVariant>[];
-}): IDesignGroup => {
-  return {
-    _id: new mongoose.Types.ObjectId(),
-    name: data.name,
-    designs: data.designs as IDesignApplication[],
-    variants: data.variants as IProductVariant[],
-  };
-};
+async function uploadToCloudinary(imageData: string, folder: string) {
+  try {
+    const result = await cloudinary.uploader.upload(imageData, {
+      folder,
+      resource_type: 'image',
+    });
+    return result;
+  } catch (error) {
+    logger.error(`Failed to upload image to ${folder}:`, error);
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      'Failed to upload image',
+    );
+  }
+}
 
 /**
- * Helper function to find a design group by ID
- */
-const findDesignGroup = (
-  product1: IFinalProduct,
-  groupId: string,
-): IDesignGroup | null => {
-  return (
-    // eslint-disable-next-line no-underscore-dangle
-    product1.designGroups.find((g) => g._id.toString() === groupId) || null
-  );
-};
-
-/**
- * Helper function to find a variant in a design group
- */
-const findVariant = (
-  group: IDesignGroup,
-  variantId: string,
-): IProductVariant | null => {
-  // eslint-disable-next-line no-underscore-dangle
-  return group.variants.find((v) => v._id?.toString() === variantId) || null;
-};
-
-/**
- * Creates a new final product with design applications and variants
+ * Creates a new final product with applied designs
+ *
+ * This endpoint handles:
+ * 1. Validation of all input data
+ * 2. Processing and uploading of design images
+ * 3. Creation of variants with inherited stock levels
+ * 4. Organization of products by design groups
+ *
  * @route POST /api/finalproduct/create
+ * @param req Request containing product creation data
+ * @param res Response object
+ * @param next Next middleware function
+ * @returns {Promise<void>}
+ * @throws {AppError} If validation fails or processing error occurs
  */
-const createFinalProduct = async (
+// eslint-disable-next-line import/prefer-default-export
+export async function createFinalProduct(
   req: CustomRequest,
   res: Response,
   next: NextFunction,
-) => {
-  const uploadedFiles: Array<{ url: string; filename: string }> = [];
+): Promise<void> {
+  // Track uploaded files for cleanup in case of error
+  const uploadedFiles: string[] = [];
+
   try {
     const {
-      baseProductId,
       productName,
-      designGroupName,
+      gender,
+      designPrice,
       designs,
       variants,
-      basePrice,
-      tags,
-    } = req.body;
+      processedImages,
+    } = req.body as CreateProductRequest;
 
-    // Validate base product exists
-    const baseProduct = await product.findById(baseProductId);
-    if (!baseProduct) {
-      throw new AppError(httpStatus.NOT_FOUND, 'Base product not found');
-    }
+    logger.debug(`Processing final product creation: ${productName}`);
 
-    // Process uploaded images if any
-    if (req.files?.length) {
-      // eslint-disable-next-line no-restricted-syntax
-      for (const file of req.files) {
-        uploadedFiles.push({
-          url: file.path,
-          filename: file.filename,
+    // Step 1: Process and validate designs
+    const processedDesigns = await Promise.all(
+      designs.map(async (designData): Promise<IDesignPlacement> => {
+        // Validate design exists and is approved
+        const designDoc = await design
+          .findById(designData.designId)
+          .select('isVerified title designImage designer')
+          .populate('designer', 'artistName');
+
+        if (!designDoc?.isVerified) {
+          throw new AppError(
+            httpStatus.NOT_FOUND,
+            `Design ${designData.designId} not found or not verified`,
+          );
+        }
+
+        // Return processed design placement
+        return {
+          // eslint-disable-next-line no-underscore-dangle
+          designId: designDoc._id,
+          position: designData.position,
+          scale: designData.scale || 1,
+          rotation: designData.rotation || 0,
+          coordinates: designData.coordinates,
+        };
+      }),
+    );
+
+    // Step 2: Process variant images with organized uploads
+    const processedImagesByVariant = await Promise.all(
+      processedImages.map(async (imgData) => {
+        // Create folder structure for images
+        const folder = `final-products/${productName}/${gender}/${imgData.color}`;
+
+        // Upload front and back images
+        const [frontImage, backImage] = await Promise.all([
+          uploadToCloudinary(imgData.front, `${folder}/front`),
+          uploadToCloudinary(imgData.back, `${folder}/back`),
+        ]);
+
+        // Track uploaded files
+        uploadedFiles.push(frontImage.public_id, backImage.public_id);
+
+        return {
+          baseProductId: imgData.baseProductId,
+          color: imgData.color,
+          images: {
+            front: {
+              url: frontImage.secure_url,
+              filename: frontImage.public_id,
+            },
+            back: {
+              url: backImage.secure_url,
+              filename: backImage.public_id,
+            },
+          },
+        };
+      }),
+    );
+
+    // Step 3: Process and validate variants
+    const processedVariants = await Promise.all(
+      variants.map(async (variantData): Promise<IProductVariant> => {
+        // Validate base product exists and is active
+        const baseProductDoc = await product.findById(
+          variantData.baseProductId,
+        );
+        if (!baseProductDoc?.isActive) {
+          throw new AppError(
+            httpStatus.NOT_FOUND,
+            `Base product ${variantData.baseProductId} not found or inactive`,
+          );
+        }
+
+        // Ensure baseProductDoc is valid
+        if (!baseProductDoc) {
+          throw new Error('Invalid baseProductDoc');
+        }
+
+        // Verify if baseProductDoc contains the same color and gender
+        const hasMatchingColor = baseProductDoc.colors.includes(
+          variantData.color,
+        );
+        const hasMatchingGender = baseProductDoc.gender.includes(gender);
+
+        if (!hasMatchingColor || !hasMatchingGender) {
+          throw new Error(
+            `Base product does not match the required color: ${variantData.color} or gender: ${gender}`,
+          );
+        }
+
+        // Validate processed images exist for this variant
+        const variantImages = processedImagesByVariant.find(
+          (img) =>
+            img.baseProductId === variantData.baseProductId &&
+            img.color === variantData.color,
+        );
+
+        if (!variantImages) {
+          throw new AppError(
+            httpStatus.BAD_REQUEST,
+            `Missing processed images for variant: ${variantData.color}`,
+          );
+        }
+
+        // Create variant with inherited stock levels
+        return {
+          baseProductId: new mongoose.Types.ObjectId(variantData.baseProductId),
+          color: variantData.color,
+          stock: new Map(
+            baseProductDoc.sizes.map((size) => [
+              size,
+              baseProductDoc.quantity || 0,
+            ]),
+          ),
+        };
+      }),
+    );
+
+    // Step 4: Create design group
+    const designGroup = {
+      name: `${productName} ${gender} Collection`,
+      gender,
+      designs: processedDesigns,
+      variants: processedVariants,
+      processedImages: {
+        front: processedImagesByVariant.map((v) => v.images.front),
+        back: processedImagesByVariant.map((v) => v.images.back),
+      },
+      designPrice: Number(designPrice) || 0,
+    };
+
+    logger.debug('Checking for existing product with same design combination');
+
+    // Step 5: Find or create final product
+    let finalProd = await finalProduct.findOne({
+      productName,
+      'designGroups.designs': {
+        $size: designs.length,
+        $all: designs.map((d) => ({
+          designId: d.designId,
+          position: d.position,
+        })),
+      },
+    });
+
+    if (finalProd) {
+      // Check for existing gender group
+      if (finalProd.designGroups.some((g) => g.gender === gender)) {
+        throw new AppError(
+          httpStatus.CONFLICT,
+          'Design combination already exists for this gender',
+        );
+      }
+
+      // Add new gender group
+      finalProd.designGroups.push(designGroup);
+      logger.debug('Added new gender group to existing product');
+    } else {
+      // Extract tags from form-data
+      const tagsString = req.body.tags; // Form-data sends tags as a string
+      let tags: string[] = [];
+
+      if (tagsString) {
+        // Parse tags into an array
+        tags = JSON.parse(tagsString);
+
+        // Ensure it's an array of strings
+        if (
+          !Array.isArray(tags) ||
+          !tags.every((tag) => typeof tag === 'string')
+        ) {
+          throw new Error('Tags must be an array of strings');
+        }
+        // Create new final product
+        finalProd = await finalProduct.create({
+          productName,
+          designGroups: [designGroup],
+          tags,
         });
+        logger.debug('Created new final product');
       }
     }
 
-    // Process design applications with proper typing
-    const processedDesigns = await Promise.all(
-      JSON.parse(designs).map(
-        async (designData: {
-          designId: string;
-          position: 'front' | 'back';
-          scale?: number;
-          rotation?: number;
-          coordinates?: { x: number; y: number };
-          appliedImage: { url: string; filename: string };
-        }) => {
-          const existingDesign = await design.findById(designData.designId);
-          if (!existingDesign) {
-            throw new Error(`Design not found: ${designData.designId}`);
-          }
+    // Save changes
+    await finalProd.save();
 
-          return {
-            _id: new mongoose.Types.ObjectId(),
-            // eslint-disable-next-line no-underscore-dangle
-            designId: existingDesign._id,
-            designerId: existingDesign.designer,
-            position: designData.position,
-            scale: designData.scale || 1,
-            rotation: designData.rotation || 0,
-            coordinates: designData.coordinates,
-            appliedImage: designData.appliedImage,
-          };
-        },
-      ),
+    logger.info(
+      // eslint-disable-next-line no-underscore-dangle
+      `Successfully created/updated final product ${finalProd._id} ` +
+        `with ${processedVariants.length} variants`,
     );
 
-    // Process variants with proper typing
-    const processedVariants = JSON.parse(variants).map((variantData: any) => ({
-      _id: new mongoose.Types.ObjectId(),
-      color: variantData.color,
-      gender: variantData.gender,
-      sizes: variantData.sizes,
-      baseImages: variantData.baseImages,
-      processedImages: variantData.processedImages,
-      price: variantData.price,
-      stock: new Map(Object.entries(variantData.stock)),
-    }));
-
-    // Create the initial design group
-    const initialGroup = createDesignGroup({
-      name: designGroupName,
-      designs: processedDesigns,
-      variants: processedVariants,
-    });
-
-    // Create final product
-    const newFinalProduct = await finalProduct.create({
-      baseProductId,
-      productName,
-      basePrice: parseFloat(basePrice),
-      category: baseProduct.category,
-      tags: JSON.parse(tags),
-      designGroups: [initialGroup],
-    });
-
+    // Return success response
     res.status(httpStatus.CREATED).json({
       success: true,
       // eslint-disable-next-line no-underscore-dangle
-      productId: newFinalProduct._id,
+      productId: finalProd._id,
       message: 'Final product created successfully',
     });
   } catch (error) {
-    logger.error('Final product creation error:', error);
-
-    // Clean up uploaded files if any
+    // Clean up uploaded files on error
     if (uploadedFiles.length) {
+      logger.debug('Cleaning up uploaded files due to error');
       await Promise.all(
-        uploadedFiles.map((file) => cloudinary.uploader.destroy(file.filename)),
+        uploadedFiles.map((publicId) =>
+          cloudinary.uploader
+            .destroy(publicId)
+            .catch((err) =>
+              logger.error(`Failed to delete image ${publicId}:`, err),
+            ),
+        ),
       );
     }
 
-    next(new AppError(httpStatus.BAD_REQUEST, error.message));
-  }
-};
-
-/**
- * Adds a new design group to an existing product
- * @route POST /api/finalproduct/:productId/designgroup
- */
-const addDesignGroup = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const { productId } = req.params;
-    const { designGroupName, designs, variants } = req.body;
-
-    const existingProduct = await finalProduct
-      .findById(productId)
-      .populate('baseProductId')
-      .populate('designGroups.designs.designId')
-      .populate('designGroups.designs.designerId');
-
-    if (!existingProduct) {
-      throw new AppError(httpStatus.NOT_FOUND, 'Product not found');
-    }
-
-    const processedDesigns = await Promise.all(
-      JSON.parse(designs).map(
-        async (designData: {
-          designId: string;
-          position: 'front' | 'back';
-          scale?: number;
-          rotation?: number;
-          coordinates?: { x: number; y: number };
-          appliedImage: { url: string; filename: string };
-        }) => {
-          const existingDesign = await design.findById(designData.designId);
-          if (!existingDesign) {
-            throw new Error(`Design not found: ${designData.designId}`);
-          }
-
-          return {
-            _id: new mongoose.Types.ObjectId(),
-            // eslint-disable-next-line no-underscore-dangle
-            designId: existingDesign._id,
-            designerId: existingDesign.designer,
-            position: designData.position,
-            scale: designData.scale || 1,
-            rotation: designData.rotation || 0,
-            coordinates: designData.coordinates,
-            appliedImage: designData.appliedImage,
-          };
-        },
-      ),
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError(
+            httpStatus.INTERNAL_SERVER_ERROR,
+            'Error creating final product',
+          ),
     );
-
-    const processedVariants = JSON.parse(variants).map((variantData: any) => ({
-      _id: new mongoose.Types.ObjectId(),
-      color: variantData.color,
-      gender: variantData.gender,
-      sizes: variantData.sizes,
-      baseImages: variantData.baseImages,
-      processedImages: variantData.processedImages,
-      price: variantData.price,
-      stock: new Map(Object.entries(variantData.stock)),
-    }));
-
-    const newGroup = createDesignGroup({
-      name: designGroupName,
-      designs: processedDesigns,
-      variants: processedVariants,
-    });
-
-    existingProduct.designGroups.push(newGroup);
-    await existingProduct.save();
-
-    res.status(httpStatus.OK).json({
-      success: true,
-      // eslint-disable-next-line no-underscore-dangle
-      groupId: newGroup._id,
-      message: 'Design group added successfully',
-    });
-  } catch (error) {
-    next(new AppError(httpStatus.BAD_REQUEST, error.message));
   }
-};
+}
 
 /**
- * Gets product variants filtered by gender
- * @route GET /api/finalproduct/:productId/variants/:gender
- */
-const getVariantsByGender = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const { productId, gender } = req.params;
-
-    const finalProd = await finalProduct
-      .findById(productId)
-      .populate('baseProductId')
-      .populate('designGroups.designs.designId', 'title')
-      .populate('designGroups.designs.designerId', 'artistName');
-
-    if (!finalProd) {
-      throw new AppError(httpStatus.NOT_FOUND, 'Product not found');
-    }
-
-    const groupedVariants = finalProd.designGroups.map((group) => ({
-      // eslint-disable-next-line no-underscore-dangle
-      groupId: group._id,
-      name: group.name,
-      designs: group.designs.map((design1) => ({
-        designName: design1.designId?.title || 'Unknown Design',
-        designerName: design1.designerId?.artistName || 'Unknown Designer',
-        position: design1.position,
-      })),
-      variants: group.variants
-        .filter((v) => v.gender === gender)
-        .map((v) => ({
-          // eslint-disable-next-line no-underscore-dangle
-          variantId: v._id,
-          color: v.color,
-          sizes: v.sizes,
-          price: v.price,
-          // eslint-disable-next-line node/no-unsupported-features/es-builtins
-          stock: Object.fromEntries(v.stock),
-          images: v.processedImages,
-        })),
-    }));
-
-    res.status(httpStatus.OK).json({
-      success: true,
-      productName: finalProd.productName,
-      category: finalProd.category,
-      variants: groupedVariants,
-    });
-  } catch (error) {
-    next(new AppError(httpStatus.BAD_REQUEST, error.message));
-  }
-};
-
-/**
- * Updates stock levels for product variants
- * @route PATCH /api/finalproduct/:productId/stock
- */
-const updateStock = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { productId } = req.params;
-    const { updates } = req.body;
-
-    const finalProd = await finalProduct.findById(productId);
-    if (!finalProd) {
-      throw new AppError(httpStatus.NOT_FOUND, 'Product not found');
-    }
-
-    const stockUpdates = JSON.parse(updates);
-    // eslint-disable-next-line no-restricted-syntax
-    for (const update of stockUpdates) {
-      const group = findDesignGroup(finalProd, update.groupId);
-      if (!group) continue;
-
-      const variant = findVariant(group, update.variantId);
-      if (!variant) continue;
-
-      update.stock.forEach((stockItem: { size: string; quantity: number }) => {
-        variant.stock.set(stockItem.size, stockItem.quantity);
-      });
-    }
-
-    await finalProd.save();
-
-    res.status(httpStatus.OK).json({
-      success: true,
-      message: 'Stock updated successfully',
-    });
-  } catch (error) {
-    next(new AppError(httpStatus.BAD_REQUEST, error.message));
-  }
-};
-
-/**
- * Gets filtered products by category and/or gender
+ * Retrieves a filtered list of final products
+ *
+ * Supports filtering by:
+ * - Category of base product
+ * - Gender of design group
+ * - Specific base product ID
+ *
+ * Returns formatted product data with:
+ * - Basic product information
+ * - Design groups with their variants
+ * - Processed images for each variant
+ *
  * @route GET /api/finalproduct/list
+ * @param req Request with optional query parameters
+ * @param res Response object
+ * @param next Next middleware function
+ * @returns {Promise<void>}
  */
-const getFilteredProducts = async (
+export async function getFilteredProducts(
   req: Request,
   res: Response,
   next: NextFunction,
-) => {
+): Promise<void> {
   try {
-    const { category, gender } = req.query;
+    const { category, gender, baseProductId } = req.query;
+    logger.debug('Getting filtered products:', {
+      category,
+      gender,
+      baseProductId,
+    });
 
-    const query: any = {};
-    if (category) query.category = category;
+    // Build query filters
+    const query: any = { isActive: true };
 
+    if (baseProductId) {
+      query['designGroups.variants.baseProductId'] = baseProductId;
+    }
+    if (gender) {
+      query['designGroups.gender'] = gender;
+    }
+
+    // Fetch products with populated references
     const products = await finalProduct
       .find(query)
-      .populate('baseProductId')
-      .populate('designGroups.designs.designId', 'title')
-      .populate('designGroups.designs.designerId', 'artistName');
+      .populate({
+        path: 'designGroups.variants.baseProductId',
+        select: 'name category tags',
+        match: category ? { category } : {},
+      })
+      .populate({
+        path: 'designGroups.designs.designId',
+        select: 'title designImage designer',
+        populate: {
+          path: 'designer',
+          select: 'artistName',
+        },
+      })
+      .lean();
 
-    const filteredProducts = products.map((prod) => {
-      const groupedByGender = prod.designGroups.map((group) => ({
-        // eslint-disable-next-line no-underscore-dangle
-        groupId: group._id,
-        name: group.name,
-        designs: group.designs.map((design1) => ({
-          designName: design1.designId?.title || 'Unknown Design',
-          designerName: design1.designerId?.artistName || 'Unknown Designer',
-        })),
-        variants: gender
-          ? group.variants
-              .filter((v) => v.gender === gender)
-              .map((v) => ({
-                color: v.color,
-                previewImage: v.processedImages.front,
-                price: v.price,
-              }))
-          : group.variants.map((v) => ({
-              gender: v.gender,
+    // Filter out products with no matching variants
+    const filteredProducts = products.filter(
+      (prod) =>
+        !category ||
+        prod.designGroups.some((group) =>
+          group.variants.some((v) => v.baseProductId),
+        ),
+    );
+
+    // Format response
+    const formattedProducts = filteredProducts.map((prod) => ({
+      // eslint-disable-next-line no-underscore-dangle
+      id: prod._id,
+      productName: prod.productName,
+      tags: prod.tags,
+      designGroups: prod.designGroups
+        // Only include groups matching gender filter if specified
+        .filter((g) => !gender || g.gender === gender)
+        .map((group) => ({
+          // eslint-disable-next-line no-underscore-dangle
+          // @ts-ignore
+          id: group._id,
+          name: group.name,
+          gender: group.gender,
+          designPrice: group.designPrice,
+          // Format designs
+          designs: group.designs.map((d) => ({
+            // eslint-disable-next-line no-underscore-dangle
+            id: d.designId._id,
+            designName: d.designId.title || 'Unknown Design',
+            designerName: d.designId.designer?.artistName || 'Unknown Designer',
+            position: d.position,
+            scale: d.scale,
+            rotation: d.rotation,
+            coordinates: d.coordinates,
+          })),
+          // Format variants
+          variants: group.variants
+            .filter((v) => v.baseProductId) // Filter out variants with no matching base product
+            .map((v) => ({
+              // eslint-disable-next-line no-underscore-dangle
+              baseProductId: v.baseProductId._id,
+              // @ts-ignore
+              productName: v.baseProductId.name,
+              // @ts-ignore
+              category: v.baseProductId.category,
               color: v.color,
-              previewImage: v.processedImages.front,
-              price: v.price,
+              // @ts-ignore
+              // eslint-disable-next-line node/no-unsupported-features/es-builtins
+              stock: Object.fromEntries(v.quantity),
+              // Match images to variant
+              images: {
+                front: group.processedImages.front.find((img) =>
+                  img.filename.includes(v.color.toLowerCase()),
+                )?.url,
+                back: group.processedImages.back.find((img) =>
+                  img.filename.includes(v.color.toLowerCase()),
+                )?.url,
+              },
             })),
-      }));
+        })),
+    }));
 
-      return {
-        // eslint-disable-next-line no-underscore-dangle
-        productId: prod._id,
-        productName: prod.productName,
-        category: prod.category,
-        basePrice: prod.basePrice,
-        designGroups: groupedByGender,
-      };
-    });
+    logger.debug(`Found ${formattedProducts.length} products matching filters`);
 
     res.status(httpStatus.OK).json({
       success: true,
-      products: filteredProducts,
+      products: formattedProducts,
     });
   } catch (error) {
-    next(new AppError(httpStatus.BAD_REQUEST, error.message));
+    next(
+      new AppError(httpStatus.INTERNAL_SERVER_ERROR, 'Error fetching products'),
+    );
   }
-};
+}
 
 /**
- * Gets detailed product information for a specific product
+ * Retrieves detailed information about a single final product
+ *
+ * Returns comprehensive product data including:
+ * - All design groups and their configurations
+ * - Complete variant information with stock levels
+ * - Processed images for all variants
+ * - Total stock and sales information
+ *
  * @route GET /api/finalproduct/:productId
+ * @param req Request with product ID parameter
+ * @param res Response object
+ * @param next Next middleware function
+ * @returns {Promise<void>}
+ * @throws {AppError} If product not found
  */
-const getProductDetails = async (
+export async function getProductDetails(
   req: Request,
   res: Response,
   next: NextFunction,
-) => {
+): Promise<void> {
   try {
     const { productId } = req.params;
+    logger.debug(`Getting details for product: ${productId}`);
 
+    // Fetch product with populated references
     const finalProd = await finalProduct
       .findById(productId)
-      .populate('baseProductId')
-      .populate('designGroups.designs.designId', 'title')
-      .populate('designGroups.designs.designerId', 'artistName');
+      .populate({
+        path: 'designGroups.variants.baseProductId',
+        select: 'name category tags',
+      })
+      .populate({
+        path: 'designGroups.designs.designId',
+        select: 'title designImage designer',
+        populate: {
+          path: 'designer',
+          select: 'artistName',
+        },
+      });
 
     if (!finalProd) {
       throw new AppError(httpStatus.NOT_FOUND, 'Product not found');
     }
-
     const response = {
       // eslint-disable-next-line no-underscore-dangle
-      productId: finalProd._id,
+      id: finalProd._id,
       productName: finalProd.productName,
-      category: finalProd.category,
-      basePrice: finalProd.basePrice,
       tags: finalProd.tags,
       designGroups: finalProd.designGroups.map((group) => ({
         // eslint-disable-next-line no-underscore-dangle
-        groupId: group._id,
+        // @ts-ignore
+        id: group._id,
         name: group.name,
-        designs: group.designs.map((design1) => ({
-          designName: design1.designId?.title || 'Unknown Design',
-          designerName: design1.designerId?.artistName || 'Unknown Designer',
-          position: design1.position,
-          scale: design1.scale,
-          rotation: design1.rotation,
-          coordinates: design1.coordinates,
-          appliedImage: design1.appliedImage,
+        gender: group.gender,
+        designPrice: group.designPrice,
+        // Format design information
+        designs: group.designs.map((d) => ({
+          // eslint-disable-next-line no-underscore-dangle
+          id: d.designId._id,
+          designName: d.designId.title || 'Unknown Design',
+          designerName: d.designId.designer?.artistName || 'Unknown Designer',
+          position: d.position,
+          scale: d.scale,
+          rotation: d.rotation,
+          coordinates: d.coordinates,
         })),
+        // Format variant information
         variants: group.variants.map((v) => ({
-          variantId: v._id,
+          // eslint-disable-next-line no-underscore-dangle
+          baseProductId: v.baseProductId._id,
+          // @ts-ignore
+          productName: v.baseProductId.name,
+          // @ts-ignore
+          category: v.baseProductId.category,
           color: v.color,
-          gender: v.gender,
-          sizes: v.sizes,
-          images: {
-            base: v.baseImages,
-            processed: v.processedImages,
-          },
-          price: v.price,
           // eslint-disable-next-line node/no-unsupported-features/es-builtins
           stock: Object.fromEntries(v.stock),
+          // Match processed images to variant
+          images: {
+            front: group.processedImages.front.find((img) =>
+              img.filename.includes(v.color.toLowerCase()),
+            )?.url,
+            back: group.processedImages.back.find((img) =>
+              img.filename.includes(v.color.toLowerCase()),
+            )?.url,
+          },
         })),
       })),
+      totalStock: finalProd.getTotalStock(),
+      sales: finalProd.sales,
+      isActive: finalProd.isActive,
+      createdAt: finalProd.createdAt,
+      updatedAt: finalProd.updatedAt,
     };
+
+    logger.debug(`Successfully retrieved product details: ${productId}`);
 
     res.status(httpStatus.OK).json({
       success: true,
       product: response,
     });
   } catch (error) {
-    next(new AppError(httpStatus.BAD_REQUEST, error.message));
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError(
+            httpStatus.INTERNAL_SERVER_ERROR,
+            'Error fetching product details',
+          ),
+    );
   }
-};
+}
 
-export {
-  createFinalProduct,
-  addDesignGroup,
-  getVariantsByGender,
-  updateStock,
-  getFilteredProducts,
-  getProductDetails,
-};
+/**
+ * Updates stock levels for a specific variant in a design group
+ *
+ * This endpoint:
+ * - Validates product and variant existence
+ * - Updates stock levels for specific size
+ * - Ensures non-negative stock values
+ * - Handles concurrent updates safely
+ *
+ * @route PATCH /api/finalproduct/:productId/stock
+ * @param req Request containing:
+ *    - productId: ID of final product
+ *    - groupId: ID of design group
+ *    - baseProductId: ID of base product
+ *    - color: Color variant
+ *    - size: Size to update
+ *    - quantity: New stock quantity
+ * @param res Response object
+ * @param next Next middleware function
+ * @returns {Promise<void>}
+ * @throws {AppError} If product not found or update fails
+ */
+export async function updateStock(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const { productId } = req.params;
+    const { groupId, baseProductId, color, size, quantity } = req.body;
+
+    logger.debug('Updating stock:', {
+      productId,
+      groupId,
+      baseProductId,
+      color,
+      size,
+      quantity,
+    });
+
+    // Validate inputs
+    if (quantity < 0) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'Stock quantity cannot be negative',
+      );
+    }
+
+    // Find product and validate existence
+    const finalProd = await finalProduct.findById(productId);
+    if (!finalProd) {
+      throw new AppError(httpStatus.NOT_FOUND, 'Product not found');
+    }
+
+    // Find design group
+    // @ts-ignore
+    const group = finalProd.designGroups.id(groupId);
+    if (!group) {
+      throw new AppError(httpStatus.NOT_FOUND, 'Design group not found');
+    }
+
+    // Find variant
+    const variant = group.variants.find(
+      (v) => v.baseProductId.toString() === baseProductId && v.color === color,
+    );
+    if (!variant) {
+      throw new AppError(httpStatus.NOT_FOUND, 'Variant not found');
+    }
+
+    // Update stock level
+    variant.stock.set(size as Size, quantity);
+
+    // Save changes with optimistic concurrency control
+    try {
+      await finalProd.save();
+    } catch (err) {
+      if (err.name === 'VersionError') {
+        throw new AppError(
+          httpStatus.CONFLICT,
+          'Stock was updated by another request, please retry',
+        );
+      }
+      throw err;
+    }
+
+    logger.info(
+      `Updated stock for product ${productId}, variant ${color}, size ${size} to ${quantity}`,
+    );
+
+    res.status(httpStatus.OK).json({
+      success: true,
+      message: 'Stock updated successfully',
+    });
+  } catch (error) {
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError(
+            httpStatus.INTERNAL_SERVER_ERROR,
+            'Error updating stock',
+          ),
+    );
+  }
+}
+
+/**
+ * Deactivates a final product
+ *
+ * This operation:
+ * - Sets product isActive flag to false
+ * - Maintains historical data
+ * - Does not affect existing orders/references
+ *
+ * Note: Deactivation is reversible through admin intervention
+ *
+ * @route PATCH /api/finalproduct/:productId/deactivate
+ * @param req Request with product ID parameter
+ * @param res Response object
+ * @param next Next middleware function
+ * @returns {Promise<void>}
+ * @throws {AppError} If product not found
+ */
+export async function deactivateProduct(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const { productId } = req.params;
+    logger.debug(`Deactivating product: ${productId}`);
+
+    // Find and update product
+    const finalProd = await finalProduct.findByIdAndUpdate(
+      productId,
+      {
+        isActive: false,
+        $set: {
+          'designGroups.$[].variants.$[].stock': new Map(),
+        },
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+    if (!finalProd) {
+      throw new AppError(httpStatus.NOT_FOUND, 'Product not found');
+    }
+
+    logger.info(`Successfully deactivated product: ${productId}`);
+
+    res.status(httpStatus.OK).json({
+      success: true,
+      message: 'Product deactivated successfully',
+      deactivatedAt: finalProd.updatedAt,
+    });
+  } catch (error) {
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError(
+            httpStatus.INTERNAL_SERVER_ERROR,
+            'Error deactivating product',
+          ),
+    );
+  }
+}

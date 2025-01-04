@@ -29,8 +29,6 @@ router.post(
   createProd,
 );
 
-router.get('/product/:id', [protectedByApiKey], readProd);
-
 // Product Variant Management Routes
 router.get('/product/variants', [protectedByApiKey], getProductVariants);
 
@@ -52,5 +50,7 @@ router.delete(
   [protectedByApiKey, validation(colorOperationValidation)],
   removeColorVariant,
 );
+
+router.get('/product/read/:id', [protectedByApiKey], readProd);
 
 export default router;

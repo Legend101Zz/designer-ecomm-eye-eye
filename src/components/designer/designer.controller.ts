@@ -9,7 +9,6 @@ import { product } from '@components/product/product.model';
 import { sendEmailMiddleware } from '@core/middlewares/nodemailer';
 import { design } from '@components/design/design.model';
 import { address } from '@components/user/userAddress.model';
-import { IDesigner } from './designer.interface';
 
 interface CustomRequest extends Request {
   files: any; // Include the 'file' property with the MulterFile type
