@@ -15,12 +15,342 @@ interface CustomRequest extends Request {
   files: any; // Include the 'file' property with the MulterFile type
   uploadedImages?: Array<{ url: string; public_id: string }>;
 }
-interface CustomDesignerData extends Omit<IDesigner, 'userId'> {
-  username: any;
-  email: any;
-  following: any;
-  coverImage: any;
-  profileImage: any;
+// interface CustomDesignerData extends Omit<IDesigner, 'userId'> {
+//   username: any;
+//   email: any;
+//   following: any;
+//   coverImage: any;
+//   profileImage: any;
+// }
+
+interface DesignerRequest {
+  userId: string;
+  fullname: string;
+  artistName: string;
+  description?: string;
+  portfolioLinks?: string[];
+  cvLinks?: string[];
+  phone: string;
+  panCardNumber: string;
+  addressBody: any; // Replace with proper address interface
+}
+
+const sendDesignerRequestEmail = async (
+  // eslint-disable-next-line @typescript-eslint/no-shadow
+  user: any,
+  designerData: DesignerRequest,
+) => {
+  const subject = 'Designer Profile Request Received - Deauth';
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          line-height: 1.6;
+          color: #292929;
+          background-color: #f5f5f5;
+          margin: 0;
+          padding: 0;
+        }
+        .container {
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+        }
+        .header {
+          background-color: #292929;
+          color: white;
+          text-align: center;
+          padding: 30px 20px;
+          border-radius: 12px 12px 0 0;
+        }
+        .logo {
+          width: 180px;
+          height: auto;
+          margin-bottom: 20px;
+        }
+        .header h1 {
+          margin: 0;
+          font-size: 28px;
+          color: #ffffff;
+        }
+        .content {
+          background-color: #ffffff;
+          padding: 40px;
+          border-radius: 0 0 12px 12px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .status-box {
+          background-color: #fff9f0;
+          border-left: 4px solid #ff7d04;
+          padding: 20px;
+          margin: 25px 0;
+          border-radius: 0 8px 8px 0;
+        }
+        .status-box h3 {
+          color: #ff7d04;
+          margin: 0 0 10px 0;
+          font-size: 20px;
+        }
+        .details {
+          background-color: #f9f9f9;
+          padding: 25px;
+          border-radius: 8px;
+          margin: 25px 0;
+        }
+        .details h3 {
+          color: #292929;
+          margin: 0 0 15px 0;
+        }
+        .details ul {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
+        .details li {
+          padding: 8px 0;
+          border-bottom: 1px solid #eeeeee;
+        }
+        .details li:last-child {
+          border-bottom: none;
+        }
+        .steps {
+          background-color: #292929;
+          color: white;
+          padding: 25px;
+          border-radius: 8px;
+          margin: 25px 0;
+        }
+        .steps h3 {
+          color: #ff7d04;
+          margin: 0 0 15px 0;
+        }
+        .steps ol {
+          margin: 0;
+          padding-left: 20px;
+        }
+        .steps li {
+          margin: 10px 0;
+        }
+        .contact {
+          background-color: #fff9f0;
+          padding: 20px;
+          border-radius: 8px;
+          text-align: center;
+          margin: 25px 0;
+        }
+        .contact a {
+          color: #ff7d04;
+          text-decoration: none;
+          font-weight: bold;
+        }
+        .footer {
+          text-align: center;
+          padding-top: 30px;
+          color: #666666;
+          font-size: 12px;
+          border-top: 1px solid #eeeeee;
+        }
+        .footer a {
+          color: #ff7d04;
+          text-decoration: none;
+          margin: 0 10px;
+        }
+        .highlight {
+          color: #ff7d04;
+          font-weight: bold;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <img src="https://www.deauth.in/_next/image?url=%2Flogos%2Flogo.webp&w=256&q=75" alt="Deauth Logo" class="logo">
+          <h1>Designer Profile Request Received</h1>
+        </div>
+        
+        <div class="content">
+          <p>Hello <span class="highlight">${designerData.fullname}</span>,</p>
+          
+          <div class="status-box">
+            <h3>🎨 Your Request is Under Review</h3>
+            <p>We've received your application to become a Deauth designer. We're excited to review your creative portfolio!</p>
+          </div>
+          
+          <div class="details">
+            <h3>Profile Details Submitted</h3>
+            <ul>
+              <li><strong>Artist Name:</strong> ${designerData.artistName}</li>
+              <li><strong>Phone:</strong> ${designerData.phone}</li>
+              ${
+                designerData.description
+                  ? `<li><strong>Description:</strong> ${designerData.description}</li>`
+                  : ''
+              }
+            </ul>
+          </div>
+
+          <div class="steps">
+            <h3>Next Steps</h3>
+            <ol>
+              <li>Our team will carefully review your application and portfolio</li>
+              <li>We'll verify your submitted documents and credentials</li>
+              <li>You'll receive an email with our decision within 2-3 business days</li>
+            </ol>
+          </div>
+
+          <div class="contact">
+            <p>Have questions? Our designer support team is here to help!</p>
+            <a href="mailto:designer.support@deauth.in">designer.support@deauth.in</a>
+          </div>
+        
+          <div class="footer">
+            <p>© ${new Date().getFullYear()} Deauth. All rights reserved.</p>
+            <div>
+              <a href="https://deauth.in/privacy">Privacy Policy</a> | 
+              <a href="https://deauth.in/terms">Terms of Service</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  // Keep the plain text version for email clients that don't support HTML
+  const textContent = `
+Designer Profile Request Received - Deauth
+
+Hello ${designerData.fullname},
+
+We've received your application to become a Deauth designer. We're excited to review your creative portfolio!
+
+Profile Details Submitted:
+- Artist Name: ${designerData.artistName}
+- Phone: ${designerData.phone}
+${designerData.description ? `- Description: ${designerData.description}` : ''}
+
+Next Steps:
+1. Our team will carefully review your application and portfolio
+2. We'll verify your submitted documents and credentials
+3. You'll receive an email with our decision within 2-3 business days
+
+Questions? Contact our designer support team at designer.support@deauth.in
+
+© ${new Date().getFullYear()} Deauth. All rights reserved.
+`;
+
+  await sendEmailMiddleware(
+    null,
+    null,
+    user.email,
+    subject,
+    htmlContent,
+    textContent,
+  );
+};
+
+// Helper function for cleanup
+async function cleanup(
+  designerDoc: any,
+  addressDoc: any,
+  cloudinaryIds: string[],
+): Promise<void> {
+  try {
+    // Delete created designer if it exists
+    // eslint-disable-next-line no-underscore-dangle
+    if (designerDoc?._id) {
+      // eslint-disable-next-line no-underscore-dangle
+      await designer.findByIdAndDelete(designerDoc._id);
+      // eslint-disable-next-line no-underscore-dangle
+      logger.info(`Cleaned up designer: ${designerDoc._id}`);
+    }
+
+    // Delete created address if it exists
+    // eslint-disable-next-line no-underscore-dangle
+    if (addressDoc?._id) {
+      // eslint-disable-next-line no-underscore-dangle
+      await address.findByIdAndDelete(addressDoc._id);
+      // eslint-disable-next-line no-underscore-dangle
+      logger.info(`Cleaned up address: ${addressDoc._id}`);
+    }
+
+    // Delete uploaded images from Cloudinary
+    if (cloudinaryIds.length > 0) {
+      await Promise.all(
+        cloudinaryIds.map(async (publicId) => {
+          try {
+            await cloudinary.uploader.destroy(publicId);
+            logger.info(`Cleaned up Cloudinary image: ${publicId}`);
+          } catch (cloudinaryError) {
+            logger.error(
+              `Failed to clean up Cloudinary image ${publicId}:`,
+              cloudinaryError,
+            );
+          }
+        }),
+      );
+    }
+  } catch (cleanupError) {
+    logger.error('Error during cleanup:', cleanupError);
+  }
+}
+
+// Helper function for design cleanup
+async function cleanupDesign(
+  designDoc: any,
+  cloudinaryIds: string[],
+): Promise<void> {
+  try {
+    // Delete created design if it exists
+    // eslint-disable-next-line no-underscore-dangle
+    if (designDoc?._id) {
+      // eslint-disable-next-line no-underscore-dangle
+      await design.findByIdAndDelete(designDoc._id);
+      // eslint-disable-next-line no-underscore-dangle
+      logger.info(`Cleaned up design: ${designDoc._id}`);
+    }
+
+    // Delete uploaded images from Cloudinary
+    if (cloudinaryIds.length > 0) {
+      await Promise.all(
+        cloudinaryIds.map(async (publicId) => {
+          try {
+            await cloudinary.uploader.destroy(publicId);
+            logger.info(`Cleaned up Cloudinary image: ${publicId}`);
+          } catch (cloudinaryError) {
+            logger.error(
+              `Failed to clean up Cloudinary image ${publicId}:`,
+              cloudinaryError,
+            );
+          }
+        }),
+      );
+    }
+  } catch (cleanupError) {
+    logger.error('Error during cleanup:', cleanupError);
+  }
+}
+
+// Helper function to clean up Cloudinary images
+async function cleanupCloudinaryImages(
+  uploadedImages: any[] = [],
+): Promise<void> {
+  if (uploadedImages.length > 0) {
+    try {
+      await Promise.all(
+        uploadedImages.map((image) =>
+          cloudinary.uploader.destroy(image.public_id),
+        ),
+      );
+    } catch (error) {
+      logger.error('Error cleaning up Cloudinary images:', error);
+    }
+  }
 }
 
 const requestDesigner = async (
@@ -28,42 +358,44 @@ const requestDesigner = async (
   res: Response,
   next: NextFunction,
 ) => {
-  const {
-    userId,
-    fullname,
-    artistName,
-    description,
-    portfolioLinks,
-    cvLinks,
-    phone,
-    panCardNumber,
-    addressBody,
-  } = req.body;
-
-  // console.log(req.body, req.files);
-
-  const subject = 'Designer Profile Creation Request';
-  const text = ' Please wait while we review your profile';
+  // Track created resources for cleanup in case of error
+  let createdDesigner = null;
+  let createdAddress = null;
+  let uploadedImages: string[] = [];
 
   try {
-    const checkUser: any = await user.findById(userId);
-    const email = `${checkUser.email}`;
-    // console.log(checkUser);
-    if (checkUser.isDesigner) {
-      // Clean up uploaded images from Cloudinary
-      if (req.uploadedImages && req.uploadedImages.length > 0) {
-        const deletePromises = req.uploadedImages.map((image) =>
-          cloudinary.uploader.destroy(image.public_id),
-        );
-        await Promise.all(deletePromises);
-      }
+    const {
+      userId,
+      fullname,
+      artistName,
+      description,
+      portfolioLinks,
+      cvLinks,
+      phone,
+      panCardNumber,
+      addressBody,
+    } = req.body;
 
+    // Check if user exists and is not already a designer
+    const checkUser: any = await user.findById(userId);
+    if (!checkUser) {
+      throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+    }
+
+    if (checkUser.isDesigner) {
+      // Clean up any uploaded images
+      await cleanupCloudinaryImages(req.uploadedImages);
       return res
         .status(201)
-        .send({ message: 'User is already a registered Designer ' });
+        .send({ message: 'User is already a registered Designer' });
     }
-    // eslint-disable-next-line new-cap
-    // Create a new designer and add the fields
+
+    // Track uploaded images for potential cleanup
+    if (req.uploadedImages) {
+      uploadedImages = req.uploadedImages.map((img) => img.public_id);
+    }
+
+    // Create new designer
     // eslint-disable-next-line new-cap
     const newDesigner = new designer({
       userId,
@@ -76,59 +408,53 @@ const requestDesigner = async (
       panCardNumber,
     });
 
-    // Create a new address
+    // Handle profile photo and cover photo uploads
+    if (req.files?.length >= 2) {
+      const [profilePhoto, coverPhoto] = req.files;
+      // @ts-ignore - Ignore type checking for image assignment
+      newDesigner.profileImage = {
+        url: profilePhoto.path,
+        filename: profilePhoto.filename,
+      };
+      // @ts-ignore - Ignore type checking for image assignment
+      newDesigner.coverImage = {
+        url: coverPhoto.path,
+        filename: coverPhoto.filename,
+      };
+    }
+
+    // Create new address
     // eslint-disable-next-line new-cap
     const newAddress = new address({
       ...addressBody,
       user_id: userId,
     });
+
+    // Save address first to get its ID
+    createdAddress = await newAddress.save();
+    // eslint-disable-next-line no-underscore-dangle
+    newDesigner.legal_address = [createdAddress._id];
+
+    // Save designer
+    createdDesigner = await newDesigner.save();
+
+    // Update user's designer status
     checkUser.isDesigner = true;
-    // eslint-disable-next-line no-underscore-dangle
+    await checkUser.save();
 
-    // Handle profile photo and cover photo uploads
-    if (req.files.length >= 2) {
-      const profilePhoto = req.files[0];
-      const coverPhoto = req.files[1];
+    // Send confirmation email
+    await sendDesignerRequestEmail(checkUser, req.body);
 
-      // Handle profile photo upload
-      const profilePhotoPath = profilePhoto.path;
-      const profilePhotoFilename = profilePhoto.filename;
-      // @ts-ignore
-      newDesigner.profileImage = {
-        url: profilePhotoPath,
-        filename: profilePhotoFilename,
-      };
+    return res.status(httpStatus.CREATED).json({
+      message: 'Designer profile request submitted successfully',
+      // eslint-disable-next-line no-underscore-dangle
+      designerId: createdDesigner._id,
+    });
+  } catch (error) {
+    logger.error(`Designer creation error:`, error);
 
-      // Handle cover photo upload
-      const coverPhotoPath = coverPhoto.path;
-      const coverPhotoFilename = coverPhoto.filename;
-      // @ts-ignore
-      newDesigner.coverImage = {
-        url: coverPhotoPath,
-        filename: coverPhotoFilename,
-      };
-    }
-    // @ts-ignore
-    // eslint-disable-next-line no-underscore-dangle
-    newDesigner.legal_address.push(newAddress._id);
-    // Save all changes
-    await Promise.all([
-      checkUser.save(),
-      newDesigner.save(),
-      newAddress.save(),
-    ]);
-
-    return sendEmailMiddleware(req, res, email, subject, text);
-  } catch (err) {
-    logger.error(`Designer creation error: %O`, err);
-
-    // Clean up uploaded images from Cloudinary
-    if (req.uploadedImages && req.uploadedImages.length > 0) {
-      const deletePromises = req.uploadedImages.map((image) =>
-        cloudinary.uploader.destroy(image.public_id),
-      );
-      await Promise.all(deletePromises);
-    }
+    // Perform cleanup in reverse order of creation
+    await cleanup(createdDesigner, createdAddress, uploadedImages);
 
     return next(
       new AppError(httpStatus.BAD_REQUEST, 'Designer was not created!'),
@@ -252,6 +578,19 @@ const publicData = async (req: Request, res: Response) => {
       .findById(designerId)
       .populate('settings.showDesigns.designIds');
 
+    if (!designerData) {
+      return res.status(404).json({ message: 'Designer not found' });
+    }
+
+    // Check if settings exist
+    if (!designerData.settings) {
+      return res.status(400).json({
+        message:
+          'Designer settings not found. Please set up your profile settings first.',
+        needsSettings: true,
+      });
+    }
+
     // Check if the profile is private
     if (designerData.settings.isPrivate) {
       return res.status(403).json({ message: 'Profile is private' });
@@ -281,34 +620,29 @@ const publicData = async (req: Request, res: Response) => {
       publicDesignerData.description = designerData.description;
     }
 
-    if (designerData.settings.socialMedia.length > 0) {
+    if (
+      designerData.settings.socialMedia &&
+      designerData.settings.socialMedia.length > 0
+    ) {
       publicDesignerData.socialMedia = designerData.socialMedia;
     }
 
-    if (designerData.settings.portfolioLinks.length > 0) {
+    if (
+      designerData.settings.portfolioLinks &&
+      designerData.settings.portfolioLinks.length > 0
+    ) {
       publicDesignerData.portfolioLinks = designerData.portfolioLinks;
     }
 
-    // if (designerData.settings.showFollowers) {
-    //   // Now, let's populate the 'following' field manually
-    //   const userData = await user
-    //     .findById(designerData.userId)
-    //     .populate('following.userId', 'username');
-    //   const followingUsernames = userData.following.map(
-    //     (followedUser: any) => followedUser.userId.username,
-    //   );
-    //   publicDesignerData.following = followingUsernames;
-    // }
-
     if (
-      designerData.settings.showDesigns.enabled &&
-      designerData.settings.showDesigns.designIds.length > 0
+      designerData.settings.showDesigns?.enabled &&
+      designerData.settings.showDesigns.designIds?.length > 0
     ) {
       publicDesignerData.designs =
         designerData.settings.showDesigns.designIds.map((design1: any) => ({
           title: design1.title,
           description: design1.description,
-          designImage: design1.designImage[0].url,
+          designImage: design1.designImage[0]?.url,
         }));
     }
 
@@ -389,63 +723,109 @@ const checkDesignerApproval = async (
 
 // controller for creating design
 const createDesign = async (req: CustomRequest, res: Response) => {
+  let savedDesign = null;
+  const cloudinaryIds: string[] = [];
+
   try {
-    // Extract data from the request
-    const { designerId } = req.body;
-    console.log('nunu1', req.body, req.files, designerId);
+    const { designerId, title, description, tags } = req.body;
+
+    // Validate required fields
+    if (!designerId || !title || !tags) {
+      return res.status(400).json({
+        message:
+          'Missing required fields. Title, designerId, and tags are required.',
+      });
+    }
+
+    // Validate tags format
+    if (!Array.isArray(tags) || tags.length === 0) {
+      return res.status(400).json({
+        message: 'Tags must be provided as a non-empty array',
+      });
+    }
+
+    // Process tags: trim whitespace and remove duplicates
+    const processedTags = [...new Set(tags.map((tag) => tag.trim()))].filter(
+      (tag) => tag.length > 0,
+    );
+
+    if (processedTags.length === 0) {
+      return res.status(400).json({
+        message: 'At least one valid tag is required',
+      });
+    }
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: 'No design image provided' });
+    }
+
     const { path, filename } = req.files[0];
+    cloudinaryIds.push(filename); // Store Cloudinary ID for cleanup if needed
 
-    // logger.debug(req.body);
+    // Check if the designer exists and is approved
+    const existingDesigner = await designer.findById(designerId);
+    if (!existingDesigner) {
+      // Cleanup uploaded image since designer wasn't found
+      await cleanupDesign(null, cloudinaryIds);
+      return res.status(404).json({ message: 'Designer not found' });
+    }
 
-    // Check if the designer exists
-    const existingDesigner: any = await designer.findById(designerId);
     if (!existingDesigner.isApproved) {
-      return res.status(404).json({ message: 'Designer not Approved' });
+      // Cleanup uploaded image since designer isn't approved
+      await cleanupDesign(null, cloudinaryIds);
+      return res.status(403).json({ message: 'Designer not approved' });
     }
 
     // Create a new design
-    const newDesignData: {
-      designImage: { url: any; filename: any }[];
-      designer: any;
-      title?: string; //  'title' property optional
-      description?: string; //  'description' property optional
-      product?: any; //  'product' property optional
-    } = {
+    const newDesignData = {
+      title,
+      description,
+      tags: processedTags,
       designImage: [{ url: path, filename }],
       designer: designerId,
     };
 
-    // Include title and description if provided in the request
-    if (req.body.title) {
-      newDesignData.title = req.body.title;
-    }
-    if (req.body.description) {
-      newDesignData.description = req.body.description;
-    }
-
-    // Include productId if provided in the request
+    // Include productId if provided
     if (req.body.productId) {
       const existingProduct = await product.findById(req.body.productId);
       if (!existingProduct) {
+        // Cleanup uploaded image since product wasn't found
+        await cleanupDesign(null, cloudinaryIds);
         return res.status(404).json({ message: 'Product not found' });
       }
-      newDesignData.product = req.body.productId;
+      // @ts-ignore
+      newDesignData.finalProduct = [req.body.productId];
     }
 
+    // Create and save the design
     // eslint-disable-next-line new-cap
     const newDesign = new design(newDesignData);
-
-    // Save the design
-    const savedDesign = await newDesign.save();
+    savedDesign = await newDesign.save();
 
     // Add the design reference to the designer's Designs array
     // eslint-disable-next-line no-underscore-dangle
     existingDesigner.Designs.push(savedDesign._id);
     await existingDesigner.save();
 
-    return res.status(201).json(savedDesign);
+    return res.status(201).json({
+      message: 'Design created successfully',
+      design: savedDesign,
+    });
   } catch (error) {
-    logger.error(error);
+    logger.error('Error creating design:', error);
+
+    // Cleanup any uploaded files and created design
+    await cleanupDesign(savedDesign, cloudinaryIds);
+
+    // Handle validation errors specifically
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        message: 'Validation error',
+        // @ts-ignore
+        errors: Object.values(error.errors).map((err) => err.message),
+      });
+    }
+
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -572,6 +952,7 @@ const getRandomDesigners = async (req: Request, res: Response) => {
       designName:
         // @ts-ignore
         designer2.Designs.length > 0 ? designer2.Designs[0].title : '',
+      // eslint-disable-next-line no-underscore-dangle
       designerId: designer2._id.toString(),
       designerName: designer2.artistName || designer2.fullname || '',
     }));

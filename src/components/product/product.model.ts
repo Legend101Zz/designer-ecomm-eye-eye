@@ -1,19 +1,47 @@
-/* eslint-disable no-unused-vars */
-import mongoose, { Schema } from 'mongoose';
-import { IModel } from '@core/interfaces/validationSchema';
-import { Iproduct, Color, Category, Size, Gender } from './product.interface';
+import { Schema, model } from 'mongoose';
+import {
+  ProductDocument,
+  ProductType,
+  ClothingCategory,
+  AccessoryCategory,
+  Color,
+  IProductImage,
+  Gender,
+  Size,
+} from './product.interface';
 
-const ImageSchema: Schema<IModel> = new Schema({
+const ImageSchema = new Schema<IProductImage>({
   url: String,
   filename: String,
   position: {
     type: String,
-    enum: ['front', 'back'],
+    enum: ['front', 'back', 'side', 'detail'],
     required: true,
+  },
+  color: {
+    type: String,
+    enum: Object.values(Color),
+    required: true,
+  },
+  variant: String,
+});
+
+const DeviceVariantSchema = new Schema({
+  deviceBrand: {
+    type: String,
+    required: true,
+  },
+  deviceModel: {
+    type: String,
+    required: true,
+  },
+  dimensions: {
+    width: Number,
+    height: Number,
   },
 });
 
-const ProductSchema: Schema<Iproduct> = new Schema(
+const ProductSchema = new Schema<ProductDocument>(
   {
     name: {
       type: String,
@@ -23,67 +51,148 @@ const ProductSchema: Schema<Iproduct> = new Schema(
       type: Number,
       required: true,
     },
-    color: [{ type: String, enum: Object.values(Color) }],
+    productType: {
+      type: String,
+      enum: Object.values(ProductType),
+      required: true,
+    },
     category: {
       type: String,
       required: true,
-      enum: Object.values(Category),
-    },
-    image: [ImageSchema],
-    sizes: {
-      type: [String],
-      enum: Object.values(Size),
       validate: {
-        validator(v: string[]) {
-          if (['shirt', 'Tshirt', 'hoodie'].includes(this.category)) {
-            return v && v.length > 0;
+        validator(this: ProductDocument, value: string) {
+          if (this.productType === ProductType.CLOTHING) {
+            return Object.values(ClothingCategory).includes(
+              value as ClothingCategory,
+            );
           }
-          return true;
+          return Object.values(AccessoryCategory).includes(
+            value as AccessoryCategory,
+          );
         },
-        message:
-          'Sizes field is required for shirt, Tshirt, and hoodie categories',
+        message: 'Invalid category for product type',
       },
     },
+    colors: {
+      type: [
+        {
+          type: String,
+          enum: Object.values(Color),
+        },
+      ],
+      validate: {
+        validator(v: Color[]) {
+          return v && v.length > 0;
+        },
+        message: 'At least one color is required',
+      },
+    },
+    description: String,
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    images: [ImageSchema],
     basePrice: {
       type: Number,
       required: true,
     },
+    sizes: {
+      type: [
+        {
+          type: String,
+          enum: Object.values(Size),
+        },
+      ],
+      validate: {
+        validator(this: ProductDocument, v: Size[]) {
+          if (this.productType === ProductType.CLOTHING) {
+            return v && v.length > 0;
+          }
+          return true;
+        },
+        message: 'Sizes are required for clothing products',
+      },
+    },
     gender: {
-      type: String,
-      enum: Object.values(Gender),
-      default: Gender.unisex,
+      type: [
+        {
+          type: String,
+          enum: Object.values(Gender),
+        },
+      ],
+      validate: {
+        validator(this: ProductDocument, v: Gender[]) {
+          if (this.productType === ProductType.CLOTHING) {
+            return v && v.length > 0;
+          }
+          return true;
+        },
+        message: 'Gender is required for clothing products',
+      },
+    },
+    measurements: {
+      type: Map,
+      of: {
+        chest: Number,
+        length: Number,
+        sleeve: Number,
+      },
+    },
+    deviceVariants: {
+      type: [DeviceVariantSchema],
+      validate: {
+        validator(this: ProductDocument, v: any[]) {
+          if (
+            this.category === AccessoryCategory.PHONE_CASE ||
+            this.category === AccessoryCategory.LAPTOP_CASE
+          ) {
+            return v && v.length > 0;
+          }
+          return true;
+        },
+        message: 'Device variants are required for case products',
+      },
+    },
+    dimensions: {
+      width: Number,
+      height: Number,
+      depth: Number,
     },
   },
   { timestamps: true },
 );
 
+// Add middleware for validation
 // eslint-disable-next-line func-names, consistent-return
-ProductSchema.pre('save', function (next) {
-  const { category, color, sizes } = this;
-
-  if (['shirt', 'Tshirt', 'hoodie'].includes(category)) {
-    // Ensure color field is optional and can be undefined
-    if (!color || color.length === 0) {
-      this.color = [];
-    }
-    // Ensure sizes field is present
-    if (!sizes || sizes.length === 0) {
-      return next(
-        new Error(
-          'Sizes field is required for shirt, Tshirt, and hoodie categories',
-        ),
-      );
-    }
-  } else {
-    // Remove the sizes field if the category is not 'shirt', 'Tshirt', or 'hoodie'
-    this.sizes = [];
+ProductSchema.pre('save', function (this: ProductDocument, next) {
+  const requiredImages = this.calculateRequiredImages();
+  if (this.images.length !== requiredImages) {
+    return next(
+      new Error(`Must provide ${requiredImages} images for all variations`),
+    );
   }
-
-  // Call next to continue with the save operation
   next();
 });
 
-const product = mongoose.model<Iproduct>('Product', ProductSchema);
+// Add method to calculate required images
+// eslint-disable-next-line func-names
+ProductSchema.methods.calculateRequiredImages = function (
+  this: ProductDocument,
+): number {
+  if (this.productType === ProductType.CLOTHING) {
+    return this.colors.length * (this.gender?.length || 0) * 2;
+  }
+  if (
+    this.category === AccessoryCategory.PHONE_CASE ||
+    this.category === AccessoryCategory.LAPTOP_CASE
+  ) {
+    return this.colors.length * (this.deviceVariants?.length || 0) * 2;
+  }
+  return this.colors.length * (this.category === AccessoryCategory.MUG ? 2 : 1);
+};
+
+const product = model<ProductDocument>('Product', ProductSchema);
 
 // eslint-disable-next-line import/prefer-default-export
 export { product };

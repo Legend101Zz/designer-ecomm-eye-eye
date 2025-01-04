@@ -7,8 +7,8 @@ export interface IUser {
   username: string;
   email: string;
   password?: string;
+  isVerified: boolean; // For email verification
   following?: mongoose.Schema.Types.ObjectId[];
-  googleId: string;
   isDesigner: boolean;
   addresses?: mongoose.Schema.Types.ObjectId[];
   phone?: string;

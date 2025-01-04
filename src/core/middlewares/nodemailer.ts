@@ -7,40 +7,41 @@ import config from '@config/config';
 
 // Define a Nodemailer transporter
 const transporter: Transporter = nodemailer.createTransport({
-  service: 'gmail',
   auth: {
     user: config.mailUser,
     pass: config.mailPass,
   },
   port: 465,
-  host: 'smtp.gmail.com',
+  secure: true,
+  host: 'smtp.hostinger.com',
 });
 
 // Middleware function to send an email
 // eslint-disable-next-line import/prefer-default-export
-export const sendEmailMiddleware = (
+export const sendEmailMiddleware = async (
   req: Request,
   res: Response,
   to: string,
   subject: string,
+  html: string,
   text: string,
 ) => {
   const mailOptions = {
-    from: config.mailUser,
+    from: '"Team Deauth" <team@deauth.in>',
     to,
     subject,
-    text,
+    html, // HTML version
+    text, // Plain text version as fallback
   };
 
   // Send the email
   // eslint-disable-next-line consistent-return
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      logger.error(error);
-      return res.status(500).json({ error: 'Error sending email' });
-    }
-    logger.debug(info.response);
-
-    return res.status(200).json({ success: 'mail sent successfully' });
-  });
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    logger.debug(`Email sent: ${info.response}`);
+    return true;
+  } catch (error) {
+    logger.error(`Email error: ${error}`);
+    return false;
+  }
 };

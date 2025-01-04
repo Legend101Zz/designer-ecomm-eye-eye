@@ -36,33 +36,295 @@ function generateRandomPassword(length = 8) {
   return password;
 }
 
+// Password validation helper
+const isValidPassword = (password: string): boolean => {
+  const minLength = 8;
+  const hasUpperCase = /[A-Z]/.test(password);
+  const hasLowerCase = /[a-z]/.test(password);
+  const hasNumbers = /\d/.test(password);
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+  return (
+    password.length >= minLength &&
+    hasUpperCase &&
+    hasLowerCase &&
+    hasNumbers &&
+    hasSpecialChar
+  );
+};
+
 const createUser = async (req: Request, res: Response) => {
   try {
     const newUser = req.body as IUser;
-    const subject = 'Welcome to EYE-EYE-TEE';
     const password = generateRandomPassword();
     const mail = `${newUser.email}`;
-    const text = `Your credentials are :- \n username : ${newUser.username} \n password: ${password}`;
+
+    // HTML Email Template
+    const subject = 'Welcome to Deauth - Your Fashion Journey Begins';
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          line-height: 1.6;
+          color: #292929;
+          background-color: #f5f5f5;
+          margin: 0;
+          padding: 0;
+        }
+        .container {
+          max-width: 600px;
+          margin: 0 auto;
+          background-color: #ffffff;
+        }
+        .header {
+          background-color: #292929;
+          color: white;
+          text-align: center;
+          padding: 40px 20px;
+        }
+        .logo {
+          width: 180px;
+          height: auto;
+          margin-bottom: 20px;
+        }
+        .welcome-text {
+          font-size: 28px;
+          font-weight: bold;
+          margin: 20px 0;
+          color: #ffffff;
+        }
+        .content {
+          padding: 40px;
+        }
+        .hero-message {
+          text-align: center;
+          margin-bottom: 30px;
+          font-size: 18px;
+          color: #292929;
+        }
+        .credentials-box {
+          background-color: #fff9f0;
+          border: 2px solid #ff7d04;
+          border-radius: 8px;
+          padding: 25px;
+          margin: 25px 0;
+        }
+        .credentials-box h3 {
+          color: #ff7d04;
+          margin: 0 0 15px 0;
+          font-size: 20px;
+        }
+        .credentials-item {
+          padding: 12px;
+          background: #ffffff;
+          margin: 8px 0;
+          border-radius: 4px;
+        }
+        .button-container {
+          text-align: center;
+          margin: 30px 0;
+        }
+        .login-button {
+          display: inline-block;
+          padding: 15px 40px;
+          background-color: #ff7d04;
+          color: #ffffff;
+          text-decoration: none;
+          border-radius: 4px;
+          font-weight: bold;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+        .security-notice {
+          background-color: #292929;
+          color: #ffffff;
+          padding: 25px;
+          border-radius: 8px;
+          margin: 25px 0;
+        }
+        .security-notice h3 {
+          color: #ff7d04;
+          margin: 0 0 15px 0;
+        }
+        .security-notice ol {
+          margin: 0;
+          padding-left: 20px;
+        }
+        .security-notice li {
+          margin: 10px 0;
+        }
+        .features {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 20px;
+          margin: 30px 0;
+        }
+        .feature {
+          text-align: center;
+          padding: 20px;
+          background: #f9f9f9;
+          border-radius: 8px;
+        }
+        .feature h4 {
+          color: #ff7d04;
+          margin: 10px 0;
+        }
+        .footer {
+          background-color: #292929;
+          color: #ffffff;
+          text-align: center;
+          padding: 30px;
+          font-size: 12px;
+        }
+        .footer a {
+          color: #ff7d04;
+          text-decoration: none;
+          margin: 0 10px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <img src="https://www.deauth.in/_next/image?url=%2Flogos%2Flogo.webp&w=256&q=75" alt="Deauth Logo" class="logo">
+          <div class="welcome-text">Welcome to Your Fashion Journey</div>
+        </div>
+        
+        <div class="content">
+          <div class="hero-message">
+            Get ready to explore exclusive designer collections and express your unique style.
+          </div>
+          
+          <div class="credentials-box">
+            <h3>Your Account Details</h3>
+            <div class="credentials-item">
+              <strong>Email:</strong> ${mail}
+            </div>
+            <div class="credentials-item">
+              <strong>Username:</strong> ${newUser.username}
+            </div>
+            <div class="credentials-item">
+              <strong>Password:</strong> ${password}
+            </div>
+          </div>
+    
+          <div class="button-container">
+            <a href="https://deauth.in/login" class="login-button">Start Shopping</a>
+          </div>
+    
+          <div class="security-notice">
+            <h3>Important Security Steps</h3>
+            <ol>
+              <li>Log in using your credentials</li>
+              <li>Change your password immediately</li>
+              <li>Keep your account information secure</li>
+            </ol>
+          </div>
+    
+          <div class="features">
+            <div class="feature">
+              <h4>Exclusive Designs</h4>
+              <p>Discover unique pieces from talented designers</p>
+            </div>
+            <div class="feature">
+              <h4>Premium Quality</h4>
+              <p>Experience fashion that stands out</p>
+            </div>
+          </div>
+        </div>
+    
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} Deauth. All rights reserved.</p>
+          <div>
+            <a href="https://deauth.in/privacy">Privacy Policy</a> | 
+            <a href="https://deauth.in/terms">Terms of Service</a>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+    `;
+
+    // Plain text version as fallback
+    const textContent = `
+Welcome to Deauth!
+
+Hello ${newUser.username},
+
+Thank you for creating an account with Deauth. We're excited to have you join our community!
+
+Your Login Credentials:
+Mail : ${mail}
+Username: ${newUser.username}
+Password: ${password}
+
+Important Security Notice:
+1. Log in to your account using the credentials above
+2. Change your password immediately after logging in
+3. Keep your login information secure and never share it with others
+
+Login at: https://deauth.in/login
+
+This is an automated message, please do not reply to this email.
+
+© ${new Date().getFullYear()} DeAuth. All rights reserved.
+`;
+
     const salt = await bcrypt.genSalt(Number(config.salt));
     const hashPassword = await bcrypt.hash(password, salt);
     const check = await user.find({ email: newUser.email });
-    // console.log(check, 'here');
-    if (check.length === 0 || !check) {
+
+    if (check.length === 0) {
       newUser.password = hashPassword;
+      newUser.isVerified = false;
+
+      const emailSent = await sendEmailMiddleware(
+        req,
+        res,
+        mail,
+        subject,
+        htmlContent,
+        textContent,
+      );
+
+      if (!emailSent) {
+        return res
+          .status(500)
+          .send({ message: 'Error sending verification email' });
+      }
+
       await create(newUser);
-      res.status(httpStatus.CREATED);
-      return sendEmailMiddleware(req, res, mail, subject, text);
+      return res.status(httpStatus.CREATED).send({
+        message:
+          'User created successfully. Please check your email for login credentials.',
+      });
     }
-    return res.status(201).send({ message: 'User already exists' });
+
+    return res.status(400).send({ message: 'User already exists' });
   } catch (err) {
-    res.status(httpStatus.INTERNAL_SERVER_ERROR);
-    return res.send({ message: 'Server Error' });
+    logger.error(err);
+    return res.status(httpStatus.INTERNAL_SERVER_ERROR).send({
+      message: 'Server Error',
+    });
   }
 };
 
 const updatePassword = async (req: Request, res: Response) => {
   try {
-    const { userId, newPassword } = req.body;
+    const { userId, oldPassword, newPassword } = req.body;
+
+    // Validate password requirements
+    if (!isValidPassword(newPassword)) {
+      return res.status(400).json({
+        message:
+          'Password must be at least 8 characters long and include uppercase, lowercase, number, and special character',
+      });
+    }
 
     // Check if the user exists
     const existingUser = await user.findById(userId);
@@ -70,24 +332,213 @@ const updatePassword = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Generate a new password and hash it
+    // Verify old password
+    const isPasswordValid = await bcrypt.compare(
+      oldPassword,
+      existingUser.password,
+    );
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Current password is incorrect' });
+    }
+
+    // Hash and update the new password
     const salt = await bcrypt.genSalt(Number(config.salt));
     const hashPassword = await bcrypt.hash(newPassword, salt);
-
-    // Update the user's password
     existingUser.password = hashPassword;
     await existingUser.save();
 
-    // Send an email notification
-    const subject = 'Password Update Notification';
-    const mail = `${existingUser.email}`;
-    const text = `Your password has been updated.`;
+    // Send email notification with HTML template
 
-    await sendEmailMiddleware(req, res, mail, subject, text);
+    const mail = existingUser.email;
+    const subject = 'Password Updated Successfully - Deauth';
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <style>
+       body {
+         font-family: Arial, sans-serif;
+         line-height: 1.6;
+         color: #292929;
+         background-color: #f5f5f5;
+         margin: 0;
+         padding: 0;
+       }
+       .container {
+         max-width: 600px;
+         margin: 0 auto;
+         background-color: #ffffff;
+       }
+       .header {
+         background-color: #292929;
+         color: white;
+         text-align: center;
+         padding: 40px 20px;
+       }
+       .logo {
+         width: 180px;
+         height: auto;
+         margin-bottom: 20px;
+       }
+       .title {
+         font-size: 28px;
+         font-weight: bold;
+         margin: 20px 0;
+         color: #ffffff;
+       }
+       .content {
+         padding: 40px;
+       }
+       .alert-box {
+         background-color: #fff9f0;
+         border: 2px solid #ff7d04;
+         border-radius: 8px;
+         padding: 25px;
+         margin: 25px 0;
+         text-align: center;
+       }
+       .alert-box h3 {
+         color: #ff7d04;
+         margin: 0 0 15px 0;
+         font-size: 20px;
+       }
+       .success-icon {
+         font-size: 48px;
+         margin-bottom: 15px;
+       }
+       .security-tips {
+         background-color: #292929;
+         color: #ffffff;
+         padding: 25px;
+         border-radius: 8px;
+         margin: 25px 0;
+       }
+       .security-tips h3 {
+         color: #ff7d04;
+         margin: 0 0 15px 0;
+       }
+       .tips-list {
+         list-style: none;
+         padding: 0;
+         margin: 0;
+       }
+       .tips-list li {
+         margin: 15px 0;
+         padding-left: 25px;
+         position: relative;
+       }
+       .tips-list li:before {
+         content: "•";
+         color: #ff7d04;
+         font-size: 20px;
+         position: absolute;
+         left: 0;
+       }
+       .warning-box {
+         background-color: #fff9f0;
+         border-left: 4px solid #ff7d04;
+         padding: 20px;
+         margin: 25px 0;
+         border-radius: 0 8px 8px 0;
+       }
+       .warning-box p {
+         margin: 0;
+       }
+       .warning-box a {
+         color: #ff7d04;
+         text-decoration: none;
+         font-weight: bold;
+       }
+       .footer {
+         background-color: #292929;
+         color: #ffffff;
+         text-align: center;
+         padding: 30px;
+         font-size: 12px;
+       }
+       .footer a {
+         color: #ff7d04;
+         text-decoration: none;
+         margin: 0 10px;
+       }
+     </style>
+    </head>
+    <body>
+     <div class="container">
+       <div class="header">
+         <img src="https://www.deauth.in/_next/image?url=%2Flogos%2Flogo.webp&w=256&q=75" alt="Deauth Logo" class="logo">
+         <div class="title">Password Updated</div>
+       </div>
+       
+       <div class="content">
+         <p>Hello ${existingUser.username},</p>
+         
+         <div class="alert-box">
+           <div class="success-icon">✓</div>
+           <h3>Password Successfully Updated</h3>
+           <p>Your account password was changed on ${new Date().toLocaleString()}</p>
+         </div>
+         
+         <div class="security-tips">
+           <h3>Keep Your Account Secure</h3>
+           <ul class="tips-list">
+             <li>Use a unique password for your Deauth account</li>
+             <li>Never share your password with anyone</li>
+             <li>Avoid using easily guessable information</li>
+             <li>Log out when using shared devices</li>
+           </ul>
+         </div>
+    
+         <div class="warning-box">
+           <p>⚠️ Didn't make this change? Please contact our support team immediately at <a href="mailto:support@deauth.in">support@deauth.in</a></p>
+         </div>
+       </div>
+    
+       <div class="footer">
+         <p>© ${new Date().getFullYear()} Deauth. All rights reserved.</p>
+         <div>
+           <a href="https://deauth.in/privacy">Privacy Policy</a> | 
+           <a href="https://deauth.in/terms">Terms of Service</a>
+         </div>
+       </div>
+     </div>
+    </body>
+    </html>
+    `;
 
+    const textContent = `
+    Password Updated Successfully - Deauth
+    
+    Hello ${existingUser.username},
+    
+    Your password was successfully changed on ${new Date().toLocaleString()}.
+    
+    Security Tips:
+    - Use a unique password for your Deauth account
+    - Never share your password with anyone
+    - Avoid using easily guessable information
+    - Log out when using shared devices
+    
+    ⚠️ If you didn't make this change, please contact our support team immediately at support@deauth.in
+    
+    © ${new Date().getFullYear()} Deauth. All rights reserved.
+    `;
+
+    await sendEmailMiddleware(
+      req,
+      res,
+      mail,
+      subject,
+      htmlContent,
+      textContent,
+    );
+
+    logger.info(`Password updated successfully for user ${userId}`);
     return res.status(200).json({ message: 'Password updated successfully' });
   } catch (err) {
-    logger.error(err);
+    logger.error(`Password update error for user: ${err}`);
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
