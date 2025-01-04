@@ -1,67 +1,60 @@
 import { Router } from 'express';
 import protectedByApiKey from '@core/middlewares/apiKey.middleware';
+import validation from '@core/middlewares/validate.middleware';
 import cloudinaryMiddleware from '@core/middlewares/cloudinary';
 import {
   createFinalProduct,
-  getAllProductsByDesign,
-  getAllProductsByDesigner,
-  getCategoriesWithoutFinalProducts,
-  getProducts,
-  dummyProductsCreate,
-  getSingleProductData,
-  getLatestProducts,
+  addDesignGroup,
+  getVariantsByGender,
+  updateStock,
+  getFilteredProducts,
+  getProductDetails,
 } from './finalprod.controller';
+import {
+  createFinalProductValidation,
+  addDesignGroupValidation,
+  getVariantsValidation,
+  updateStockValidation,
+} from './finalprod.validation';
 
 const router: Router = Router();
 
-router.get('/finalproduct/products', [protectedByApiKey], getProducts);
-
-router.get(
-  '/finalproduct/product/:finalProductId',
-  [protectedByApiKey],
-  getSingleProductData,
-);
-
-// router.post(
-//   '/finalproduct/products/sideView',
-//   [protectedByApiKey],
-//   getProductDetailSideView,
-// );
-
+// Create and manage final products
 router.post(
-  '/finalproduct/categories-without-products/:designerId',
-  [protectedByApiKey],
-  getCategoriesWithoutFinalProducts,
-);
-
-router.get(
-  '/finalproduct/products/design/:designId',
-  [protectedByApiKey],
-  getAllProductsByDesign,
-);
-
-router.get(
-  '/finalproduct/products/designer/:designerId',
-  [protectedByApiKey],
-  getAllProductsByDesigner,
-);
-
-router.get('/finalproduct/latest', [protectedByApiKey], getLatestProducts);
-
-// create new design
-router.post(
-  '/finalproduct/create-final-products',
-  [protectedByApiKey],
-  cloudinaryMiddleware,
+  '/finalproduct/create',
+  [
+    protectedByApiKey,
+    cloudinaryMiddleware,
+    validation(createFinalProductValidation),
+  ],
   createFinalProduct,
 );
 
-// create dummy data
-
-router.get(
-  '/finalproduct/createDummy',
-  // [protectedByApiKey],
-  dummyProductsCreate,
+// Add new design group to existing product
+router.post(
+  '/finalproduct/:productId/designgroup',
+  [protectedByApiKey, validation(addDesignGroupValidation)],
+  addDesignGroup,
 );
+
+// Get variants by gender
+router.get(
+  '/finalproduct/:productId/variants/:gender',
+  [protectedByApiKey, validation(getVariantsValidation)],
+  getVariantsByGender,
+);
+
+// Update stock levels
+router.patch(
+  '/finalproduct/:productId/stock',
+  [protectedByApiKey, validation(updateStockValidation)],
+  updateStock,
+);
+
+// Get filtered products
+router.get('/finalproduct/list', [protectedByApiKey], getFilteredProducts);
+
+// Gets detailed product information for a specific product
+router.get('/finalproduct/:productId', [protectedByApiKey], getProductDetails);
 
 export default router;

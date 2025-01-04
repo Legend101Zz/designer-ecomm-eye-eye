@@ -3,254 +3,262 @@ import { v2 as cloudinary } from 'cloudinary';
 import httpStatus from 'http-status';
 import logger from '@core/utils/logger';
 import AppError from '@core/utils/appError';
-import { create, read } from '@components/product/product.service';
 import { product } from '@components/product/product.model';
-import { Iproduct } from './product.interface';
+import {
+  ProductType,
+  IProductImage,
+  Color,
+  ProductDocument,
+} from './product.interface';
+import { createProduct, readProduct, updateProduct } from './product.service';
 
 interface CustomRequest extends Request {
-  files: any; // Include the 'file' property with the MulterFile type
+  files: any[];
   uploadedImages?: Array<{ url: string; public_id: string }>;
 }
 
+/**
+ * Creates a new product with proper categorization and image handling
+ * @param {CustomRequest} req - Express request object with files
+ * @param {Response} res - Express response object
+ * @param {NextFunction} next - Express next function
+ */
 const createProd = async (
   req: CustomRequest,
   res: Response,
   next: NextFunction,
 ) => {
   try {
-    // Retrieve form data from req.body
-    const { name, quantity, category, color, sizes, basePrice, gender } =
-      req.body;
-    // Process images
-    const images = req.files;
-    const updatedImages = images.map((image, index) => {
-      let position = 'other';
-      if (index === 0) {
-        position = 'front';
-      } else if (index === 1) {
-        position = 'back';
-      }
+    const {
+      name,
+      quantity,
+      productType,
+      category,
+      colors,
+      sizes,
+      basePrice,
+      gender,
+      description,
+      deviceVariants,
+      dimensions,
+      measurements,
+    } = req.body;
+
+    // Process images with proper metadata
+    const processedImages: IProductImage[] = req.files.map((file, index) => {
       return {
-        url: image.path,
-        filename: image.filename,
-        position,
+        url: file.path,
+        filename: file.filename,
+        // eslint-disable-next-line no-nested-ternary
+        position: index === 0 ? 'front' : index === 1 ? 'back' : 'detail',
+        color: file.color || Color.WHITE, // Default color if not specified
+        variant: file.variant,
       };
     });
 
-    // Create a new product using the Product model
-    const newProduct: Iproduct = {
+    // Create base product data
+    const productData: Partial<ProductDocument> = {
       name,
       quantity: parseInt(quantity, 10),
-      category,
-      color,
-      image: updatedImages,
-      sizes,
-      gender,
       basePrice: parseFloat(basePrice),
+      productType,
+      category,
+      colors: colors.split(','),
+      description,
+      images: processedImages,
+      isActive: true,
     };
 
-    // Save the product to the database
-    await create(newProduct);
-    res
-      .status(httpStatus.CREATED)
-      .json({ message: 'Product created successfully' });
+    // Add type-specific fields
+    if (productType === ProductType.CLOTHING) {
+      Object.assign(productData, {
+        sizes: sizes.split(','),
+        gender: gender.split(','),
+        measurements: JSON.parse(measurements || '{}'),
+      });
+    } else if (productType === ProductType.ACCESSORY) {
+      Object.assign(productData, {
+        deviceVariants: JSON.parse(deviceVariants || '[]'),
+        dimensions: JSON.parse(dimensions || '{}'),
+      });
+    }
+
+    const newProduct = await createProduct(productData);
+    res.status(httpStatus.CREATED).json({
+      message: 'Product created successfully',
+      // eslint-disable-next-line no-underscore-dangle
+      productId: newProduct._id,
+    });
   } catch (error) {
     logger.error(`Product creation error: %O`, error);
 
-    // Clean up uploaded images from Cloudinary
-    if (req.uploadedImages && req.uploadedImages.length > 0) {
-      const deletePromises = req.uploadedImages.map((image) =>
-        cloudinary.uploader.destroy(image.public_id),
+    // Clean up uploaded images
+    if (req.uploadedImages?.length) {
+      await Promise.all(
+        req.uploadedImages.map((img) =>
+          cloudinary.uploader.destroy(img.public_id),
+        ),
       );
-      await Promise.all(deletePromises);
     }
 
-    next(new AppError(httpStatus.BAD_REQUEST, 'Product was not added!'));
+    next(new AppError(httpStatus.BAD_REQUEST, 'Product creation failed'));
   }
 };
 
+/**
+ * Retrieves product by ID with all its variants and metadata
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ */
 const readProd = async (req: Request, res: Response) => {
   try {
-    const prod = req.params.id;
-    const data = await read(prod);
-
-    return res.status(200).send({ message: 'success', data });
-  } catch (err) {
-    logger.error(err);
-    return res.status(501).send({ message: 'server error ' });
+    const productRead = await readProduct(req.params.id);
+    if (!productRead) {
+      return res.status(httpStatus.NOT_FOUND).json({
+        message: 'Product not found',
+      });
+    }
+    return res.status(httpStatus.OK).json({ data: productRead });
+  } catch (error) {
+    logger.error(`Error reading product: %O`, error);
+    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+      message: 'Error retrieving product',
+    });
   }
 };
 
-const changeQuan = async (req: Request, res: Response) => {
+/**
+ * Updates product quantity
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ */
+const updateQuantity = async (req: Request, res: Response) => {
   try {
-    const prod = req.body.productId;
-    const data: any = await read(prod);
-    data.quantity = req.body.quantity;
-    await data.save();
-    return res.status(200).send({ message: 'success', data });
-  } catch (err) {
-    logger.error(err);
-    return res.status(501).send({ message: 'server error ' });
+    const { productId, quantity } = req.body;
+    const updatedProduct = await updateProduct(productId, {
+      quantity: parseInt(quantity, 10),
+    });
+
+    if (!updatedProduct) {
+      return res.status(httpStatus.NOT_FOUND).json({
+        message: 'Product not found',
+      });
+    }
+
+    return res.status(httpStatus.OK).json({
+      message: 'Quantity updated successfully',
+      product: updatedProduct,
+    });
+  } catch (error) {
+    logger.error(`Error updating quantity: %O`, error);
+    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+      message: 'Error updating quantity',
+    });
   }
 };
 
-const addColor = async (req: Request, res: Response) => {
-  const { color, productId } = req.body;
-
+/**
+ * Adds new color variant to a product
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ */
+const addColorVariant = async (req: Request, res: Response) => {
   try {
+    const { productId, color } = req.body;
+
     const updatedProduct = await product.findByIdAndUpdate(
       productId,
-      { $addToSet: { color } }, // Add color to the array if it doesn't exist
+      { $addToSet: { colors: color } },
       { new: true },
     );
 
     if (!updatedProduct) {
-      return res.status(404).json({ message: 'Product not found' });
+      return res.status(httpStatus.NOT_FOUND).json({
+        message: 'Product not found',
+      });
     }
 
-    return res.status(200).json(updatedProduct);
+    return res.status(httpStatus.OK).json({
+      message: 'Color variant added successfully',
+      product: updatedProduct,
+    });
   } catch (error) {
-    logger.error(error);
-    return res.status(500).json({ message: 'Internal server error' });
+    logger.error(`Error adding color variant: %O`, error);
+    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+      message: 'Error adding color variant',
+    });
   }
 };
 
-const deleteColor = async (req: Request, res: Response) => {
-  const { color, productId } = req.body;
-
+/**
+ * Removes a color variant from a product
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ */
+const removeColorVariant = async (req: Request, res: Response) => {
   try {
+    const { productId, color } = req.body;
+
     const updatedProduct = await product.findByIdAndUpdate(
       productId,
-      { $pull: { color } }, // Remove the specified color from the array
+      { $pull: { colors: color } },
       { new: true },
     );
 
     if (!updatedProduct) {
-      return res.status(404).json({ message: 'Product not found' });
+      return res.status(httpStatus.NOT_FOUND).json({
+        message: 'Product not found',
+      });
     }
 
-    return res.status(200).json(updatedProduct);
+    return res.status(httpStatus.OK).json({
+      message: 'Color variant removed successfully',
+      product: updatedProduct,
+    });
   } catch (error) {
-    logger.error(error);
-    return res.status(500).json({ message: 'Internal server error' });
+    logger.error(`Error removing color variant: %O`, error);
+    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+      message: 'Error removing color variant',
+    });
   }
 };
 
-const addProductImages = async (req: CustomRequest, res: Response) => {
-  const { productId } = req.body;
-  const images = req.files; // Assuming req.files is an array of image files
-
+/**
+ * Gets product variants by name and optional gender
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ */
+const getProductVariants = async (req: Request, res: Response) => {
   try {
-    const updatedImages = [];
-
-    // eslint-disable-next-line no-restricted-syntax
-    for (const image of images) {
-      updatedImages.push({ url: image.path, filename: image.filename });
-    }
-
-    // Use your Product model to update the image field with all the images
-    const updatedProduct = await product.findByIdAndUpdate(
-      productId,
-      { $push: { image: { $each: updatedImages } } }, // Add multiple images to the array
-      { new: true }, // Return the updated document
-    );
-
-    if (!updatedProduct) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-
-    return res.status(200).json(updatedProduct);
-  } catch (error) {
-    logger.error(error); // You can use console.error instead of logger.error
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-};
-
-const getProductImages = async (req: Request, res: Response) => {
-  try {
-    const { color, category } = req.query;
-
-    // Construct the query based on color and category
-    const query: any = {};
-    if (color) {
-      query.color = color;
-    }
-    if (category) {
-      query.category = category;
-    }
-
-    // Find products that match the query
-    const products = await product.find(query);
-
-    if (!products || products.length === 0) {
-      return res.status(404).json({ message: 'No matching products found' });
-    }
-    // Extract URLs from the matching products' images
-
-    // Extract product ID and URLs from the matching products' images
-    const productImages = products.map((prod) => ({
-      // eslint-disable-next-line no-underscore-dangle
-      productId: prod._id,
-      // @ts-ignore
-      imageUrls: prod.image.map((img) => img.url).flat(),
-    }));
-
-    return res.status(200).json(productImages);
-  } catch (error) {
-    logger.error(error);
-    return res.status(500).json({ message: 'Internal Server Error' });
-  }
-};
-
-const getColorsByCategory = async (req: Request, res: Response) => {
-  const { category } = req.query;
-
-  try {
-    const colors = await product.distinct('color', { category });
-
-    res.status(200).json({ colors });
-  } catch (error) {
-    logger.error('Error fetching colors:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-};
-const getProductByName = async (req: Request, res: Response) => {
-  const { name, gender } = req.query;
-
-  try {
-    // Build the query object
+    const { name, gender } = req.query;
     const query: any = { name };
 
-    // Include gender in the query if provided
     if (gender) {
-      query.gender = gender;
+      query.gender = { $in: [gender] };
     }
 
-    // Find all products matching the query
     const products = await product.find(query);
 
-    // Check if products were found
-    if (products.length === 0) {
-      return res
-        .status(404)
-        .json({ message: 'No products found with the given name and gender' });
+    if (!products.length) {
+      return res.status(httpStatus.NOT_FOUND).json({
+        message: 'No products found',
+      });
     }
 
-    return res.status(200).json({ products });
+    return res.status(httpStatus.OK).json({ products });
   } catch (error) {
-    logger.error('Error fetching products by name and gender:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    logger.error(`Error getting product variants: %O`, error);
+    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+      message: 'Error retrieving product variants',
+    });
   }
 };
-// eslint-disable-next-line import/prefer-default-export
+
 export {
   createProd,
   readProd,
-  changeQuan,
-  addColor,
-  deleteColor,
-  addProductImages,
-  getProductImages,
-  getColorsByCategory,
-  getProductByName,
+  updateQuantity,
+  addColorVariant,
+  removeColorVariant,
+  getProductVariants,
 };
