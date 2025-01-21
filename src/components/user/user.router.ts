@@ -8,6 +8,7 @@ import {
 import {
   // User Management
   createUser,
+  handleGoogleAuth,
   loginUser,
   updatePassword,
   updateUser,
@@ -41,6 +42,9 @@ router.post(
   [protectedByApiKey, validation(createUserValidation)],
   createUser,
 );
+
+// Create new user with email verification using google
+router.post('/user/google-auth', [protectedByApiKey], handleGoogleAuth);
 
 // Authenticate user with email/password
 router.post('/user/login', [protectedByApiKey], loginUser);

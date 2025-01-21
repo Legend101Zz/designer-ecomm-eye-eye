@@ -37,6 +37,9 @@ const UserSchema: Schema<IUser> = new Schema(
     description: {
       type: String,
     },
+    googleId: {
+      type: String,
+    },
 
     // Relationships & References
     following: [

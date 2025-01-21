@@ -375,6 +375,8 @@ const requestDesigner = async (
       addressBody,
     } = req.body;
 
+    console.log('checking', req.body);
+
     // Check if user exists and is not already a designer
     const checkUser: any = await user.findById(userId);
     if (!checkUser) {
@@ -850,6 +852,7 @@ const getDesigns = async (req: Request, res: Response) => {
 
     // Extract relevant information from designs
     const formattedDesigns = designs.map((design1) => ({
+      designId: design1._id,
       title: design1.title,
       description: design1.description,
       // @ts-ignore
@@ -985,39 +988,49 @@ const updateSettings = async (req: Request, res: Response) => {
 
   try {
     const existingDesigner = await designer.findById(designerId);
-    // console.log('Dessign', req.body);
-    // If the existing designer does not have a settings object, create one
+
     if (!existingDesigner.settings) {
       existingDesigner.settings = {};
     }
 
-    // Update settings based on the fields present in req.body.settings
     if (req.body.settings) {
       const { settings } = req.body;
+      console.log('Setting', settings);
+      // Ensure `showDesigns` matches the schema
+      if (typeof settings.showDesigns === 'boolean') {
+        settings.showDesigns = {
+          enabled: settings.showDesigns,
+          designIds: [],
+        };
+      }
 
-      // Loop through each field in req.body.settings and update existingDesigner.settings
+      // Merge settings, ensuring type safety
       Object.keys(settings).forEach((field) => {
-        existingDesigner.settings[field] = settings[field];
+        if (field === 'showDesigns' && typeof settings[field] === 'object') {
+          existingDesigner.settings.showDesigns = {
+            ...existingDesigner.settings.showDesigns,
+            ...settings[field],
+          };
+        } else {
+          existingDesigner.settings[field] = settings[field];
+        }
       });
+      existingDesigner.settings.socialMedia = [
+        settings.socialMediaLink1 || 'Add social Media Here !',
+        settings.socialMediaLink2 || 'Add social Media Here !',
+      ];
+
+      existingDesigner.settings.portfolioLinks = [
+        settings.portfolioLink1 || 'Add portolio Media Here !',
+        settings.portfolioLink2 || 'Add portolio Media Here !',
+      ];
     }
 
-    // Copy socialMedia if not provided in the request body
-    if (!req.body.settings?.socialMedia && existingDesigner.socialMedia) {
-      existingDesigner.settings.socialMedia = existingDesigner.socialMedia;
-    }
-
-    // Copy portfolioLinks if not provided in the request body
-    if (!req.body.settings?.portfolioLinks && existingDesigner.portfolioLinks) {
-      existingDesigner.settings.portfolioLinks =
-        existingDesigner.portfolioLinks;
-    }
-    // console.log('Dessign', existingDesigner.settings);
-    // Save the updated designer
+    // Save updated designer
     const updatedDesigner = await existingDesigner.save();
-
     return res.status(200).json(updatedDesigner);
   } catch (error) {
-    logger.error(error);
+    console.error(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 };
@@ -1025,7 +1038,7 @@ const updateSettings = async (req: Request, res: Response) => {
 // middleware
 
 const transformToArray = (req: Request, res: Response, next: NextFunction) => {
-  // console.log('transform midd hitt', req.body);
+  console.log('transform midd hitt', req.body);
   const { portfolioLinks, cvLinks } = req.body;
 
   if (typeof portfolioLinks === 'string') {

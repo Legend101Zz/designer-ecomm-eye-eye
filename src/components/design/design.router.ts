@@ -5,6 +5,7 @@ import {
   updateDesign,
   getDesignerDesigns,
   getRandomDesigns,
+  getDesignDetails,
 } from './design.controller';
 
 const router: Router = Router();
@@ -19,5 +20,7 @@ router.get(
   getDesignerDesigns,
 );
 router.post('/designs/update/:designId', [protectedByApiKey], updateDesign);
+
+router.get('/designs/details/:designId', [protectedByApiKey], getDesignDetails);
 
 export default router;

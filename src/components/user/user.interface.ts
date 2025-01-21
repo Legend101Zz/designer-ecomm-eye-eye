@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 export interface IUser {
   _id: string;
   username: string;
+  googleId?: string;
   email: string;
   password?: string;
   isVerified: boolean; // For email verification

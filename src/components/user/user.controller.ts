@@ -314,6 +314,222 @@ This is an automated message, please do not reply to this email.
   }
 };
 
+const handleGoogleAuth = async (req: Request, res: Response) => {
+  try {
+    const { email, username, name, googleId, image } = req.body;
+    const password = generateRandomPassword(); // Your existing password generator
+
+    // Check if user exists
+    const existingUser = await user.findOne({ email });
+
+    if (existingUser) {
+      // User exists, update Google-specific fields if needed
+      existingUser.googleId = googleId;
+      await existingUser.save();
+
+      return res.status(200).json({
+        success: true,
+        // eslint-disable-next-line no-underscore-dangle
+        userId: existingUser._id,
+        isDesigner: existingUser.isDesigner,
+        designerId: existingUser.DesignerId,
+      });
+    }
+
+    // Create new user
+    const salt = await bcrypt.genSalt(Number(config.salt));
+    const hashPassword = await bcrypt.hash(password, salt);
+
+    // eslint-disable-next-line new-cap
+    const newUser = new user({
+      email,
+      username,
+      name,
+      password: hashPassword,
+      googleId,
+      image,
+      isVerified: true, // Google users are verified by default
+    });
+
+    await newUser.save();
+
+    // Email Template
+    const subject = 'Welcome to Deauth - Your Account Details';
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          line-height: 1.6;
+          color: #292929;
+          background-color: #f5f5f5;
+          margin: 0;
+          padding: 0;
+        }
+        .container {
+          max-width: 600px;
+          margin: 0 auto;
+          background-color: #ffffff;
+        }
+        .header {
+          background-color: #292929;
+          color: white;
+          text-align: center;
+          padding: 40px 20px;
+        }
+        .logo {
+          width: 180px;
+          height: auto;
+          margin-bottom: 20px;
+        }
+        .welcome-text {
+          font-size: 28px;
+          font-weight: bold;
+          margin: 20px 0;
+          color: #ffffff;
+        }
+        .content {
+          padding: 40px;
+        }
+        .credentials-box {
+          background-color: #fff9f0;
+          border: 2px solid #ff7d04;
+          border-radius: 8px;
+          padding: 25px;
+          margin: 25px 0;
+        }
+        .credentials-item {
+          padding: 12px;
+          background: #ffffff;
+          margin: 8px 0;
+          border-radius: 4px;
+        }
+        .notice-box {
+          background-color: #292929;
+          color: #ffffff;
+          padding: 25px;
+          border-radius: 8px;
+          margin: 25px 0;
+        }
+        .notice-box h3 {
+          color: #ff7d04;
+          margin: 0 0 15px 0;
+        }
+        .button {
+          display: inline-block;
+          padding: 15px 40px;
+          background-color: #ff7d04;
+          color: #ffffff;
+          text-decoration: none;
+          border-radius: 4px;
+          font-weight: bold;
+          text-align: center;
+        }
+        .footer {
+          background-color: #292929;
+          color: #ffffff;
+          text-align: center;
+          padding: 30px;
+          font-size: 12px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <img src="https://www.deauth.in/_next/image?url=%2Flogos%2Flogo.webp&w=256&q=75" alt="Deauth Logo" class="logo">
+          <div class="welcome-text">Welcome to Deauth</div>
+        </div>
+        
+        <div class="content">
+          <p>Hi ${name || username},</p>
+          
+          <p>Your account has been successfully created using Google Sign-In!</p>
+          
+          <div class="credentials-box">
+            <h3>Your Account Details</h3>
+            <div class="credentials-item">
+              <strong>Email:</strong> ${email}
+            </div>
+            <div class="credentials-item">
+              <strong>Password:</strong> ${password}
+            </div>
+          </div>
+
+          <div class="notice-box">
+            <h3>Important Information</h3>
+            <p>You can continue using Google Sign-In for quick access to your account.</p>
+            <p>If you prefer, you can also use the password provided above to log in directly.</p>
+            <p>We recommend changing this password after your first login for security purposes.</p>
+          </div>
+
+          <p style="text-align: center;">
+            <a href="https://deauth.in/auth/login" class="button">Login to Your Account</a>
+          </p>
+        </div>
+
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} Deauth. All rights reserved.</p>
+          <p>
+            <a href="https://deauth.in/privacy" style="color: #ff7d04; margin: 0 10px;">Privacy Policy</a> | 
+            <a href="https://deauth.in/terms" style="color: #ff7d04; margin: 0 10px;">Terms of Service</a>
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+    `;
+
+    const textContent = `
+Welcome to Deauth!
+
+Hi ${name || username},
+
+Your account has been successfully created using Google Sign-In!
+
+Your Account Details:
+Email: ${email}
+Password: ${password}
+
+Important Information:
+- You can continue using Google Sign-In for quick access
+- You can also use the password provided above to log in directly
+- We recommend changing this password after your first login
+
+Login at: https://deauth.in/auth/login
+
+© ${new Date().getFullYear()} Deauth. All rights reserved.
+`;
+
+    await sendEmailMiddleware(
+      req,
+      res,
+      email,
+      subject,
+      htmlContent,
+      textContent,
+    );
+
+    return res.status(200).json({
+      success: true,
+      // eslint-disable-next-line no-underscore-dangle
+      userId: newUser._id,
+      isDesigner: newUser.isDesigner,
+      designerId: newUser.DesignerId,
+    });
+  } catch (err) {
+    logger.error('Google auth error:', err);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+    });
+  }
+};
+
 const updatePassword = async (req: Request, res: Response) => {
   try {
     const { userId, oldPassword, newPassword } = req.body;
@@ -977,6 +1193,7 @@ const getUserCart = async (req: Request, res: Response) => {
 // eslint-disable-next-line import/prefer-default-export
 export {
   createUser,
+  handleGoogleAuth,
   loginUser,
   addAddress,
   followDesigner,

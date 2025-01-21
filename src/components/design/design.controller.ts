@@ -238,5 +238,50 @@ const getRandomDesigns = async (req: Request, res: Response) => {
 //   }
 // };
 
+const getDesignDetails = async (req: Request, res: Response) => {
+  try {
+    const { designId } = req.params;
+
+    // Find the design by ID and populate necessary fields
+    const designDetails = await design
+      .findById(designId)
+      .populate('designer', 'legal_first_name legal_last_name artistName')
+      .populate('finalProduct', 'name category price')
+      .exec();
+
+    if (!designDetails) {
+      return res.status(404).json({ message: 'Design not found' });
+    }
+
+    // Structure the response
+    const formattedDetails = {
+      title: designDetails.title,
+      description: designDetails.description,
+      designImage: designDetails.designImage,
+      designer: designDetails.designer,
+      finalProduct: designDetails.finalProduct,
+      isVerified: designDetails.isVerified,
+      likes: designDetails.likes,
+      appliedCount: designDetails.appliedCount,
+      tags: designDetails.tags,
+      //@ts-ignore
+      createdAt: designDetails.createdAt,
+      //@ts-ignore
+      updatedAt: designDetails.updatedAt,
+    };
+
+    return res.status(200).json(formattedDetails);
+  } catch (error) {
+    logger.error('Error fetching design details:', error);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
-export { showDesigns, updateDesign, getDesignerDesigns, getRandomDesigns };
+export {
+  showDesigns,
+  updateDesign,
+  getDesignerDesigns,
+  getRandomDesigns,
+  getDesignDetails,
+};

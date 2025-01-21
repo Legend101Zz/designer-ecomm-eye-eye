@@ -54,7 +54,7 @@ const cloudinaryMiddleware = (
         // Store uploaded images information in req
         req.uploadedImages = req.files.map((file) => ({
           url: file.path,
-          public_id: file.filename, // Assuming filename stores Cloudinary's public_id
+          public_id: file.filename,
         }));
         // console.log(req.files);
         return next();
