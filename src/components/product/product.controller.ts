@@ -267,6 +267,93 @@ const getProductVariants = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Gets products by type with optional gender filter
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ */
+const getProductsByType = async (req: Request, res: Response) => {
+  try {
+    const { type, gender } = req.query;
+
+    // Validate product type
+    if (!type || !Object.values(ProductType).includes(type as ProductType)) {
+      return res.status(httpStatus.BAD_REQUEST).json({
+        success: false,
+        message: 'Invalid product type',
+      });
+    }
+
+    // Build query
+    const query: any = {
+      productType: type,
+      isActive: true,
+    };
+
+    // Add gender filter if provided
+    if (gender) {
+      query.gender = { $in: [gender] };
+    }
+
+    // Get products with required fields
+    const products = await product.find(query).select({
+      name: 1,
+      productType: 1,
+      category: 1,
+      colors: 1,
+      images: {
+        url: 1,
+        position: 1,
+        color: 1,
+      },
+      sizes: 1,
+      gender: 1,
+      isActive: 1,
+    });
+
+    if (!products.length) {
+      return res.status(httpStatus.NOT_FOUND).json({
+        success: false,
+        message: 'No products found',
+      });
+    }
+
+    // Format response
+    const formattedProducts = products.map((p) => ({
+      // eslint-disable-next-line no-underscore-dangle
+      id: p._id,
+      name: p.name,
+      productType: p.productType,
+      category: p.category,
+      colors: p.colors,
+      // Group images by color
+      images: p.colors.reduce((acc: any, color: string) => {
+        acc[color] = {};
+        const colorImages = p.images.filter((img) => img.color === color);
+        colorImages.forEach((img) => {
+          acc[color][img.position] = img.url;
+        });
+        return acc;
+      }, {}),
+      sizes: p.sizes,
+      gender: p.gender,
+    }));
+
+    logger.info(`Retrieved ${products.length} products of type ${type}`);
+
+    return res.status(httpStatus.OK).json({
+      success: true,
+      products: formattedProducts,
+    });
+  } catch (error) {
+    logger.error(`Error getting products by type: %O`, error);
+    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: 'Error retrieving products',
+    });
+  }
+};
+
 export {
   createProd,
   readProd,
@@ -274,4 +361,5 @@ export {
   addColorVariant,
   removeColorVariant,
   getProductVariants,
+  getProductsByType,
 };

@@ -9,6 +9,7 @@ import {
   addColorVariant,
   removeColorVariant,
   getProductVariants,
+  getProductsByType,
 } from './product.controller';
 import {
   createProductValidation,
@@ -52,5 +53,7 @@ router.delete(
 );
 
 router.get('/product/read/:id', [protectedByApiKey], readProd);
+
+router.get('/products/by-type', [protectedByApiKey], getProductsByType);
 
 export default router;
