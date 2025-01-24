@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import protectedByApiKey from '@core/middlewares/apiKey.middleware';
-import cloudinaryMiddleware from '@core/middlewares/cloudinary';
+import { finalProductUploadMiddleware } from '@core/middlewares/cloudinary';
 import {
   createFinalProduct,
   getFilteredProducts,
@@ -15,7 +15,7 @@ const router: Router = Router();
 router.post(
   '/finalproduct/create',
   [protectedByApiKey],
-  cloudinaryMiddleware,
+  finalProductUploadMiddleware,
   createFinalProduct,
 );
 

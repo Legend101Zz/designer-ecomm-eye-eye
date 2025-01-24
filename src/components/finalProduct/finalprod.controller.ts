@@ -41,13 +41,14 @@ interface CreateProductRequest {
   productName: string;
   gender: Gender;
   designPrice: number;
-  designs: DesignPlacementRequest[];
-  variants: ProductVariantRequest[];
-  processedImages: ProcessedImage[];
+  designs: string; // JSON string
+  variants: string; // JSON string
+  imageMetadata: string; // JSON string containing baseProductId and color
+  tags?: string; // Optional JSON string
 }
 
 interface CustomRequest extends Request {
-  files: Multer.File[];
+  processedImages: Multer.File[];
 }
 
 /**
@@ -96,16 +97,28 @@ export async function createFinalProduct(
 ): Promise<void> {
   // Track uploaded files for cleanup in case of error
   const uploadedFiles: string[] = [];
-
+  console.log('createFinalProduct', req.body);
   try {
     const {
       productName,
       gender,
       designPrice,
-      designs,
-      variants,
-      processedImages,
-    } = req.body as CreateProductRequest;
+      designs: designsJson, // to indicate it's JSON string
+      variants: variantsJson, // to indicate it's JSON string
+      imageMetadata,
+    } = req.body;
+
+    // Log the incoming data
+    logger.debug('Creating final product with data:');
+    console.log({
+      body: req.body,
+      filesReceived: req.processedImages,
+    });
+
+    // Parse JSON strings
+    const designs = JSON.parse(designsJson);
+    const variants = JSON.parse(variantsJson);
+    const parsedMetadata = JSON.parse(imageMetadata || '{}');
 
     logger.debug(`Processing final product creation: ${productName}`);
 
@@ -137,37 +150,38 @@ export async function createFinalProduct(
       }),
     );
 
-    // Step 2: Process variant images with organized uploads
-    const processedImagesByVariant = await Promise.all(
-      processedImages.map(async (imgData) => {
-        // Create folder structure for images
-        const folder = `final-products/${productName}/${gender}/${imgData.color}`;
+    // STEP 2: Process Variant Images
+    // Maps processed images from middleware to their respective variants
+    const processedImagesByVariant = variants.map((variant) => {
+      // Find front and back images
+      const frontImage = req.processedImages.find(
+        (img) => img.position === 'front',
+      );
+      const backImage = req.processedImages.find(
+        (img) => img.position === 'back',
+      );
 
-        // Upload front and back images
-        const [frontImage, backImage] = await Promise.all([
-          uploadToCloudinary(imgData.front, `${folder}/front`),
-          uploadToCloudinary(imgData.back, `${folder}/back`),
-        ]);
+      logger.debug('Processing images for variant:', {
+        variant,
+        frontImage,
+        backImage,
+      });
 
-        // Track uploaded files
-        uploadedFiles.push(frontImage.public_id, backImage.public_id);
-
-        return {
-          baseProductId: imgData.baseProductId,
-          color: imgData.color,
-          images: {
-            front: {
-              url: frontImage.secure_url,
-              filename: frontImage.public_id,
-            },
-            back: {
-              url: backImage.secure_url,
-              filename: backImage.public_id,
-            },
+      return {
+        baseProductId: variant.baseProductId,
+        color: variant.color,
+        images: {
+          front: {
+            url: frontImage?.url,
+            filename: frontImage?.filename,
           },
-        };
-      }),
-    );
+          back: {
+            url: backImage?.url,
+            filename: backImage?.filename,
+          },
+        },
+      };
+    });
 
     // Step 3: Process and validate variants
     const processedVariants = await Promise.all(
@@ -235,14 +249,33 @@ export async function createFinalProduct(
       designs: processedDesigns,
       variants: processedVariants,
       processedImages: {
-        front: processedImagesByVariant.map((v) => v.images.front),
-        back: processedImagesByVariant.map((v) => v.images.back),
+        front: [
+          {
+            url: req.processedImages.find((img) => img.position === 'front')
+              ?.url,
+            filename: req.processedImages.find(
+              (img) => img.position === 'front',
+            )?.filename,
+          },
+        ],
+        back: [
+          {
+            url: req.processedImages.find((img) => img.position === 'back')
+              ?.url,
+            filename: req.processedImages.find((img) => img.position === 'back')
+              ?.filename,
+          },
+        ],
       },
       designPrice: Number(designPrice) || 0,
     };
 
     logger.debug('Checking for existing product with same design combination');
 
+    console.log('ProcessedImages in designGroup:', {
+      front: designGroup.processedImages.front,
+      back: designGroup.processedImages.back,
+    });
     // Step 5: Find or create final product
     let finalProd = await finalProduct.findOne({
       productName,
@@ -302,14 +335,51 @@ export async function createFinalProduct(
         `with ${processedVariants.length} variants`,
     );
 
-    // Return success response
-    res.status(httpStatus.CREATED).json({
-      success: true,
-      // eslint-disable-next-line no-underscore-dangle
-      productId: finalProd._id,
-      message: 'Final product created successfully',
-    });
+    // After successfully saving the final product
+    // Update all used designs with this final product ID and increment appliedCount
+    try {
+      // Get unique design IDs from all design groups
+      const uniqueDesignIds = [
+        ...new Set(designs.map((design1) => design1.designId)),
+      ];
+
+      console.log('Updating designs with final product reference:', {
+        finalProductId: finalProd._id,
+        designIds: uniqueDesignIds,
+      });
+
+      // Update all designs in one operation
+      await design.updateMany(
+        { _id: { $in: uniqueDesignIds } },
+        {
+          // eslint-disable-next-line no-underscore-dangle
+          $addToSet: { finalProduct: finalProd._id }, // Add to finalProduct array if not already present
+          $inc: { appliedCount: 1 }, // Increment appliedCount
+        },
+      );
+
+      logger.info(
+        `Updated ${uniqueDesignIds.length} designs with final product reference`,
+      );
+
+      // Return success response
+      res.status(httpStatus.CREATED).json({
+        success: true,
+        // eslint-disable-next-line no-underscore-dangle
+        productId: finalProd._id,
+        message: 'Final product created successfully',
+      });
+    } catch (updateError) {
+      logger.error('Error updating designs:', updateError);
+      throw new Error(updateError);
+    }
   } catch (error) {
+    logger.error('Error in createFinalProduct:', {
+      error: error.message,
+      stack: error.stack,
+      body: req.body,
+      files: req.processedImages,
+    });
     // Clean up uploaded files on error
     if (uploadedFiles.length) {
       logger.debug('Cleaning up uploaded files due to error');

@@ -29,7 +29,7 @@ const DesignPlacementSchema = new Schema({
   scale: {
     type: Number,
     default: 1,
-    min: 0.1,
+    min: 0.001,
     max: 5,
   },
   rotation: {
