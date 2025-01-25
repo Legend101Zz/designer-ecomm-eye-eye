@@ -7,6 +7,7 @@ import {
   getProductDetails,
   updateStock,
   deactivateProduct,
+  getProcessedImages,
 } from './finalprod.controller';
 
 const router: Router = Router();
@@ -21,6 +22,9 @@ router.post(
 
 // Get filtered products list
 router.get('/finalproduct/list', [protectedByApiKey], getFilteredProducts);
+
+// Get processed images with optional filters
+router.get('/finalproduct/images', [protectedByApiKey], getProcessedImages);
 
 // Get single product details
 router.get('/finalproduct/:productId', [protectedByApiKey], getProductDetails);

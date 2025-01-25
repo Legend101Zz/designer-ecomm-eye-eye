@@ -14,37 +14,51 @@ import { IDesignPlacement, IProductVariant } from './finalprod.interface';
 /**
  * Types for request/response data structures
  */
-interface ProcessedImage {
-  baseProductId: string;
-  color: Color;
-  front: string; // base64 or file path
-  back: string; // base64 or file path
-}
+// interface ProcessedImage {
+//   baseProductId: string;
+//   color: Color;
+//   front: string; // base64 or file path
+//   back: string; // base64 or file path
+// }
 
-interface ProductVariantRequest {
-  baseProductId: string;
-  color: Color;
-}
+// interface ProductVariantRequest {
+//   baseProductId: string;
+//   color: Color;
+// }
 
-interface DesignPlacementRequest {
-  designId: string;
-  position: 'front' | 'back';
-  coordinates: {
-    x: number;
-    y: number;
-  };
-  scale?: number;
-  rotation?: number;
-}
+// interface DesignPlacementRequest {
+//   designId: string;
+//   position: 'front' | 'back';
+//   coordinates: {
+//     x: number;
+//     y: number;
+//   };
+//   scale?: number;
+//   rotation?: number;
+// }
 
-interface CreateProductRequest {
-  productName: string;
+// interface CreateProductRequest {
+//   productName: string;
+//   gender: Gender;
+//   designPrice: number;
+//   designs: string; // JSON string
+//   variants: string; // JSON string
+//   imageMetadata: string; // JSON string containing baseProductId and color
+//   tags?: string; // Optional JSON string
+// }
+
+interface DesignGroupImages {
   gender: Gender;
-  designPrice: number;
-  designs: string; // JSON string
-  variants: string; // JSON string
-  imageMetadata: string; // JSON string containing baseProductId and color
-  tags?: string; // Optional JSON string
+  images: {
+    front: { url: string; filename: string }[];
+    back: { url: string; filename: string }[];
+  };
+}
+
+interface ProcessedImagesResponse {
+  productId: string;
+  productName: string;
+  designGroups: DesignGroupImages[];
 }
 
 interface CustomRequest extends Request {
@@ -431,7 +445,8 @@ export async function getFilteredProducts(
 ): Promise<void> {
   try {
     const { category, gender, baseProductId } = req.query;
-    logger.debug('Getting filtered products:', {
+
+    console.log('Getting filtered products:', {
       category,
       gender,
       baseProductId,
@@ -503,28 +518,25 @@ export async function getFilteredProducts(
           })),
           // Format variants
           variants: group.variants
-            .filter((v) => v.baseProductId) // Filter out variants with no matching base product
-            .map((v) => ({
-              // eslint-disable-next-line no-underscore-dangle
-              baseProductId: v.baseProductId._id,
-              // @ts-ignore
-              productName: v.baseProductId.name,
-              // @ts-ignore
-              category: v.baseProductId.category,
-              color: v.color,
-              // @ts-ignore
-              // eslint-disable-next-line node/no-unsupported-features/es-builtins
-              stock: Object.fromEntries(v.quantity),
-              // Match images to variant
-              images: {
-                front: group.processedImages.front.find((img) =>
-                  img.filename.includes(v.color.toLowerCase()),
-                )?.url,
-                back: group.processedImages.back.find((img) =>
-                  img.filename.includes(v.color.toLowerCase()),
-                )?.url,
-              },
-            })),
+            .filter((v) => v.baseProductId)
+            .map((v) => {
+              // Since we're using lean(), stock is already a plain object, not a Map
+              const stockData = typeof v.stock === 'object' ? v.stock : {};
+
+              return {
+                baseProductId: v.baseProductId._id,
+                //@ts-ignore
+                productName: v.baseProductId.name,
+                //@ts-ignore
+                category: v.baseProductId.category,
+                color: v.color,
+                stock: stockData, // Use the object directly
+                images: {
+                  front: group.processedImages.front[0]?.url,
+                  back: group.processedImages.back[0]?.url,
+                },
+              };
+            }),
         })),
     }));
 
@@ -535,6 +547,10 @@ export async function getFilteredProducts(
       products: formattedProducts,
     });
   } catch (error) {
+    console.error('Error in getFilteredProducts:', {
+      error: error.message,
+      stack: error.stack,
+    });
     next(
       new AppError(httpStatus.INTERNAL_SERVER_ERROR, 'Error fetching products'),
     );
@@ -621,12 +637,8 @@ export async function getProductDetails(
           stock: Object.fromEntries(v.stock),
           // Match processed images to variant
           images: {
-            front: group.processedImages.front.find((img) =>
-              img.filename.includes(v.color.toLowerCase()),
-            )?.url,
-            back: group.processedImages.back.find((img) =>
-              img.filename.includes(v.color.toLowerCase()),
-            )?.url,
+            front: group.processedImages.front[0]?.url,
+            back: group.processedImages.back[0]?.url,
           },
         })),
       })),
@@ -819,6 +831,120 @@ export async function deactivateProduct(
         : new AppError(
             httpStatus.INTERNAL_SERVER_ERROR,
             'Error deactivating product',
+          ),
+    );
+  }
+}
+
+/**
+ * Get processed images with flexible filtering
+ *
+ * @route GET /api/finalproduct/images
+ * @query productId - Optional specific product ID
+ * @query gender - Optional gender filter
+ * @query category - Optional category filter
+ * @query productName - Optional product name filter (partial match)
+ * @query designId - Optional design ID filter
+ */
+export async function getProcessedImages(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const { productId, gender, category, productName, designId } = req.query;
+
+    console.log('Fetching processed images with filters:', {
+      productId,
+      gender,
+      category,
+      productName,
+      designId,
+    });
+
+    // Build query based on provided filters
+    const query: any = { isActive: true };
+
+    // Single product query
+    if (productId) {
+      if (!mongoose.Types.ObjectId.isValid(productId as string)) {
+        throw new AppError(httpStatus.BAD_REQUEST, 'Invalid product ID');
+      }
+      // eslint-disable-next-line no-underscore-dangle
+      query._id = new mongoose.Types.ObjectId(productId as string);
+    }
+
+    // Apply additional filters if provided
+    if (gender) {
+      query['designGroups.gender'] = gender;
+    }
+
+    if (category) {
+      query['designGroups.variants.baseProductId.category'] = category;
+    }
+
+    if (productName) {
+      // eslint-disable-next-line security/detect-non-literal-regexp
+      query.productName = new RegExp(productName as string, 'i');
+    }
+
+    if (designId) {
+      if (!mongoose.Types.ObjectId.isValid(designId as string)) {
+        throw new AppError(httpStatus.BAD_REQUEST, 'Invalid design ID');
+      }
+      query['designGroups.designs.designId'] = new mongoose.Types.ObjectId(
+        designId as string,
+      );
+    }
+
+    // Fetch products with minimal field selection
+    const products = await finalProduct
+      .find(query)
+      .select('productName designGroups.gender designGroups.processedImages')
+      .populate({
+        path: 'designGroups.variants.baseProductId',
+        select: 'category',
+      })
+      .lean();
+
+    // Format response
+    const response: ProcessedImagesResponse[] = products.map((prod) => ({
+      // eslint-disable-next-line no-underscore-dangle
+      productId: prod._id.toString(),
+      productName: prod.productName,
+      designGroups: prod.designGroups.map((group) => ({
+        gender: group.gender,
+        images: {
+          front: group.processedImages.front.map((img) => ({
+            url: img.url,
+            filename: img.filename,
+          })),
+          back: group.processedImages.back.map((img) => ({
+            url: img.url,
+            filename: img.filename,
+          })),
+        },
+      })),
+    }));
+
+    logger.debug(`Found ${response.length} products with processed images`);
+
+    res.status(httpStatus.OK).json({
+      success: true,
+      count: response.length,
+      data: response,
+    });
+  } catch (error) {
+    console.error('Error fetching processed images:', {
+      error: error.message,
+      stack: error.stack,
+    });
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError(
+            httpStatus.INTERNAL_SERVER_ERROR,
+            'Error fetching processed images',
           ),
     );
   }
