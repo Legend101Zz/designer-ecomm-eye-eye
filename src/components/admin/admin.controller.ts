@@ -214,7 +214,7 @@ const getDesignerDetails = async (req: Request, res: Response) => {
     const designer1 = await designer.findById(req.params.id);
 
     if (!designer1) {
-      return res.status(404).send('Designer not found');
+      return res.status(404).send(' heeeh');
     }
 
     return res.render('designerSingle', { designer: designer1 });
@@ -236,7 +236,7 @@ const approveDesignerController = async (req: Request, res: Response) => {
     );
 
     if (!updatedDesigner) {
-      return res.status(404).json({ error: 'Designer not found' });
+      return res.status(404).json({ error: 'Designer not foundaaa' });
     }
 
     return res.redirect('/api/admin/designer');

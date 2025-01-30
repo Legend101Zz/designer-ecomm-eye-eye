@@ -32,6 +32,8 @@ if (error) {
 
 // map env vars and make it visible outside module
 export default {
+  jwtSecret: envVars.JWT_SECRET,
+  sessionSecret: envVars.SESSION_SECRET,
   env: envVars.NODE_ENV,
   port: envVars.PORT,
   xApiKey: envVars.API_KEY_TOKEN,

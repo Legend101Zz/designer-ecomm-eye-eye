@@ -375,8 +375,6 @@ const requestDesigner = async (
       addressBody,
     } = req.body;
 
-    console.log('checking', req.body);
-
     // Check if user exists and is not already a designer
     const checkUser: any = await user.findById(userId);
     if (!checkUser) {
@@ -580,7 +578,7 @@ const publicData = async (req: Request, res: Response) => {
       .populate('settings.showDesigns.designIds');
 
     if (!designerData) {
-      return res.status(404).json({ message: 'Designer not found' });
+      return res.status(404).json({ message: 'ss' });
     }
 
     // Check if settings exist
@@ -655,18 +653,19 @@ const publicData = async (req: Request, res: Response) => {
 };
 
 // controller for showing designer's own data
-const personalData = async (req: Request, res: Response) => {
+const personalData = async (req: any, res: Response) => {
   try {
-    const { designerId } = req.params;
-    // console.log('id_here', designerId);
-    // Find the designer by ID
+    let { designerId } = req.params;
+    if (!designerId) {
+      designerId = req.user.designerId;
+    }
     const designerData = await designer.findById(designerId);
 
     // Designer's all designs
     const designData = await design.find({ designer: designerId });
 
     if (!designData) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: 'Designer notas found' });
     }
 
     // Extract the desired fields for the public data
@@ -694,11 +693,12 @@ const personalData = async (req: Request, res: Response) => {
 
 // Middleware function to check if a designer is approved
 const checkDesignerApproval = async (
-  req: Request,
+  req: any,
   res: Response,
   next: NextFunction,
 ) => {
-  const designerId = req.body.designerId || req.params.designerId;
+  const designerId =
+    req.body.designerId || req.params.designerId || req.user.designerId;
   logger.debug(designerId);
 
   try {
@@ -768,7 +768,7 @@ const createDesign = async (req: CustomRequest, res: Response) => {
     if (!existingDesigner) {
       // Cleanup uploaded image since designer wasn't found
       await cleanupDesign(null, cloudinaryIds);
-      return res.status(404).json({ message: 'Designer not found' });
+      return res.status(404).json({ message: 'Designer not foundsss' });
     }
 
     if (!existingDesigner.isApproved) {
@@ -831,14 +831,16 @@ const createDesign = async (req: CustomRequest, res: Response) => {
   }
 };
 
-const getDesigns = async (req: Request, res: Response) => {
+const getDesigns = async (req: any, res: Response) => {
   try {
-    const { designerId } = req.params;
+    const designerId = req.params.designerId || req.user.designerId;
 
     // Check if the designer exists
     const existingDesigner = await designer.findById(designerId);
+    console.log('existingDesigner', existingDesigner);
+
     if (!existingDesigner) {
-      return res.status(404).json({ error: 'Designer not found.' });
+      return res.status(404).json({ error: 'Designer not found.aa' });
     }
 
     // Fetch designs of the specified designer
@@ -968,8 +970,8 @@ const getRandomDesigners = async (req: Request, res: Response) => {
 
 // SETTINGS CONTROLLERS
 
-const getSettings = async (req: Request, res: Response) => {
-  const { designerId } = req.params;
+const getSettings = async (req: any, res: Response) => {
+  const designerId = req.params.designerId || req.user.designerId;
 
   try {
     const existingDesigner = await designer
@@ -983,9 +985,9 @@ const getSettings = async (req: Request, res: Response) => {
   }
 };
 
-const updateSettings = async (req: Request, res: Response) => {
-  const { designerId } = req.params;
-
+const updateSettings = async (req: any, res: Response) => {
+  const designerId = req.params.designerId || req.user.designerId;
+  logger.debug(designerId);
   try {
     const existingDesigner = await designer.findById(designerId);
 

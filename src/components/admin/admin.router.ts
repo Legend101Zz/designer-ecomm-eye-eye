@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import protectedByApiKey from '@core/middlewares/apiKey.middleware';
 import cloudinaryMiddleware from '@core/middlewares/cloudinary';
+
 import {
   createAdmin,
   loginAdmin,
