@@ -125,7 +125,12 @@ router.post(
 router.post(
   '/designer/createDesign',
 
-  [protectedByApiKey, cloudinaryMiddleware, checkDesignerApproval],
+  [
+    protectedByApiKey,
+    cloudinaryMiddleware,
+    authenticate,
+    checkDesignerApproval,
+  ],
   authorizeRole('designer'),
   createDesign,
 );

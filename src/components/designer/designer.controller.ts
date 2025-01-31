@@ -185,11 +185,10 @@ const sendDesignerRequestEmail = async (
             <ul>
               <li><strong>Artist Name:</strong> ${designerData.artistName}</li>
               <li><strong>Phone:</strong> ${designerData.phone}</li>
-              ${
-                designerData.description
-                  ? `<li><strong>Description:</strong> ${designerData.description}</li>`
-                  : ''
-              }
+              ${designerData.description
+      ? `<li><strong>Description:</strong> ${designerData.description}</li>`
+      : ''
+    }
             </ul>
           </div>
 
@@ -723,12 +722,12 @@ const checkDesignerApproval = async (
 };
 
 // controller for creating design
-const createDesign = async (req: CustomRequest, res: Response) => {
+const createDesign = async (req: any, res: Response) => {
   let savedDesign = null;
   const cloudinaryIds: string[] = [];
-
+  const designerId = req.user.designerId || req.body.designerId;
   try {
-    const { designerId, title, description, tags } = req.body;
+    const { title, description, tags } = req.body;
 
     // Validate required fields
     if (!designerId || !title || !tags) {
@@ -737,6 +736,8 @@ const createDesign = async (req: CustomRequest, res: Response) => {
           'Missing required fields. Title, designerId, and tags are required.',
       });
     }
+
+    console.log('req.files', req.body);
 
     // Validate tags format
     if (!Array.isArray(tags) || tags.length === 0) {
@@ -947,7 +948,7 @@ const getRandomDesigners = async (req: Request, res: Response) => {
       profileImage: designer2.profileImage?.url || null,
       designImage:
         designer2.Designs.length > 0 &&
-        designer2.Designs[0].designImage.length > 0
+          designer2.Designs[0].designImage.length > 0
           ? designer2.Designs[0].designImage[0].url
           : null,
       totalDesigns: designer2.Designs.length,

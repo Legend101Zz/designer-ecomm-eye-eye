@@ -9,13 +9,14 @@ import {
   deactivateProduct,
   getProcessedImages,
 } from './finalprod.controller';
+import { authenticate } from '@core/middlewares/userAuth.middleware';
 
 const router: Router = Router();
 
 // Create new final product with designs
 router.post(
   '/finalproduct/create',
-  [protectedByApiKey],
+  [protectedByApiKey, authenticate],
   finalProductUploadMiddleware,
   createFinalProduct,
 );

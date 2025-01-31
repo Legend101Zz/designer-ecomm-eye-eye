@@ -25,13 +25,11 @@ function authenticate(req, res, next) {
     return res.status(401).json({ message: 'Unauthorized: No token provided' });
   }
   let error;
-  console.log('i am working');
 
   verifyJwt(token, (err, decoded: JWTUserPayload) => {
     if (err) {
       error = err;
     }
-    console.log('decoded', decoded);
 
     req.user = decoded; // Attach the decoded token (user ID and role) to the request
   });
@@ -41,8 +39,10 @@ function authenticate(req, res, next) {
   next();
 }
 
-const authorizeRole = (role: string) => {
+const authorizeRole = (authRole: string) => {
   return (req: any, res: Response, next: NextFunction) => {
+    console.log('authorizeRole middleware', req.user);
+
     const token: string = req.headers.authorization?.split(' ')[1];
     if (!token) {
       return res
@@ -56,7 +56,7 @@ const authorizeRole = (role: string) => {
       }
       req.user = decoded;
       const { role } = req.user;
-      if (role !== 'designer') {
+      if (role !== authRole) {
         res.status(403).json({ message: 'Unauthorized: Invalid role' });
       }
       next();
