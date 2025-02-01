@@ -834,6 +834,31 @@ const createDesign = async (req: CustomRequest, res: Response) => {
 const getDesigns = async (req: Request, res: Response) => {
   try {
     const { designerId } = req.params;
+    const {
+      isVerified,
+      tags,
+      page = 1,
+      limit = 5,
+      sortBy = 'createdAt',
+      order = 'desc',
+    } = req.query;
+
+    // Convert page and limit to numbers
+    const pageNum = parseInt(page as string, 10);
+    const limitNum = parseInt(limit as string, 10);
+
+    // Validate pagination parameters
+    if (
+      Number.isNaN(pageNum) ||
+      Number.isNaN(limitNum) ||
+      pageNum < 1 ||
+      limitNum < 1
+    ) {
+      return res.status(400).json({
+        error:
+          'Invalid pagination parameters. Page and limit must be positive numbers.',
+      });
+    }
 
     // Check if the designer exists
     const existingDesigner = await designer.findById(designerId);
@@ -841,29 +866,79 @@ const getDesigns = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Designer not found.' });
     }
 
-    // Fetch designs of the specified designer
+    // Build query object
+    const query: any = { designer: designerId };
+
+    // Add isVerified filter if specified
+    if (isVerified !== undefined) {
+      query.isVerified = isVerified === 'true';
+    }
+
+    // Add tags filter if specified
+    if (tags) {
+      // Split tags string into array and trim whitespace
+      const tagArray = (tags as string).split(',').map((tag) => tag.trim());
+      query.tags = { $all: tagArray };
+    }
+
+    // Calculate skip value for pagination
+    const skip = (pageNum - 1) * limitNum;
+
+    // Build sort object
+    const sortObject: any = {};
+    sortObject[sortBy as string] = order === 'asc' ? 1 : -1;
+
+    // Fetch total count for pagination metadata
+    const totalDesigns = await design.countDocuments(query);
+
+    // Fetch designs with pagination, sorting, and filters
     const designs = await design
-      .find({ designer: designerId })
-      .populate('designer', 'artistName');
+      .find(query)
+      .populate('designer', 'artistName')
+      .sort(sortObject)
+      .skip(skip)
+      .limit(limitNum);
 
     if (!designs || designs.length === 0) {
-      return res.status(404).json({ error: 'Designer has no designs.' });
+      return res.status(404).json({
+        error: 'No designs found matching the specified criteria.',
+      });
     }
 
     // Extract relevant information from designs
     const formattedDesigns = designs.map((design1) => ({
+      // eslint-disable-next-line no-underscore-dangle
       designId: design1._id,
       title: design1.title,
       description: design1.description,
+      isVerified: design1.isVerified,
+      tags: design1.tags,
+      likes: design1.likes,
+      appliedCount: design1.appliedCount,
       // @ts-ignore
-      designImages: design1.designImage.map((image) => ({
+      createdAt: design1.createdAt,
+      // @ts-ignore
+      designImages: design1.designImage.map((image: any) => ({
         url: image.url,
       })),
     }));
 
-    // Response with designer and design images
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalDesigns / limitNum);
+    const hasNextPage = pageNum < totalPages;
+    const hasPrevPage = pageNum > 1;
+
+    // Response with designer designs and pagination metadata
     return res.json({
       designs: formattedDesigns,
+      pagination: {
+        currentPage: pageNum,
+        totalPages,
+        totalDesigns,
+        hasNextPage,
+        hasPrevPage,
+        limit: limitNum,
+      },
     });
   } catch (error) {
     logger.error('Error fetching design images:', error);
