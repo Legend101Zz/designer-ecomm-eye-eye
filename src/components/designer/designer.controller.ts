@@ -1018,6 +1018,7 @@ const getRandomDesigners = async (req: Request, res: Response) => {
 
     const randomDesigners = designers.map((designer2) => ({
       profileImage: designer2.profileImage?.url || null,
+      coverImage: designer2.coverImage?.url || null,
       designImage:
         designer2.Designs.length > 0 &&
         designer2.Designs[0].designImage.length > 0
