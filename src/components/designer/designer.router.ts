@@ -45,6 +45,11 @@ router.get(
   [checkDesignerApproval],
   publicData,
 );
+router.get(
+  '/designer/viewProfile/',
+  [authenticate, checkDesignerApproval],
+  publicData,
+);
 
 router.get(
   '/designer/personalProfile/:designerId',

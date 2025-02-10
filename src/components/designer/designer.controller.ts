@@ -569,7 +569,7 @@ const updateDesignerProfile = async (req: Request, res: Response) => {
 // controller for showing designer's public data
 const publicData = async (req: Request, res: Response) => {
   try {
-    const { designerId } = req.params;
+    const designerId = req.params.designerId || req.params.designerId;
 
     // Find the designer by ID
     const designerData = await designer
@@ -654,10 +654,7 @@ const publicData = async (req: Request, res: Response) => {
 // controller for showing designer's own data
 const personalData = async (req: any, res: Response) => {
   try {
-    let { designerId } = req.params;
-    if (!designerId) {
-      designerId = req.user.designerId;
-    }
+    const designerId = req.user.designerId || req.params.designerId;
     const designerData = await designer.findById(designerId);
 
     // Designer's all designs
@@ -988,7 +985,6 @@ const getSettings = async (req: any, res: Response) => {
 
 const updateSettings = async (req: any, res: Response) => {
   const designerId = req.params.designerId || req.user.designerId;
-  logger.debug(designerId);
   try {
     const existingDesigner = await designer.findById(designerId);
 
@@ -998,7 +994,6 @@ const updateSettings = async (req: any, res: Response) => {
 
     if (req.body.settings) {
       const { settings } = req.body;
-      console.log('Setting', settings);
       // Ensure `showDesigns` matches the schema
       if (typeof settings.showDesigns === 'boolean') {
         settings.showDesigns = {
