@@ -10,7 +10,6 @@ export type JWTUserPayload = {
 };
 
 const isLoggedIn = (req: any, res: Response, next: NextFunction) => {
-  console.log('loggedIn middleware', req.session);
   if (req.session.userData) {
     next();
   } else {
@@ -41,8 +40,6 @@ function authenticate(req, res, next) {
 
 const authorizeRole = (authRole: string) => {
   return (req: any, res: Response, next: NextFunction) => {
-    console.log('authorizeRole middleware', req.user);
-
     const token: string = req.headers.authorization?.split(' ')[1];
     if (!token) {
       return res

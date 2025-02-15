@@ -734,8 +734,6 @@ const createDesign = async (req: any, res: Response) => {
       });
     }
 
-    console.log('req.files', req.body);
-
     // Validate tags format
     if (!Array.isArray(tags) || tags.length === 0) {
       return res.status(400).json({
@@ -835,7 +833,6 @@ const getDesigns = async (req: any, res: Response) => {
 
     // Check if the designer exists
     const existingDesigner = await designer.findById(designerId);
-    console.log('existingDesigner', existingDesigner);
 
     if (!existingDesigner) {
       return res.status(404).json({ error: 'Designer not found.aa' });
@@ -870,58 +867,6 @@ const getDesigns = async (req: any, res: Response) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 };
-
-// const designByCategory = async (req: Request, res: Response) => {
-//   try {
-//     const { designerId } = req.params;
-//     const { productCategory } = req.query;
-//     // Find the designer by ID
-//     const designerCheck = await designer.findById(designerId);
-//     if (!designerCheck) {
-//       return res.status(404).json({ message: 'Designer not found' });
-//     }
-
-//     // Find the product by category or fetch all products if the category is not specified
-//     let products: any;
-//     if (productCategory) {
-//       products = await product.find({ category: productCategory });
-//     } else {
-//       products = await product.find();
-//     }
-
-//     console.log('products', products);
-
-//     if (products.length === 0) {
-//       return res
-//         .status(404)
-//         .json({ message: 'No products found for the given category' });
-//     }
-
-//     // Find designs for the specified designer and product category
-//     const designs = await design
-//       .find({
-//         // eslint-disable-next-line no-underscore-dangle
-//         designer: designerCheck._id,
-//         // eslint-disable-next-line no-underscore-dangle
-//         'product.productId': { $in: products.map((product1) => product1._id) },
-//       })
-//       .select('title description product.images.url -_id');
-
-//     if (designs.length === 0) {
-//       return res.status(404).json({
-//         message:
-//           'No products found for the given category made by this designer',
-//       });
-//     }
-
-//     return res.status(200).json(designs);
-//   } catch (error) {
-//     logger.error(error);
-//     return res.status(500).json({ message: 'Internal Server Error' });
-//   }
-// };
-
-// get random designer to be changed later
 
 const getRandomDesigners = async (req: Request, res: Response) => {
   try {
@@ -1036,7 +981,7 @@ const updateSettings = async (req: any, res: Response) => {
 // middleware
 
 const transformToArray = (req: Request, res: Response, next: NextFunction) => {
-  console.log('transform midd hitt', req.body);
+
   const { portfolioLinks, cvLinks } = req.body;
 
   if (typeof portfolioLinks === 'string') {

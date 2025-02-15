@@ -50,7 +50,6 @@ app.use(
     resave: false,
   }),
 );
-console.log(process.env.SESSION_SECRET);
 
 app.use(passport.initialize());
 app.use(passport.session());

@@ -65,8 +65,6 @@ router.get(
 );
 
 router.get('/designer/check', [authenticate], (req, res) => {
-  console.log('check', req.user);
-
   return res
     .status(200)
     .json({ isDesigner: req.user?.role === 'designer' ? true : false });

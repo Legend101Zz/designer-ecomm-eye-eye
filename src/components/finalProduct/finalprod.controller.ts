@@ -111,7 +111,7 @@ export async function createFinalProduct(
 ): Promise<void> {
   // Track uploaded files for cleanup in case of error
   const uploadedFiles: string[] = [];
-  console.log('createFinalProduct', req.body);
+
   try {
     const {
       productName,
@@ -124,10 +124,6 @@ export async function createFinalProduct(
 
     // Log the incoming data
     logger.debug('Creating final product with data:');
-    console.log({
-      body: req.body,
-      filesReceived: req.processedImages,
-    });
 
     // Parse JSON strings
     const designs = JSON.parse(designsJson);
@@ -286,10 +282,6 @@ export async function createFinalProduct(
 
     logger.debug('Checking for existing product with same design combination');
 
-    console.log('ProcessedImages in designGroup:', {
-      front: designGroup.processedImages.front,
-      back: designGroup.processedImages.back,
-    });
     // Step 5: Find or create final product
     let finalProd = await finalProduct.findOne({
       productName,
@@ -346,7 +338,7 @@ export async function createFinalProduct(
     logger.info(
       // eslint-disable-next-line no-underscore-dangle
       `Successfully created/updated final product ${finalProd._id} ` +
-        `with ${processedVariants.length} variants`,
+      `with ${processedVariants.length} variants`,
     );
 
     // After successfully saving the final product
@@ -356,11 +348,6 @@ export async function createFinalProduct(
       const uniqueDesignIds = [
         ...new Set(designs.map((design1) => design1.designId)),
       ];
-
-      console.log('Updating designs with final product reference:', {
-        finalProductId: finalProd._id,
-        designIds: uniqueDesignIds,
-      });
 
       // Update all designs in one operation
       await design.updateMany(
@@ -412,9 +399,9 @@ export async function createFinalProduct(
       error instanceof AppError
         ? error
         : new AppError(
-            httpStatus.INTERNAL_SERVER_ERROR,
-            'Error creating final product',
-          ),
+          httpStatus.INTERNAL_SERVER_ERROR,
+          'Error creating final product',
+        ),
     );
   }
 }
@@ -445,12 +432,6 @@ export async function getFilteredProducts(
 ): Promise<void> {
   try {
     const { category, gender, baseProductId } = req.query;
-
-    console.log('Getting filtered products:', {
-      category,
-      gender,
-      baseProductId,
-    });
 
     // Build query filters
     const query: any = { isActive: true };
@@ -660,9 +641,9 @@ export async function getProductDetails(
       error instanceof AppError
         ? error
         : new AppError(
-            httpStatus.INTERNAL_SERVER_ERROR,
-            'Error fetching product details',
-          ),
+          httpStatus.INTERNAL_SERVER_ERROR,
+          'Error fetching product details',
+        ),
     );
   }
 }
@@ -765,9 +746,9 @@ export async function updateStock(
       error instanceof AppError
         ? error
         : new AppError(
-            httpStatus.INTERNAL_SERVER_ERROR,
-            'Error updating stock',
-          ),
+          httpStatus.INTERNAL_SERVER_ERROR,
+          'Error updating stock',
+        ),
     );
   }
 }
@@ -829,9 +810,9 @@ export async function deactivateProduct(
       error instanceof AppError
         ? error
         : new AppError(
-            httpStatus.INTERNAL_SERVER_ERROR,
-            'Error deactivating product',
-          ),
+          httpStatus.INTERNAL_SERVER_ERROR,
+          'Error deactivating product',
+        ),
     );
   }
 }
@@ -853,14 +834,6 @@ export async function getProcessedImages(
 ): Promise<void> {
   try {
     const { productId, gender, category, productName, designId } = req.query;
-
-    console.log('Fetching processed images with filters:', {
-      productId,
-      gender,
-      category,
-      productName,
-      designId,
-    });
 
     // Build query based on provided filters
     const query: any = { isActive: true };
@@ -943,9 +916,9 @@ export async function getProcessedImages(
       error instanceof AppError
         ? error
         : new AppError(
-            httpStatus.INTERNAL_SERVER_ERROR,
-            'Error fetching processed images',
-          ),
+          httpStatus.INTERNAL_SERVER_ERROR,
+          'Error fetching processed images',
+        ),
     );
   }
 }

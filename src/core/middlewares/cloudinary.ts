@@ -54,8 +54,6 @@ const cloudinaryMiddleware = (
           });
         }
 
-        console.log('In cloud:', req.body);
-
         // Store uploaded images information in req
         req.uploadedImages = req.files.map((file) => ({
           url: file.path, // If using disk storage
@@ -85,7 +83,6 @@ export const cleanupCloudinaryImages = async (
         await cloudinary.uploader.destroy(publicId);
         logger.info(`Cleaned up image: `);
         logger.info(`${publicId}`);
-        console.log(`Cleaned up image: ${publicId}`);
       } catch (cleanupError) {
         logger.error(`Failed to clean up image ${publicId}:`, cleanupError);
       }
