@@ -830,10 +830,34 @@ const createDesign = async (req: any, res: Response) => {
 const getDesigns = async (req: any, res: Response) => {
   try {
     const designerId = req.params.designerId || req.user.designerId;
+    const {
+      isVerified,
+      tags,
+      page = 1,
+      limit = 5,
+      sortBy = 'createdAt',
+      order = 'desc',
+    } = req.query;
+
+    // Convert page and limit to numbers
+    const pageNum = parseInt(page as string, 10);
+    const limitNum = parseInt(limit as string, 10);
+
+    // Validate pagination parameters
+    if (
+      Number.isNaN(pageNum) ||
+      Number.isNaN(limitNum) ||
+      pageNum < 1 ||
+      limitNum < 1
+    ) {
+      return res.status(400).json({
+        error:
+          'Invalid pagination parameters. Page and limit must be positive numbers.',
+      });
+    }
 
     // Check if the designer exists
     const existingDesigner = await designer.findById(designerId);
-
     if (!existingDesigner) {
       return res.status(404).json({ error: 'Designer not found.aa' });
     }
@@ -876,10 +900,8 @@ const getDesigns = async (req: any, res: Response) => {
         error: 'No designs found matching the specified criteria.',
       });
     }
-
     // Extract relevant information from designs
     const formattedDesigns = designs.map((design1) => ({
-      // eslint-disable-next-line no-underscore-dangle
       designId: design1._id,
       title: design1.title,
       description: design1.description,
@@ -890,17 +912,16 @@ const getDesigns = async (req: any, res: Response) => {
       // @ts-ignore
       createdAt: design1.createdAt,
       // @ts-ignore
-      designImages: design1.designImage.map((image: any) => ({
+      designImages: design1.designImage.map((image) => ({
         url: image.url,
       })),
     }));
-
     // Calculate pagination metadata
     const totalPages = Math.ceil(totalDesigns / limitNum);
     const hasNextPage = pageNum < totalPages;
     const hasPrevPage = pageNum > 1;
 
-    // Response with designer designs and pagination metadata
+    // Response with designer and design images
     return res.json({
       designs: formattedDesigns,
       pagination: {
@@ -938,7 +959,6 @@ const getRandomDesigners = async (req: Request, res: Response) => {
 
     const randomDesigners = designers.map((designer2) => ({
       profileImage: designer2.profileImage?.url || null,
-      coverImage: designer2.coverImage?.url || null,
       designImage:
         designer2.Designs.length > 0 &&
           designer2.Designs[0].designImage.length > 0
