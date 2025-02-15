@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import protectedByApiKey from '@core/middlewares/apiKey.middleware';
 import validation from '@core/middlewares/validate.middleware';
+import {
+  authenticate,
+  authorizeRole,
+} from '@core/middlewares/userAuth.middleware';
 import cloudinaryMiddleware from '@core/middlewares/cloudinary';
 import {
   requestDesigner,
@@ -27,6 +31,7 @@ import {
 const router: Router = Router();
 
 // TO GET RANDOM DESIGNERS
+router.use(protectedByApiKey);
 
 router.get(
   '/designer/getRandomDesigner',
@@ -37,24 +42,38 @@ router.get(
 // TO GET DESIGNER DETAILS
 router.get(
   '/designer/viewProfile/:designerId',
-  [protectedByApiKey, checkDesignerApproval],
+  [checkDesignerApproval],
+  publicData,
+);
+router.get(
+  '/designer/viewProfile/',
+  [authenticate, checkDesignerApproval],
   publicData,
 );
 
 router.get(
   '/designer/personalProfile/:designerId',
-  [protectedByApiKey, checkDesignerApproval],
+  [checkDesignerApproval, authenticate, authorizeRole('designer')],
+  // checkDesignerApproval,
+  personalData,
+);
+router.get(
+  '/designer/personalProfile/',
+  [authenticate, checkDesignerApproval, authorizeRole('designer')],
   // checkDesignerApproval,
   personalData,
 );
 
+router.get('/designer/check', [authenticate], (req, res) => {
+  return res
+    .status(200)
+    .json({ isDesigner: req.user?.role === 'designer' ? true : false });
+});
+
 // GET DESIGN IMAGES
 
-router.get(
-  '/designer/design-images/:designerId',
-  [protectedByApiKey],
-  getDesigns,
-);
+router.get('/designer/design-images/:designerId', getDesigns);
+router.get('/designer/design-images', [authenticate], getDesigns);
 
 // GET PRODUCTS BY CATEGORY
 // router.get(
@@ -81,6 +100,7 @@ router.post(
 router.post(
   '/designer/updateProfile',
   [protectedByApiKey, validation(updateDesignerValidationSchema)],
+  authorizeRole('designer'),
   checkDesignerApproval,
 
   updateDesignerProfile,
@@ -108,8 +128,13 @@ router.post(
 router.post(
   '/designer/createDesign',
 
-  [protectedByApiKey, cloudinaryMiddleware, checkDesignerApproval],
-
+  [
+    protectedByApiKey,
+    cloudinaryMiddleware,
+    authenticate,
+    checkDesignerApproval,
+  ],
+  authorizeRole('designer'),
   createDesign,
 );
 
@@ -119,16 +144,29 @@ router.get(
   '/designer/show-designer-settings/:designerId',
 
   [protectedByApiKey, checkDesignerApproval],
+  authorizeRole('designer'),
+  getSettings,
+);
+router.get(
+  '/designer/show-designer-settings',
 
+  [protectedByApiKey, authenticate, checkDesignerApproval],
+  authorizeRole('designer'),
   getSettings,
 );
 
 router.post(
   '/designer/update-settings/:designerId',
 
-  [protectedByApiKey, checkDesignerApproval],
-
+  [protectedByApiKey, authenticate, checkDesignerApproval],
+  authorizeRole('designer'),
   updateSettings,
 );
+router.post(
+  '/designer/update-settings',
 
+  [protectedByApiKey, authenticate, checkDesignerApproval],
+  authorizeRole('designer'),
+  updateSettings,
+);
 export default router;

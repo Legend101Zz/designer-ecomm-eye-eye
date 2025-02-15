@@ -5,7 +5,7 @@ import bodyParser from 'body-parser';
 import logger from '@core/utils/logger';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import { v2 as cloudinary } from 'cloudinary';
-import multer from 'multer';
+import multer, { Multer } from 'multer';
 
 // Define a custom Request type that extends express.Request
 interface CustomRequest extends Request {
@@ -34,6 +34,8 @@ const upload = multer({ storage });
  * This middleware assumes that the client sends a file with the field name 'file'.
  */
 // eslint-disable-next-line import/prefer-default-export
+
+
 const cloudinaryMiddleware = (
   req: CustomRequest,
   res: Response,
@@ -43,25 +45,27 @@ const cloudinaryMiddleware = (
     // logger.debug('here');
     // Handle parsing of form data and file uploads using bodyParser and multer
     bodyParser.urlencoded({ extended: false })(req, res, () => {
-      console.log('in cloud', req.body);
+      // Then, process file uploads
       upload.array('image')(req, res, (err) => {
         if (err) {
-          return res
-            .status(400)
-            .json({ error: 'File upload failed', details: err.message });
+          return res.status(400).json({
+            error: 'File upload failed',
+            details: err.message,
+          });
         }
 
         // Store uploaded images information in req
         req.uploadedImages = req.files.map((file) => ({
-          url: file.path,
+          url: file.path, // If using disk storage
+          buffer: file.buffer, // If using memory storage
           public_id: file.filename,
         }));
-        // console.log(req.files);
-        return next();
+
+        next();
       });
     });
   } catch (err) {
-    res.status(500).send({ message: 'Internal Server error' });
+    console.log('Error in cloudinaryMiddleware:', err);
   }
 };
 
@@ -79,7 +83,6 @@ export const cleanupCloudinaryImages = async (
         await cloudinary.uploader.destroy(publicId);
         logger.info(`Cleaned up image: `);
         logger.info(`${publicId}`);
-        console.log(`Cleaned up image: ${publicId}`);
       } catch (cleanupError) {
         logger.error(`Failed to clean up image ${publicId}:`, cleanupError);
       }
@@ -102,8 +105,7 @@ const finalProductStorage = new CloudinaryStorage({
           ? JSON.parse(req.body.imageMetadata)
           : req.body.imageMetadata;
 
-      const productName = req.body.productName;
-      const gender = req.body.gender;
+      const { productName, gender } = req.body;
       const color = metadata?.color;
 
       // Log what we found
@@ -193,7 +195,7 @@ export const finalProductUploadMiddleware = (
         // Process uploaded files
         if (req.files) {
           const files = req.files as {
-            [fieldname: string]: Express.Multer.File[];
+            [fieldname: string]: Multer.File[];
           };
 
           // Add debug logging here too

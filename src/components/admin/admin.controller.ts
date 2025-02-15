@@ -94,7 +94,7 @@ const addProduct = async (req: CustomRequest, res: Response) => {
       updatedImages.push({ url: image.path, filename: image.filename });
     }
 
-    console.log(updatedImages);
+
     // Create a new product using the Product model
     // eslint-disable-next-line new-cap
     const newProduct = new product({
@@ -196,7 +196,6 @@ const allDesigners = async (req: Request, res: Response) => {
       .find({ isVerified: false })
       .select('title description designImage');
 
-    console.log(designs);
 
     res.render('designer', {
       designs,
@@ -214,7 +213,7 @@ const getDesignerDetails = async (req: Request, res: Response) => {
     const designer1 = await designer.findById(req.params.id);
 
     if (!designer1) {
-      return res.status(404).send('Designer not found');
+      return res.status(404).send(' heeeh');
     }
 
     return res.render('designerSingle', { designer: designer1 });
@@ -236,7 +235,7 @@ const approveDesignerController = async (req: Request, res: Response) => {
     );
 
     if (!updatedDesigner) {
-      return res.status(404).json({ error: 'Designer not found' });
+      return res.status(404).json({ error: 'Designer not foundaaa' });
     }
 
     return res.redirect('/api/admin/designer');

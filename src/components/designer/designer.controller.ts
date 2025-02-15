@@ -185,11 +185,10 @@ const sendDesignerRequestEmail = async (
             <ul>
               <li><strong>Artist Name:</strong> ${designerData.artistName}</li>
               <li><strong>Phone:</strong> ${designerData.phone}</li>
-              ${
-                designerData.description
-                  ? `<li><strong>Description:</strong> ${designerData.description}</li>`
-                  : ''
-              }
+              ${designerData.description
+      ? `<li><strong>Description:</strong> ${designerData.description}</li>`
+      : ''
+    }
             </ul>
           </div>
 
@@ -374,8 +373,6 @@ const requestDesigner = async (
       panCardNumber,
       addressBody,
     } = req.body;
-
-    console.log('checking', req.body);
 
     // Check if user exists and is not already a designer
     const checkUser: any = await user.findById(userId);
@@ -572,7 +569,7 @@ const updateDesignerProfile = async (req: Request, res: Response) => {
 // controller for showing designer's public data
 const publicData = async (req: Request, res: Response) => {
   try {
-    const { designerId } = req.params;
+    const designerId = req.params.designerId || req.params.designerId;
 
     // Find the designer by ID
     const designerData = await designer
@@ -580,7 +577,7 @@ const publicData = async (req: Request, res: Response) => {
       .populate('settings.showDesigns.designIds');
 
     if (!designerData) {
-      return res.status(404).json({ message: 'Designer not found' });
+      return res.status(404).json({ message: 'ss' });
     }
 
     // Check if settings exist
@@ -655,18 +652,16 @@ const publicData = async (req: Request, res: Response) => {
 };
 
 // controller for showing designer's own data
-const personalData = async (req: Request, res: Response) => {
+const personalData = async (req: any, res: Response) => {
   try {
-    const { designerId } = req.params;
-    // console.log('id_here', designerId);
-    // Find the designer by ID
+    const designerId = req.user.designerId || req.params.designerId;
     const designerData = await designer.findById(designerId);
 
     // Designer's all designs
     const designData = await design.find({ designer: designerId });
 
     if (!designData) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: 'Designer notas found' });
     }
 
     // Extract the desired fields for the public data
@@ -694,11 +689,12 @@ const personalData = async (req: Request, res: Response) => {
 
 // Middleware function to check if a designer is approved
 const checkDesignerApproval = async (
-  req: Request,
+  req: any,
   res: Response,
   next: NextFunction,
 ) => {
-  const designerId = req.body.designerId || req.params.designerId;
+  const designerId =
+    req.body.designerId || req.params.designerId || req.user.designerId;
   logger.debug(designerId);
 
   try {
@@ -723,12 +719,12 @@ const checkDesignerApproval = async (
 };
 
 // controller for creating design
-const createDesign = async (req: CustomRequest, res: Response) => {
+const createDesign = async (req: any, res: Response) => {
   let savedDesign = null;
   const cloudinaryIds: string[] = [];
-
+  const designerId = req.user.designerId || req.body.designerId;
   try {
-    const { designerId, title, description, tags } = req.body;
+    const { title, description, tags } = req.body;
 
     // Validate required fields
     if (!designerId || !title || !tags) {
@@ -768,7 +764,7 @@ const createDesign = async (req: CustomRequest, res: Response) => {
     if (!existingDesigner) {
       // Cleanup uploaded image since designer wasn't found
       await cleanupDesign(null, cloudinaryIds);
-      return res.status(404).json({ message: 'Designer not found' });
+      return res.status(404).json({ message: 'Designer not foundsss' });
     }
 
     if (!existingDesigner.isApproved) {
@@ -831,39 +827,15 @@ const createDesign = async (req: CustomRequest, res: Response) => {
   }
 };
 
-const getDesigns = async (req: Request, res: Response) => {
+const getDesigns = async (req: any, res: Response) => {
   try {
-    const { designerId } = req.params;
-    const {
-      isVerified,
-      tags,
-      page = 1,
-      limit = 5,
-      sortBy = 'createdAt',
-      order = 'desc',
-    } = req.query;
-
-    // Convert page and limit to numbers
-    const pageNum = parseInt(page as string, 10);
-    const limitNum = parseInt(limit as string, 10);
-
-    // Validate pagination parameters
-    if (
-      Number.isNaN(pageNum) ||
-      Number.isNaN(limitNum) ||
-      pageNum < 1 ||
-      limitNum < 1
-    ) {
-      return res.status(400).json({
-        error:
-          'Invalid pagination parameters. Page and limit must be positive numbers.',
-      });
-    }
+    const designerId = req.params.designerId || req.user.designerId;
 
     // Check if the designer exists
     const existingDesigner = await designer.findById(designerId);
+
     if (!existingDesigner) {
-      return res.status(404).json({ error: 'Designer not found.' });
+      return res.status(404).json({ error: 'Designer not found.aa' });
     }
 
     // Build query object
@@ -946,58 +918,6 @@ const getDesigns = async (req: Request, res: Response) => {
   }
 };
 
-// const designByCategory = async (req: Request, res: Response) => {
-//   try {
-//     const { designerId } = req.params;
-//     const { productCategory } = req.query;
-//     // Find the designer by ID
-//     const designerCheck = await designer.findById(designerId);
-//     if (!designerCheck) {
-//       return res.status(404).json({ message: 'Designer not found' });
-//     }
-
-//     // Find the product by category or fetch all products if the category is not specified
-//     let products: any;
-//     if (productCategory) {
-//       products = await product.find({ category: productCategory });
-//     } else {
-//       products = await product.find();
-//     }
-
-//     console.log('products', products);
-
-//     if (products.length === 0) {
-//       return res
-//         .status(404)
-//         .json({ message: 'No products found for the given category' });
-//     }
-
-//     // Find designs for the specified designer and product category
-//     const designs = await design
-//       .find({
-//         // eslint-disable-next-line no-underscore-dangle
-//         designer: designerCheck._id,
-//         // eslint-disable-next-line no-underscore-dangle
-//         'product.productId': { $in: products.map((product1) => product1._id) },
-//       })
-//       .select('title description product.images.url -_id');
-
-//     if (designs.length === 0) {
-//       return res.status(404).json({
-//         message:
-//           'No products found for the given category made by this designer',
-//       });
-//     }
-
-//     return res.status(200).json(designs);
-//   } catch (error) {
-//     logger.error(error);
-//     return res.status(500).json({ message: 'Internal Server Error' });
-//   }
-// };
-
-// get random designer to be changed later
-
 const getRandomDesigners = async (req: Request, res: Response) => {
   try {
     const count = await designer.countDocuments({
@@ -1021,7 +941,7 @@ const getRandomDesigners = async (req: Request, res: Response) => {
       coverImage: designer2.coverImage?.url || null,
       designImage:
         designer2.Designs.length > 0 &&
-        designer2.Designs[0].designImage.length > 0
+          designer2.Designs[0].designImage.length > 0
           ? designer2.Designs[0].designImage[0].url
           : null,
       totalDesigns: designer2.Designs.length,
@@ -1044,8 +964,8 @@ const getRandomDesigners = async (req: Request, res: Response) => {
 
 // SETTINGS CONTROLLERS
 
-const getSettings = async (req: Request, res: Response) => {
-  const { designerId } = req.params;
+const getSettings = async (req: any, res: Response) => {
+  const designerId = req.params.designerId || req.user.designerId;
 
   try {
     const existingDesigner = await designer
@@ -1059,9 +979,8 @@ const getSettings = async (req: Request, res: Response) => {
   }
 };
 
-const updateSettings = async (req: Request, res: Response) => {
-  const { designerId } = req.params;
-
+const updateSettings = async (req: any, res: Response) => {
+  const designerId = req.params.designerId || req.user.designerId;
   try {
     const existingDesigner = await designer.findById(designerId);
 
@@ -1071,7 +990,6 @@ const updateSettings = async (req: Request, res: Response) => {
 
     if (req.body.settings) {
       const { settings } = req.body;
-      console.log('Setting', settings);
       // Ensure `showDesigns` matches the schema
       if (typeof settings.showDesigns === 'boolean') {
         settings.showDesigns = {
@@ -1114,7 +1032,7 @@ const updateSettings = async (req: Request, res: Response) => {
 // middleware
 
 const transformToArray = (req: Request, res: Response, next: NextFunction) => {
-  console.log('transform midd hitt', req.body);
+
   const { portfolioLinks, cvLinks } = req.body;
 
   if (typeof portfolioLinks === 'string') {

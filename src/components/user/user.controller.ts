@@ -4,7 +4,9 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
 import config from '@config/config';
+import { signJwt } from '@core/utils/auth_utils';
 import logger from '@core/utils/logger';
+import { JWTUserPayload } from '@core/middlewares/userAuth.middleware';
 import { sendEmailMiddleware } from '@core/middlewares/nodemailer';
 import { IUser } from '@components/user/user.interface';
 import { create } from '@components/user/user.service';
@@ -324,8 +326,16 @@ const handleGoogleAuth = async (req: Request, res: Response) => {
 
     if (existingUser) {
       // User exists, update Google-specific fields if needed
+      const userId = existingUser.id;
+      const designerId = existingUser.DesignerId;
       existingUser.googleId = googleId;
       await existingUser.save();
+
+      const token: string = signJwt({
+        userId,
+        role: existingUser.isDesigner ? 'designer' : 'user',
+        designerId,
+      });
 
       return res.status(200).json({
         success: true,
@@ -333,6 +343,7 @@ const handleGoogleAuth = async (req: Request, res: Response) => {
         userId: existingUser._id,
         isDesigner: existingUser.isDesigner,
         designerId: existingUser.DesignerId,
+        token,
       });
     }
 
@@ -708,7 +719,9 @@ const updatePassword = async (req: Request, res: Response) => {
          </div>
     
          <div class="warning-box">
-           <p>⚠️ Didn't make this change? Please contact our support team immediately at <a href="mailto:support@deauth.in">support@deauth.in</a></p>
+           <p> Didn't make this change? Please contact our support team immediately at 
+              <a href="mailto:support@deauth.in">support@deauth.in</a>
+            </p>
          </div>
        </div>
     
@@ -759,48 +772,47 @@ const updatePassword = async (req: Request, res: Response) => {
   }
 };
 
-const loginUser = async (req: Request, res: Response) => {
+const loginUser = async (req: any, res: Response) => {
   try {
     const { email, password } = req.body;
-
-    // Find the user by their email
     const userRecord = await user.findOne({ email });
 
     if (!userRecord) {
-      // User not found
       return res.status(201).json({ message: 'Invalid Credentials' });
     }
     const hashedPassword = String(userRecord.password);
-    // Compare the provided password with the hashed password in the database
     const passwordMatch = await bcrypt.compare(password, hashedPassword);
 
-    if (passwordMatch) {
-      // Passwords match, user is authenticated
+    if (!passwordMatch) {
+      return res.status(201).json({ message: 'Invalid Credentials' });
+    }
+    const modifiedUserData = { ...userRecord.toObject() };
+    let role = 'user';
+    let designerId;
+    // Omit the password field
+    delete modifiedUserData.password;
 
-      // Clone the user data to avoid modifying the original object directly
-      const modifiedUserData = { ...userRecord.toObject() };
-
-      // Omit the password field
-      delete modifiedUserData.password;
-
-      // If the user is a designer, find the designerId
-      if (modifiedUserData.isDesigner) {
-        const designerCheck = await designer.findOne({
-          // eslint-disable-next-line no-underscore-dangle
-          userId: modifiedUserData._id,
-        });
-        if (designerCheck) {
-          // @ts-ignore
-          // eslint-disable-next-line no-underscore-dangle
-          modifiedUserData.designerId = designerCheck._id;
-        }
+    // TODO: add isDesigner and designerId to the user object to skip additional call
+    // If the user is a designer, find the designerId
+    if (modifiedUserData.isDesigner) {
+      const designerObj = await designer.findOne({
+        userId: modifiedUserData._id,
+      });
+      if (designerObj) {
+        role = 'designer';
+        designerId = designerObj._id;
       }
-      return res
-        .status(200)
-        .json({ message: 'Success', data: modifiedUserData });
     }
 
-    return res.status(201).json({ message: 'Invalid Credentials' });
+    const payload: JWTUserPayload = {
+      userId: modifiedUserData._id,
+      role,
+      designerId,
+    };
+    const token = signJwt(payload);
+    return res
+      .status(200)
+      .json({ message: 'Success', data: modifiedUserData, token });
   } catch (err) {
     logger.error(err);
     return res.status(500).json({ message: 'Server Error' });

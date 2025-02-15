@@ -1,6 +1,6 @@
 import express, { Application } from 'express';
-import ejs from 'ejs';
 import passport from 'passport';
+import ejs from 'ejs';
 import path from 'path';
 import session from 'express-session';
 import api from 'api';
@@ -44,12 +44,13 @@ app.use(express.static(path.join(__dirname, '../public')));
 // });
 app.use(
   session({
-    secret: 'somethingsecretgoeshere',
+    secret: process.env.SESSION_SECRET,
     cookie: { maxAge: 24 * 60 * 60 * 10000 },
     saveUninitialized: false,
     resave: false,
   }),
 );
+
 app.use(passport.initialize());
 app.use(passport.session());
 app.options('/api/logout', cors());
