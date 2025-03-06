@@ -1,5 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
-import { Multer } from 'multer';
+import { Request, Response, NextFunction, Express } from 'express';
 import httpStatus from 'http-status';
 import { v2 as cloudinary } from 'cloudinary';
 import mongoose from 'mongoose';
@@ -61,9 +60,13 @@ interface ProcessedImagesResponse {
   designGroups: DesignGroupImages[];
 }
 
+interface ProcessedImage extends Express.Multer.File {
+  position?: string;
+  url?: string;
+}
+
 interface CustomRequest extends Request {
-  // @ts-ignore
-  processedImages: Multer.File[];
+  processedImages: ProcessedImage[];
 }
 
 /**
@@ -72,21 +75,21 @@ interface CustomRequest extends Request {
  * @param folder - Cloudinary folder path
  * @returns Promise resolving to upload result
  */
-async function uploadToCloudinary(imageData: string, folder: string) {
-  try {
-    const result = await cloudinary.uploader.upload(imageData, {
-      folder,
-      resource_type: 'image',
-    });
-    return result;
-  } catch (error) {
-    logger.error(`Failed to upload image to ${folder}:`, error);
-    throw new AppError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      'Failed to upload image',
-    );
-  }
-}
+// async function uploadToCloudinary(imageData: string, folder: string) {
+//   try {
+//     const result = await cloudinary.uploader.upload(imageData, {
+//       folder,
+//       resource_type: 'image',
+//     });
+//     return result;
+//   } catch (error) {
+//     logger.error(`Failed to upload image to ${folder}:`, error);
+//     throw new AppError(
+//       httpStatus.INTERNAL_SERVER_ERROR,
+//       'Failed to upload image',
+//     );
+//   }
+// }
 
 /**
  * Creates a new final product with applied designs
@@ -120,7 +123,7 @@ export async function createFinalProduct(
       designPrice,
       designs: designsJson, // to indicate it's JSON string
       variants: variantsJson, // to indicate it's JSON string
-      imageMetadata,
+      // imageMetadata,
     } = req.body;
 
     // Log the incoming data
@@ -129,7 +132,7 @@ export async function createFinalProduct(
     // Parse JSON strings
     const designs = JSON.parse(designsJson);
     const variants = JSON.parse(variantsJson);
-    const parsedMetadata = JSON.parse(imageMetadata || '{}');
+    // const parsedMetadata = JSON.parse(imageMetadata || '{}');
 
     logger.debug(`Processing final product creation: ${productName}`);
 
