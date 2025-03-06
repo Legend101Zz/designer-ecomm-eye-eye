@@ -7,6 +7,13 @@ const ImageSchema: Schema<IModel> = new Schema({
   filename: String,
 });
 
+const WaitlistSchema = new Schema({
+  isInterested: { type: Boolean, default: false },
+  description: { type: String, default: '' },
+  questions: { type: String, default: '' },
+  joinDate: { type: Date, default: Date.now },
+});
+
 const SettingsSchema = new Schema({
   isPrivate: { type: Boolean, default: false },
   showDesigns: {
@@ -67,6 +74,7 @@ const DesignerSchema: Schema<IDesigner> = new Schema(
     panCard: ImageSchema,
     panCardNumber: String,
     settings: SettingsSchema,
+    waitlist: WaitlistSchema,
   },
   { timestamps: true },
 );

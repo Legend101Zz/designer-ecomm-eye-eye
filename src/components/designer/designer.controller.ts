@@ -185,10 +185,11 @@ const sendDesignerRequestEmail = async (
             <ul>
               <li><strong>Artist Name:</strong> ${designerData.artistName}</li>
               <li><strong>Phone:</strong> ${designerData.phone}</li>
-              ${designerData.description
-      ? `<li><strong>Description:</strong> ${designerData.description}</li>`
-      : ''
-    }
+              ${
+                designerData.description
+                  ? `<li><strong>Description:</strong> ${designerData.description}</li>`
+                  : ''
+              }
             </ul>
           </div>
 
@@ -654,14 +655,14 @@ const publicData = async (req: Request, res: Response) => {
 // controller for showing designer's own data
 const personalData = async (req: any, res: Response) => {
   try {
-    const designerId = req.user.designerId || req.params.designerId;
+    const designerId = req.params.designerId || req.user.designerId;
     const designerData = await designer.findById(designerId);
 
     // Designer's all designs
     const designData = await design.find({ designer: designerId });
 
     if (!designData) {
-      return res.status(404).json({ message: 'Designer notas found' });
+      return res.status(404).json({ message: 'Designer not found' });
     }
 
     // Extract the desired fields for the public data
@@ -961,7 +962,7 @@ const getRandomDesigners = async (req: Request, res: Response) => {
       profileImage: designer2.profileImage?.url || null,
       designImage:
         designer2.Designs.length > 0 &&
-          designer2.Designs[0].designImage.length > 0
+        designer2.Designs[0].designImage.length > 0
           ? designer2.Designs[0].designImage[0].url
           : null,
       totalDesigns: designer2.Designs.length,
@@ -1052,7 +1053,6 @@ const updateSettings = async (req: any, res: Response) => {
 // middleware
 
 const transformToArray = (req: Request, res: Response, next: NextFunction) => {
-
   const { portfolioLinks, cvLinks } = req.body;
 
   if (typeof portfolioLinks === 'string') {
@@ -1066,6 +1066,109 @@ const transformToArray = (req: Request, res: Response, next: NextFunction) => {
   }
 
   next();
+};
+
+/**
+ * Allows a designer to join the Dripto waitlist
+ * @route POST /designer/join-waitlist
+ * @param {Request} req - Express request object containing designerId and waitlist info
+ * @param {Response} res - Express response object
+ * @returns {Promise<Response>} JSON response with success or error message
+ */
+const joinWaitlist = async (req: Request, res: Response) => {
+  try {
+    const { designerId, description, questions } = req.body;
+
+    // Find the designer by ID
+    const existingDesigner = await designer.findById(designerId);
+
+    if (!existingDesigner) {
+      return res.status(404).json({ message: 'Designer not found' });
+    }
+
+    // Update or create the waitlist information
+    existingDesigner.waitlist = {
+      isInterested: true,
+      description: description || '',
+      questions: questions || '',
+      joinDate: new Date(),
+    };
+
+    // Save the updated designer information
+    await existingDesigner.save();
+
+    // Send a notification email to the team and confirmation to the designer
+    if (existingDesigner.userId) {
+      const userInfo = await user.findById(existingDesigner.userId);
+      if (userInfo && userInfo.email) {
+        const subject = 'Dripto™ Waitlist Confirmation';
+        // eslint-disable-next-line max-len
+        const text = `Thank you for joining the Dripto™ waitlist! We'll keep you updated on our progress and let you know when we're ready to launch.`;
+        const html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+            <h2 style="color: #5D3FD3; text-align: center;">Welcome to the Dripto™ Waitlist!</h2>
+            <p>Thank you for your interest in Dripto™, our upcoming fractional NFT ownership platform for designers.</p>
+            <p>We've recorded your information and will keep you updated on our progress. You'll be among the first to know when we're ready to launch!</p>
+            <div style="background-color: #f7f7f7; border-left: 4px solid #5D3FD3; padding: 15px; margin: 20px 0;">
+              <p style="margin: 0;"><strong>What's next?</strong> We're working hard to build a platform that will help designers like you monetize your creativity through fractional ownership.</p>
+            </div>
+            <p>If you have any questions in the meantime, simply reply to this email.</p>
+            <p style="text-align: center; margin-top: 30px; color: #888; font-size: 12px;">© 2025 Deauth, Inc. All rights reserved.</p>
+          </div>
+        `;
+        await sendEmailMiddleware(
+          req,
+          res,
+          userInfo.email,
+          subject,
+          html,
+          text,
+        );
+
+        // Also send notification to team
+        const teamSubject = 'New Dripto™ Waitlist Signup';
+        const teamText =
+          `Designer ${
+            existingDesigner.artistName || existingDesigner.fullname
+          } has joined the Dripto waitlist.\n\n` +
+          `Description: ${description || 'None provided'}\n` +
+          `Questions: ${questions || 'None provided'}\n\n` +
+          `Designer ID: ${designerId}`;
+        const teamHtml = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+            <h2 style="color: #5D3FD3;">New Dripto™ Waitlist Signup</h2>
+            <p><strong>Designer:</strong> ${
+              existingDesigner.artistName || existingDesigner.fullname
+            }</p>
+            <div style="background-color: #f7f7f7; padding: 15px; margin: 20px 0; border-radius: 5px;">
+              <p><strong>Description:</strong> ${
+                description || 'None provided'
+              }</p>
+              <p><strong>Questions:</strong> ${questions || 'None provided'}</p>
+            </div>
+            <p><strong>Designer ID:</strong> ${designerId}</p>
+            <p><strong>Timestamp:</strong> ${new Date().toLocaleString()}</p>
+          </div>
+        `;
+        await sendEmailMiddleware(
+          req,
+          res,
+          'team@deauth.in',
+          teamSubject,
+          teamHtml,
+          teamText,
+        );
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Successfully joined the Dripto waitlist',
+    });
+  } catch (error) {
+    logger.error(error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
 };
 
 // eslint-disable-next-line import/prefer-default-export
@@ -1084,4 +1187,5 @@ export {
   updateSettings,
   getSettings,
   transformToArray,
+  joinWaitlist,
 };

@@ -1,6 +1,13 @@
 import mongoose from 'mongoose';
 import { IModel } from '@core/interfaces/validationSchema';
 
+export interface IWaitlist {
+  isInterested: boolean;
+  description: string;
+  questions: string;
+  joinDate: Date;
+}
+
 export interface IDesigner {
   userId: { type: mongoose.Schema.Types.ObjectId };
   profileImage?: IModel;
@@ -41,4 +48,5 @@ export interface IDesigner {
     socialMedia?: String[];
     portfolioLinks?: String[];
   };
+  waitlist?: IWaitlist;
 }

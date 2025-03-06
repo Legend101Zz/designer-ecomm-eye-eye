@@ -17,6 +17,7 @@ import {
   personalData,
   getDesigns,
   // designByCategory,
+  joinWaitlist,
   getRandomDesigners,
   updateSettings,
   getSettings,
@@ -26,6 +27,7 @@ import {
   designerValidationSchema,
   updateDesignerValidationSchema,
   // createDesignValidationSchema,
+  waitlistValidationSchema,
 } from './designer.validation';
 
 const router: Router = Router();
@@ -53,7 +55,7 @@ router.get(
 
 router.get(
   '/designer/personalProfile/:designerId',
-  [checkDesignerApproval, authenticate, authorizeRole('designer')],
+  [checkDesignerApproval],
   // checkDesignerApproval,
   personalData,
 );
@@ -69,6 +71,13 @@ router.get('/designer/check', [authenticate], (req, res) => {
     .status(200)
     .json({ isDesigner: req.user?.role === 'designer' ? true : false });
 });
+
+// waitlist
+router.post(
+  '/designer/join-waitlist',
+  [protectedByApiKey, validation(waitlistValidationSchema)],
+  joinWaitlist,
+);
 
 // GET DESIGN IMAGES
 
@@ -144,7 +153,6 @@ router.get(
   '/designer/show-designer-settings/:designerId',
 
   [protectedByApiKey, checkDesignerApproval],
-  authorizeRole('designer'),
   getSettings,
 );
 router.get(

@@ -8,7 +8,7 @@ import logger from '@core/utils/logger';
 import { product } from '../product/product.model';
 import { design } from '../design/design.model';
 import { finalProduct } from './finalprod.model';
-import { Gender, Size, Color } from '../product/product.interface';
+import { Gender, Size } from '../product/product.interface';
 import { IDesignPlacement, IProductVariant } from './finalprod.interface';
 
 /**
@@ -62,6 +62,7 @@ interface ProcessedImagesResponse {
 }
 
 interface CustomRequest extends Request {
+  // @ts-ignore
   processedImages: Multer.File[];
 }
 
@@ -338,7 +339,7 @@ export async function createFinalProduct(
     logger.info(
       // eslint-disable-next-line no-underscore-dangle
       `Successfully created/updated final product ${finalProd._id} ` +
-      `with ${processedVariants.length} variants`,
+        `with ${processedVariants.length} variants`,
     );
 
     // After successfully saving the final product
@@ -399,9 +400,9 @@ export async function createFinalProduct(
       error instanceof AppError
         ? error
         : new AppError(
-          httpStatus.INTERNAL_SERVER_ERROR,
-          'Error creating final product',
-        ),
+            httpStatus.INTERNAL_SERVER_ERROR,
+            'Error creating final product',
+          ),
     );
   }
 }
@@ -506,9 +507,9 @@ export async function getFilteredProducts(
 
               return {
                 baseProductId: v.baseProductId._id,
-                //@ts-ignore
+                // @ts-ignore
                 productName: v.baseProductId.name,
-                //@ts-ignore
+                // @ts-ignore
                 category: v.baseProductId.category,
                 color: v.color,
                 stock: stockData, // Use the object directly
@@ -641,9 +642,9 @@ export async function getProductDetails(
       error instanceof AppError
         ? error
         : new AppError(
-          httpStatus.INTERNAL_SERVER_ERROR,
-          'Error fetching product details',
-        ),
+            httpStatus.INTERNAL_SERVER_ERROR,
+            'Error fetching product details',
+          ),
     );
   }
 }
@@ -746,9 +747,9 @@ export async function updateStock(
       error instanceof AppError
         ? error
         : new AppError(
-          httpStatus.INTERNAL_SERVER_ERROR,
-          'Error updating stock',
-        ),
+            httpStatus.INTERNAL_SERVER_ERROR,
+            'Error updating stock',
+          ),
     );
   }
 }
@@ -810,9 +811,9 @@ export async function deactivateProduct(
       error instanceof AppError
         ? error
         : new AppError(
-          httpStatus.INTERNAL_SERVER_ERROR,
-          'Error deactivating product',
-        ),
+            httpStatus.INTERNAL_SERVER_ERROR,
+            'Error deactivating product',
+          ),
     );
   }
 }
@@ -916,9 +917,9 @@ export async function getProcessedImages(
       error instanceof AppError
         ? error
         : new AppError(
-          httpStatus.INTERNAL_SERVER_ERROR,
-          'Error fetching processed images',
-        ),
+            httpStatus.INTERNAL_SERVER_ERROR,
+            'Error fetching processed images',
+          ),
     );
   }
 }

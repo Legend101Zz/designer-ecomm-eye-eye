@@ -3,7 +3,7 @@ import { ValidationSchema } from '@core/interfaces/validationSchema';
 import userAddressValidation from '@components/user/userAddress.validation';
 
 const createDesignerValidation: ValidationSchema = {
-  body: Joi.object().keys({ 
+  body: Joi.object().keys({
     userId: Joi.string()
       .regex(/^[0-9a-fA-F]{24}$/)
       .required(),
@@ -60,10 +60,21 @@ const createDesignValidationSchema: ValidationSchema = {
   }),
 };
 
+const waitlistValidationSchema: ValidationSchema = {
+  body: Joi.object().keys({
+    designerId: Joi.string()
+      .regex(/^[0-9a-fA-F]{24}$/)
+      .required(),
+    description: Joi.string().allow(''),
+    questions: Joi.string().allow(''),
+  }),
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export {
   createDesignerValidation,
   updateDesignerValidationSchema,
   createDesignValidationSchema,
   designerValidationSchema,
+  waitlistValidationSchema,
 };
