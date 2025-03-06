@@ -1,0 +1,49 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main  
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy to VPS
+        run: |
+          ssh -o StrictHostKeyChecking=no root@89.116.33.224 << 'EOF'
+            set -e  # Exit on error
+            
+            echo "🔄 Switching to project directory..."
+            cd /root/designer-ecomm-eye-eye || exit 1
+
+            echo "🔄 Pulling latest changes..."
+            git pull origin main || exit 1
+
+            echo "🔄 Setting up Node.js environment..."
+            export NVM_DIR="$HOME/.nvm"
+            source "$NVM_DIR/nvm.sh"
+            nvm use 19 || exit 1
+
+            echo "🔄 Installing dependencies..."
+            corepack enable
+            npm install || exit 1
+
+            echo "🔄 Building project..."
+            npm run build || exit 1
+
+            echo "🛑 Stopping old process..."
+            pm2 delete backend-server || true  # Ignore error if process is not running
+
+            echo "🚀 Starting new process..."
+            pm2 start ecosystem.config.js || exit 1
+          EOF
