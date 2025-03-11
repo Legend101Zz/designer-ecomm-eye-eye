@@ -17,11 +17,11 @@ import {
 
 const router: Router = Router();
 
+// Admin user management
 router.post('/admin/create', [protectedByApiKey], createAdmin);
-router.post('/admin/login', [protectedByApiKey], loginAdmin);
+router.post('/admin/login', loginAdmin); // Removed API key requirement for login
 
-// render ejs
-
+// Dashboard & admin pages - Remove API key requirement for admin pages
 router.get('/admin/dashboard', (req, res) => {
   res.render('dashboard');
 });
@@ -30,8 +30,7 @@ router.get('/admin/billing', (req, res) => {
   res.render('billing');
 });
 
-// products routes
-
+// Products routes - Remove API key requirement for admin UI routes
 router.get('/admin/products', products);
 router.post('/admin/edit-product', editProduct);
 router.post('/admin/add-product', cloudinaryMiddleware, addProduct);
@@ -40,7 +39,7 @@ router.get('/admin/addProduct', (req, res) => {
 });
 router.get('/admin/editProduct/:productId', renderEditProductPage);
 
-// designer routes
+// Designer routes - Remove API key requirement for admin UI routes
 router.get('/admin/designer', allDesigners);
 router.get('/admin/designer/approve/:designerId', approveDesignerController);
 router.get('/admin/design/approve/:designId', verifyDesignController);

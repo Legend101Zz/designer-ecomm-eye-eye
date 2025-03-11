@@ -94,7 +94,6 @@ const addProduct = async (req: CustomRequest, res: Response) => {
       updatedImages.push({ url: image.path, filename: image.filename });
     }
 
-
     // Create a new product using the Product model
     // eslint-disable-next-line new-cap
     const newProduct = new product({
@@ -183,28 +182,53 @@ const editProduct = async (req: Request, res: Response) => {
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 };
-
 // ============ DESIGNER ============
 const allDesigners = async (req: Request, res: Response) => {
   try {
-    const approvedDesigners = await designer.find({ isApproved: true });
-    const notApprovedDesigners = await designer.find({
-      isApproved: false,
-    });
+    // Fetch approved designers with populated designs
+    const approvedDesigners = await designer
+      .find({ isApproved: true })
+      .populate({
+        path: 'Designs',
+        select: 'title description designImage isVerified',
+      });
 
+    // Fetch non-approved designers
+    const notApprovedDesigners = await designer
+      .find({
+        isApproved: false,
+      })
+      .populate({
+        path: 'Designs',
+        select: 'title description designImage isVerified',
+      });
+
+    // Fetch unverified designs with designer information
     const designs = await design
       .find({ isVerified: false })
-      .select('title description designImage');
+      .select('title description designImage')
+      .populate({
+        path: 'designer',
+        select: 'artistName fullname profileImage',
+      });
 
+    // Log counts for debugging
+    console.log(`Found ${approvedDesigners.length} approved designers`);
+    console.log(`Found ${notApprovedDesigners.length} pending designers`);
+    console.log(`Found ${designs.length} pending designs`);
 
+    // Render the page with the fetched data
     res.render('designer', {
-      designs,
-      approvedDesigners,
-      notApprovedDesigners,
+      designs: designs || [],
+      approvedDesigners: approvedDesigners || [],
+      notApprovedDesigners: notApprovedDesigners || [],
     });
   } catch (e) {
-    logger.log(e);
-    res.status(500).send('Internal Server Error');
+    console.error('Error in allDesigners:', e);
+    logger.error(e);
+    res
+      .status(500)
+      .send('Internal Server Error: ' + (e.message || 'Unknown error'));
   }
 };
 

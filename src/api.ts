@@ -10,6 +10,7 @@ import finalProduct from '@components/finalProduct/finalprod.router';
 import admin from '@components/admin/admin.router';
 
 const router: Router = Router();
+router.use(admin);
 router.use(healthCheck);
 router.use(user);
 router.use(product);
@@ -18,6 +19,5 @@ router.use(wishlist);
 router.use(design);
 router.use(transactions);
 router.use(finalProduct);
-router.use(admin);
 
 export default router;

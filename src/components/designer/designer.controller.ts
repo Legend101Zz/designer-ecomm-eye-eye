@@ -388,7 +388,7 @@ const requestDesigner = async (
       panCardNumber,
       addressBody,
     } = req.body;
-
+    console.log('check,req.body');
     // Check if user exists and is not already a designer
     const checkUser: any = await user.findById(userId);
     if (!checkUser) {

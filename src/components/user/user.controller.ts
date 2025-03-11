@@ -60,7 +60,7 @@ const createUser = async (req: Request, res: Response) => {
     const newUser = req.body as IUser;
     const password = generateRandomPassword();
     const mail = `${newUser.email}`;
-
+    console.log(password);
     // HTML Email Template
     const subject = 'Welcome to Deauth - Your Fashion Journey Begins';
     const htmlContent = `
@@ -280,7 +280,6 @@ This is an automated message, please do not reply to this email.
     const salt = await bcrypt.genSalt(Number(config.salt));
     const hashPassword = await bcrypt.hash(password, salt);
     const check = await user.find({ email: newUser.email });
-
     if (check.length === 0) {
       newUser.password = hashPassword;
       newUser.isVerified = false;
