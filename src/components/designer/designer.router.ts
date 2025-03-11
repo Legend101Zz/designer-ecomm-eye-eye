@@ -22,6 +22,8 @@ import {
   updateSettings,
   getSettings,
   transformToArray,
+  getDesignerProducts,
+  getAuthenticatedDesignerProducts,
 } from './designer.controller';
 import {
   designerValidationSchema,
@@ -83,6 +85,18 @@ router.post(
 
 router.get('/designer/design-images/:designerId', getDesigns);
 router.get('/designer/design-images', [authenticate], getDesigns);
+
+// GET DESIGNER PRODUCTS
+router.get(
+  '/designer/my-products',
+  [protectedByApiKey, authenticate],
+  getAuthenticatedDesignerProducts,
+);
+router.get(
+  '/designer/designer-products/:designerId',
+  [protectedByApiKey],
+  getDesignerProducts,
+);
 
 // GET PRODUCTS BY CATEGORY
 // router.get(

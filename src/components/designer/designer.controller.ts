@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import httpStatus from 'http-status';
+import mongoose from 'mongoose';
 import { v2 as cloudinary } from 'cloudinary';
 import logger from '@core/utils/logger';
 import AppError from '@core/utils/appError';
@@ -9,6 +10,7 @@ import { product } from '@components/product/product.model';
 import { sendEmailMiddleware } from '@core/middlewares/nodemailer';
 import { design } from '@components/design/design.model';
 import { address } from '@components/user/userAddress.model';
+import { finalProduct } from '@components/finalProduct/finalprod.model';
 
 interface CustomRequest extends Request {
   files: any; // Include the 'file' property with the MulterFile type
@@ -32,6 +34,18 @@ interface DesignerRequest {
   phone: string;
   panCardNumber: string;
   addressBody: any; // Replace with proper address interface
+}
+
+// Type definition for JWT payload
+interface JWTUserPayload {
+  userId: string;
+  role?: string;
+  // Add other fields from your JWT payload as needed
+}
+
+// Type extension for Request to include JWT user info
+interface AuthRequest extends Request {
+  user?: JWTUserPayload;
 }
 
 const sendDesignerRequestEmail = async (
@@ -1171,6 +1185,300 @@ const joinWaitlist = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Get all products created using designs by a specific designer
+ * @route GET /designs/designer-products/:designerId
+ * @param {Request} req - Express request object with designerId parameter
+ * @param {Response} res - Express response object
+ * @returns {Promise<Response>} JSON response with designs and their final products
+ */
+const getDesignerProducts = async (req: Request, res: Response) => {
+  try {
+    const { designerId } = req.params;
+
+    // Validate designerId format
+    if (!mongoose.Types.ObjectId.isValid(designerId)) {
+      return res.status(400).json({ error: 'Invalid designer ID format' });
+    }
+
+    // Validate designer exists
+    const designerExists = await designer.findById(designerId);
+    if (!designerExists) {
+      return res.status(404).json({ error: 'Designer not found' });
+    }
+
+    // Get all designs by this designer
+    const designs = await design
+      .find({ designer: designerId })
+      .select('_id title description designImage tags');
+
+    if (!designs || designs.length === 0) {
+      return res.status(200).json({
+        designer: {
+          id: designerExists._id,
+          name: designerExists.artistName || designerExists.fullname,
+          profileImage: designerExists.profileImage
+            ? designerExists.profileImage.url
+            : null,
+        },
+        designsAndProducts: [],
+      });
+    }
+
+    // Get design IDs
+    const designIds = designs.map((d) => d._id);
+
+    // Find all final products that use any of these designs
+    const finalProducts = await finalProduct
+      .find({
+        'designGroups.designs.designId': { $in: designIds },
+        isActive: true, // Only include active products
+      })
+      .populate('designGroups.designs.designId', '_id title');
+
+    // Format the response data
+    const formattedData = designs.map((designItem) => {
+      // Find final products that use this design
+      const productsWithThisDesign = finalProducts.filter((product1) =>
+        product1.designGroups.some((group) =>
+          group.designs.some((d) => {
+            // Handle both cases: populated object or plain ID
+            // eslint-disable-next-line no-nested-ternary
+            const designIdStr = d.designId
+              ? typeof d.designId === 'object'
+                ? d.designId._id.toString()
+                : d.designId
+              : null;
+
+            return designIdStr === designItem._id.toString();
+          }),
+        ),
+      );
+
+      return {
+        design: {
+          id: designItem._id,
+          title: designItem.title,
+          description: designItem.description,
+          images: (designItem.designImage || []).map((img) => ({
+            url: img.url,
+            filename: img.filename,
+          })),
+          tags: designItem.tags || [],
+        },
+        products: productsWithThisDesign.map((product1) => ({
+          id: product1._id,
+          name: product1.productName,
+          designGroups: product1.designGroups
+            .filter((group) =>
+              group.designs.some((d) => {
+                // Handle both cases: populated object or plain ID
+                // eslint-disable-next-line no-nested-ternary
+                const designIdStr = d.designId
+                  ? typeof d.designId === 'object'
+                    ? d.designId._id.toString()
+                    : d.designId
+                  : null;
+
+                return designIdStr === designItem._id.toString();
+              }),
+            )
+            .map((group) => ({
+              gender: group.gender,
+              designPrice: group.designPrice,
+              images: {
+                front:
+                  group.processedImages && group.processedImages.front
+                    ? group.processedImages.front.map((img) => ({
+                        url: img.url,
+                        filename: img.filename,
+                      }))
+                    : [],
+                back:
+                  group.processedImages && group.processedImages.back
+                    ? group.processedImages.back.map((img) => ({
+                        url: img.url,
+                        filename: img.filename,
+                      }))
+                    : [],
+              },
+            })),
+        })),
+      };
+    });
+
+    // Filter out designs with no products
+    const designsWithProducts = formattedData.filter(
+      (item) => item.products.length > 0,
+    );
+
+    return res.status(200).json({
+      designer: {
+        id: designerExists._id,
+        name: designerExists.artistName || designerExists.fullname,
+        profileImage: designerExists.profileImage
+          ? designerExists.profileImage.url
+          : null,
+      },
+      designsAndProducts: designsWithProducts,
+    });
+  } catch (error) {
+    logger.error('Error fetching designer products:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+/**
+ * Get all products created using designs by the authenticated designer
+ * @route GET /designs/my-products
+ * @param {AuthRequest} req - Express request object with user attached from JWT
+ * @param {Response} res - Express response object
+ * @returns {Promise<Response>} JSON response with designs and their final products
+ */
+const getAuthenticatedDesignerProducts = async (
+  req: AuthRequest,
+  res: Response,
+) => {
+  try {
+    // Extract userId from JWT token (attached by authenticate middleware)
+    const userId = req.user?.userId;
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: 'Invalid user ID in token' });
+    }
+
+    // Find the designer associated with this user
+    const designerDoc = await designer.findOne({ userId });
+
+    if (!designerDoc) {
+      return res
+        .status(404)
+        .json({ error: 'Designer profile not found for this user' });
+    }
+
+    const designerId = designerDoc._id;
+
+    // Get all designs by this designer
+    const designs = await design
+      .find({ designer: designerId })
+      .select('_id title description designImage tags');
+
+    if (!designs || designs.length === 0) {
+      return res.status(200).json({
+        designer: {
+          id: designerDoc._id,
+          name: designerDoc.artistName || designerDoc.fullname,
+          profileImage: designerDoc.profileImage
+            ? designerDoc.profileImage.url
+            : null,
+        },
+        designsAndProducts: [],
+      });
+    }
+
+    // Get design IDs
+    const designIds = designs.map((d) => d._id);
+
+    // Find all final products that use any of these designs
+    const finalProducts = await finalProduct
+      .find({
+        'designGroups.designs.designId': { $in: designIds },
+        isActive: true, // Only include active products
+      })
+      .populate('designGroups.designs.designId', '_id title');
+
+    // Format the response data
+    const formattedData = designs.map((designItem) => {
+      // Find final products that use this design
+      const productsWithThisDesign = finalProducts.filter((product1) =>
+        product1.designGroups.some((group) =>
+          group.designs.some((d) => {
+            // Handle both cases: populated object or plain ID
+            // eslint-disable-next-line no-nested-ternary
+            const designIdStr = d.designId
+              ? typeof d.designId === 'object'
+                ? d.designId._id.toString()
+                : d.designId
+              : null;
+
+            return designIdStr === designItem._id.toString();
+          }),
+        ),
+      );
+
+      return {
+        design: {
+          id: designItem._id,
+          title: designItem.title,
+          description: designItem.description,
+          images: (designItem.designImage || []).map((img) => ({
+            url: img.url,
+            filename: img.filename,
+          })),
+          tags: designItem.tags || [],
+        },
+        products: productsWithThisDesign.map((product1) => ({
+          id: product1._id,
+          name: product1.productName,
+          designGroups: product1.designGroups
+            .filter((group) =>
+              group.designs.some((d) => {
+                // Handle both cases: populated object or plain ID
+                // eslint-disable-next-line no-nested-ternary
+                const designIdStr = d.designId
+                  ? typeof d.designId === 'object'
+                    ? d.designId._id.toString()
+                    : d.designId
+                  : null;
+
+                return designIdStr === designItem._id.toString();
+              }),
+            )
+            .map((group) => ({
+              gender: group.gender,
+              designPrice: group.designPrice,
+              images: {
+                front:
+                  group.processedImages && group.processedImages.front
+                    ? group.processedImages.front.map((img) => ({
+                        url: img.url,
+                        filename: img.filename,
+                      }))
+                    : [],
+                back:
+                  group.processedImages && group.processedImages.back
+                    ? group.processedImages.back.map((img) => ({
+                        url: img.url,
+                        filename: img.filename,
+                      }))
+                    : [],
+              },
+            })),
+        })),
+      };
+    });
+
+    // Filter out designs with no products
+    const designsWithProducts = formattedData.filter(
+      (item) => item.products.length > 0,
+    );
+
+    return res.status(200).json({
+      designer: {
+        id: designerDoc._id,
+        name: designerDoc.artistName || designerDoc.fullname,
+        profileImage: designerDoc.profileImage
+          ? designerDoc.profileImage.url
+          : null,
+      },
+      designsAndProducts: designsWithProducts,
+    });
+  } catch (error) {
+    logger.error('Error fetching designer products:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export {
   requestDesigner,
@@ -1183,6 +1491,8 @@ export {
   personalData,
   getDesigns,
   // designByCategory,
+  getDesignerProducts,
+  getAuthenticatedDesignerProducts,
   getRandomDesigners,
   updateSettings,
   getSettings,
