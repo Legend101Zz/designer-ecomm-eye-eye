@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import logger from '@core/utils/logger';
+import { sendEmailMiddleware } from '@core/middlewares/nodemailer';
 import { product } from '@components/product/product.model';
 import bcrypt from 'bcrypt';
 import { designer } from '@components/designer/designer.model';
@@ -9,6 +10,476 @@ import { admin } from './admin.model';
 interface CustomRequest extends Request {
   files: any; // Include the 'file' property with the MulterFile type
 }
+
+// Helper function to send design verification email
+const sendDesignVerificationEmail = async (designData) => {
+  const subject = 'Your Design Has Been Verified - Deauth';
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          line-height: 1.6;
+          color: #292929;
+          background-color: #f5f5f5;
+          margin: 0;
+          padding: 0;
+        }
+        .container {
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+        }
+        .header {
+          background-color: #292929;
+          color: white;
+          text-align: center;
+          padding: 30px 20px;
+          border-radius: 12px 12px 0 0;
+        }
+        .logo {
+          width: 180px;
+          height: auto;
+          margin-bottom: 20px;
+        }
+        .header h1 {
+          margin: 0;
+          font-size: 28px;
+          color: #ffffff;
+        }
+        .content {
+          background-color: #ffffff;
+          padding: 40px;
+          border-radius: 0 0 12px 12px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .design-image-container {
+          text-align: center;
+          margin: 20px 0;
+        }
+        .design-image {
+          max-width: 100%;
+          border-radius: 8px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .success-box {
+          background-color: #f0fff4;
+          border-left: 4px solid #48bb78;
+          padding: 20px;
+          margin: 25px 0;
+          border-radius: 0 8px 8px 0;
+        }
+        .success-box h3 {
+          color: #48bb78;
+          margin: 0 0 10px 0;
+          font-size: 20px;
+        }
+        .details {
+          background-color: #f9f9f9;
+          padding: 25px;
+          border-radius: 8px;
+          margin: 25px 0;
+        }
+        .details h3 {
+          color: #292929;
+          margin: 0 0 15px 0;
+        }
+        .steps {
+          background-color: #292929;
+          color: white;
+          padding: 25px;
+          border-radius: 8px;
+          margin: 25px 0;
+        }
+        .steps h3 {
+          color: #ff7d04;
+          margin: 0 0 15px 0;
+        }
+        .steps ol {
+          margin: 0;
+          padding-left: 20px;
+        }
+        .steps li {
+          margin: 10px 0;
+        }
+        .cta-button {
+          display: inline-block;
+          background-color: #ff7d04;
+          color: white;
+          text-decoration: none;
+          padding: 12px 25px;
+          border-radius: 4px;
+          margin: 20px 0;
+          font-weight: bold;
+          text-align: center;
+        }
+        .contact {
+          background-color: #fff9f0;
+          padding: 20px;
+          border-radius: 8px;
+          text-align: center;
+          margin: 25px 0;
+        }
+        .contact a {
+          color: #ff7d04;
+          text-decoration: none;
+          font-weight: bold;
+        }
+        .footer {
+          text-align: center;
+          padding-top: 30px;
+          color: #666666;
+          font-size: 12px;
+          border-top: 1px solid #eeeeee;
+        }
+        .footer a {
+          color: #ff7d04;
+          text-decoration: none;
+          margin: 0 10px;
+        }
+        .highlight {
+          color: #ff7d04;
+          font-weight: bold;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <img src="https://www.deauth.in/_next/image?url=%2FDeauth-Logo.png&w=256&q=75" alt="Deauth Logo" class="logo">
+          <h1>Your Design Has Been Verified!</h1>
+        </div>
+        
+        <div class="content">
+          <p>Hello <span class="highlight">${
+            designData.designer.artistName || designData.designer.fullname
+          }</span>,</p>
+          
+          <div class="success-box">
+            <h3>✅ Design Approved and Live</h3>
+            <p>Great news! Your design "<span class="highlight">${
+              designData.title
+            }</span>" has been verified and is now live on Deauth.</p>
+          </div>
+          
+          <div class="design-image-container">
+            <img src="${designData.designImage[0]?.url}" alt="${
+    designData.title
+  }" class="design-image">
+          </div>
+          
+          <div class="details">
+            <h3>Design Details</h3>
+            <ul>
+              <li><strong>Title:</strong> ${designData.title}</li>
+              <li><strong>Description:</strong> ${
+                designData.description || 'No description provided'
+              }</li>
+              <li><strong>Date Approved:</strong> ${new Date().toDateString()}</li>
+            </ul>
+          </div>
+
+          <div class="steps">
+            <h3>What's Next</h3>
+            <ol>
+              <li>Create products using your verified design</li>
+              <li>Set pricing for your products</li>
+              <li>Share your creations on social media</li>
+              <li>Track your sales and earnings</li>
+            </ol>
+          </div>
+
+          <div style="text-align: center;">
+            <a href="https://deauth.in/profile/DesignerDashboard" class="cta-button">Manage Your Designs</a>
+          </div>
+
+          <div class="contact">
+            <p>Need assistance with your designs?</p>
+            <a href="mailto:designer.support@deauth.in">designer.support@deauth.in</a>
+          </div>
+        
+          <div class="footer">
+            <p>© ${new Date().getFullYear()} Deauth. All rights reserved.</p>
+            <div>
+              <a href="https://deauth.in/privacy">Privacy Policy</a> | 
+              <a href="https://deauth.in/terms">Terms of Service</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  // Plain text version
+  const textContent = `
+Your Design Has Been Verified - Deauth
+
+Hello ${designData.designer.artistName || designData.designer.fullname},
+
+Great news! Your design "${
+    designData.title
+  }" has been verified and is now live on Deauth.
+
+Design Details:
+- Title: ${designData.title}
+- Description: ${designData.description || 'No description provided'}
+- Date Approved: ${new Date().toDateString()}
+
+What's Next:
+1. Create products using your verified design
+2. Set pricing for your products
+3. Share your creations on social media
+4. Track your sales and earnings
+
+Manage your designs at: https://deauth.in/profile/DesignerDashboard
+
+Need assistance with your designs?
+designer.support@deauth.in
+
+© ${new Date().getFullYear()} Deauth. All rights reserved.
+  `;
+
+  await sendEmailMiddleware(
+    null,
+    null,
+    designData.designer.userId.email,
+    subject,
+    htmlContent,
+    textContent,
+  );
+};
+
+// Helper function to send designer approval email
+const sendDesignerApprovalEmail = async (designerData) => {
+  const subject =
+    'Congratulations! Your Designer Application Has Been Approved - Deauth';
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          line-height: 1.6;
+          color: #292929;
+          background-color: #f5f5f5;
+          margin: 0;
+          padding: 0;
+        }
+        .container {
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+        }
+        .header {
+          background-color: #292929;
+          color: white;
+          text-align: center;
+          padding: 30px 20px;
+          border-radius: 12px 12px 0 0;
+        }
+        .logo {
+          width: 180px;
+          height: auto;
+          margin-bottom: 20px;
+        }
+        .header h1 {
+          margin: 0;
+          font-size: 28px;
+          color: #ffffff;
+        }
+        .content {
+          background-color: #ffffff;
+          padding: 40px;
+          border-radius: 0 0 12px 12px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .success-box {
+          background-color: #f0fff4;
+          border-left: 4px solid #48bb78;
+          padding: 20px;
+          margin: 25px 0;
+          border-radius: 0 8px 8px 0;
+        }
+        .success-box h3 {
+          color: #48bb78;
+          margin: 0 0 10px 0;
+          font-size: 20px;
+        }
+        .details {
+          background-color: #f9f9f9;
+          padding: 25px;
+          border-radius: 8px;
+          margin: 25px 0;
+        }
+        .details h3 {
+          color: #292929;
+          margin: 0 0 15px 0;
+        }
+        .steps {
+          background-color: #292929;
+          color: white;
+          padding: 25px;
+          border-radius: 8px;
+          margin: 25px 0;
+        }
+        .steps h3 {
+          color: #ff7d04;
+          margin: 0 0 15px 0;
+        }
+        .steps ol {
+          margin: 0;
+          padding-left: 20px;
+        }
+        .steps li {
+          margin: 10px 0;
+        }
+        .cta-button {
+          display: inline-block;
+          background-color: #ff7d04;
+          color: white;
+          text-decoration: none;
+          padding: 12px 25px;
+          border-radius: 4px;
+          margin: 20px 0;
+          font-weight: bold;
+          text-align: center;
+        }
+        .contact {
+          background-color: #fff9f0;
+          padding: 20px;
+          border-radius: 8px;
+          text-align: center;
+          margin: 25px 0;
+        }
+        .contact a {
+          color: #ff7d04;
+          text-decoration: none;
+          font-weight: bold;
+        }
+        .footer {
+          text-align: center;
+          padding-top: 30px;
+          color: #666666;
+          font-size: 12px;
+          border-top: 1px solid #eeeeee;
+        }
+        .footer a {
+          color: #ff7d04;
+          text-decoration: none;
+          margin: 0 10px;
+        }
+        .highlight {
+          color: #ff7d04;
+          font-weight: bold;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <img src="https://www.deauth.in/_next/image?url=%2FDeauth-Logo.png&w=256&q=75" alt="Deauth Logo" class="logo">
+          <h1>Designer Application Approved!</h1>
+        </div>
+        
+        <div class="content">
+          <p>Hello <span class="highlight">${
+            designerData.artistName || designerData.fullname
+          }</span>,</p>
+          
+          <div class="success-box">
+            <h3>🎉 Congratulations! You're now a Deauth Designer</h3>
+            <p>We're thrilled to inform you that your application to join Deauth as a designer has been approved! Welcome to our creative community.</p>
+          </div>
+          
+          <div class="steps">
+            <h3>What's Next</h3>
+            <ol>
+              <li>Log in to your designer dashboard</li>
+              <li>Upload your first design to start selling</li>
+              <li>Set up your payout preferences</li>
+              <li>Promote your designs to increase visibility</li>
+            </ol>
+          </div>
+
+          <div style="text-align: center;">
+            <a href="https://deauth.in/profile/DesignerDashboard" class="cta-button">Go to Designer Dashboard</a>
+          </div>
+
+          <div class="details">
+            <h3>Your Designer Benefits</h3>
+            <ul>
+              <li>Competitive commission rates on every sale</li>
+              <li>Access to our design tools and resources</li>
+              <li>Exposure to our growing customer base</li>
+              <li>Support from our dedicated designer team</li>
+            </ul>
+          </div>
+
+          <div class="contact">
+            <p>Questions about getting started? We're here to help!</p>
+            <a href="mailto:designer.support@deauth.in">designer.support@deauth.in</a>
+          </div>
+        
+          <div class="footer">
+            <p>© ${new Date().getFullYear()} Deauth. All rights reserved.</p>
+            <div>
+              <a href="https://deauth.in/privacy">Privacy Policy</a> | 
+              <a href="https://deauth.in/terms">Terms of Service</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  // Plain text version
+  const textContent = `
+Congratulations! Your Designer Application Has Been Approved - Deauth
+
+Hello ${designerData.artistName || designerData.fullname},
+
+We're thrilled to inform you that your application to join Deauth as a designer has been approved! Welcome to our creative community.
+
+What's Next:
+1. Log in to your designer dashboard
+2. Upload your first design to start selling
+3. Set up your payout preferences
+4. Promote your designs to increase visibility
+
+Visit your dashboard at: https://deauth.in/profile/DesignerDashboard
+
+Your Designer Benefits:
+- Competitive commission rates on every sale
+- Access to our design tools and resources
+- Exposure to our growing customer base
+- Support from our dedicated designer team
+
+Questions about getting started? We're here to help!
+designer.support@deauth.in
+
+© ${new Date().getFullYear()} Deauth. All rights reserved.
+  `;
+
+  await sendEmailMiddleware(
+    null,
+    null,
+    designerData.userId.email,
+    subject,
+    htmlContent,
+    textContent,
+  );
+};
 
 // creating a admin
 
@@ -228,7 +699,7 @@ const allDesigners = async (req: Request, res: Response) => {
     logger.error(e);
     res
       .status(500)
-      .send('Internal Server Error: ' + (e.message || 'Unknown error'));
+      .send(`Internal Server Error: ${e.message || 'Unknown error'}`);
   }
 };
 
@@ -252,15 +723,18 @@ const approveDesignerController = async (req: Request, res: Response) => {
     const { designerId } = req.params;
 
     // Find the designer by ID and update the 'isApproved' field to true
-    const updatedDesigner = await designer.findByIdAndUpdate(
-      designerId,
-      { isApproved: true },
-      { new: true },
-    );
+    const updatedDesigner = await designer
+      .findByIdAndUpdate(designerId, { isApproved: true }, { new: true })
+      .populate('userId'); // Populate to get user info for email
 
     if (!updatedDesigner) {
-      return res.status(404).json({ error: 'Designer not foundaaa' });
+      return res.status(404).json({ error: 'Designer not found' });
     }
+
+    // Send approval email notification
+    // @ts-ignore
+    const userEmail = updatedDesigner.userId.email;
+    await sendDesignerApprovalEmail(updatedDesigner);
 
     return res.redirect('/api/admin/designer');
   } catch (error) {
@@ -274,7 +748,13 @@ const verifyDesignController = async (req: Request, res: Response) => {
 
   try {
     // Find the design by ID
-    const foundDesign = await design.findById(designId);
+    const foundDesign = await design.findById(designId).populate({
+      path: 'designer',
+      populate: {
+        path: 'userId',
+        select: 'email',
+      },
+    });
 
     if (!foundDesign) {
       return res.status(404).json({ error: 'Design not found' });
@@ -285,6 +765,9 @@ const verifyDesignController = async (req: Request, res: Response) => {
 
     // Save the updated design
     await foundDesign.save();
+
+    // Send design verification email
+    await sendDesignVerificationEmail(foundDesign);
 
     // Respond with a success message or the updated design
     return res.redirect('/api/admin/designer');

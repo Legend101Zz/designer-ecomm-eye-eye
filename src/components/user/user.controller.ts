@@ -193,7 +193,7 @@ const createUser = async (req: Request, res: Response) => {
     <body>
       <div class="container">
         <div class="header">
-          <img src="https://www.deauth.in/_next/image?url=%2Flogos%2Flogo.webp&w=256&q=75" alt="Deauth Logo" class="logo">
+          <img src="https://www.deauth.in/_next/image?url=%2FDeauth-Logo.png&w=256&q=75" alt="Deauth Logo" class="logo">
           <div class="welcome-text">Welcome to Your Fashion Journey</div>
         </div>
         
@@ -451,7 +451,7 @@ const handleGoogleAuth = async (req: Request, res: Response) => {
     <body>
       <div class="container">
         <div class="header">
-          <img src="https://www.deauth.in/_next/image?url=%2Flogos%2Flogo.webp&w=256&q=75" alt="Deauth Logo" class="logo">
+          <img src="https://www.deauth.in/_next/image?url=%2FDeauth-Logo.png&w=256&q=75" alt="Deauth Logo" class="logo">
           <div class="welcome-text">Welcome to Deauth</div>
         </div>
         
@@ -694,7 +694,7 @@ const updatePassword = async (req: Request, res: Response) => {
     <body>
      <div class="container">
        <div class="header">
-         <img src="https://www.deauth.in/_next/image?url=%2Flogos%2Flogo.webp&w=256&q=75" alt="Deauth Logo" class="logo">
+         <img src="https://www.deauth.in/_next/image?url=%2FDeauth-Logo.png&w=256&q=75" alt="Deauth Logo" class="logo">
          <div class="title">Password Updated</div>
        </div>
        

@@ -182,7 +182,7 @@ const sendDesignerRequestEmail = async (
     <body>
       <div class="container">
         <div class="header">
-          <img src="https://www.deauth.in/_next/image?url=%2Flogos%2Flogo.webp&w=256&q=75" alt="Deauth Logo" class="logo">
+          <img src="https://www.deauth.in/_next/image?url=%2FDeauth-Logo.png&w=256&q=75" alt="Deauth Logo" class="logo">
           <h1>Designer Profile Request Received</h1>
         </div>
         
@@ -388,7 +388,7 @@ const requestDesigner = async (
       panCardNumber,
       addressBody,
     } = req.body;
-    console.log('check,req.body');
+    console.log('check,req.body', req.body);
     // Check if user exists and is not already a designer
     const checkUser: any = await user.findById(userId);
     if (!checkUser) {
