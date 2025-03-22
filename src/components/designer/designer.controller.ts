@@ -382,12 +382,14 @@ const requestDesigner = async (
       fullname,
       artistName,
       description,
-      portfolioLinks,
-      cvLinks,
       phone,
       panCardNumber,
       addressBody,
     } = req.body;
+
+    const portfolioLinks = req.body.portfolioLinks || [];
+    const cvLinks = req.body.cvLinks || [];
+
     console.log('check,req.body', req.body);
     // Check if user exists and is not already a designer
     const checkUser: any = await user.findById(userId);
@@ -419,6 +421,22 @@ const requestDesigner = async (
       cvLinks,
       phone,
       panCardNumber,
+      // Initialize settings with defaults
+      settings: {
+        isPrivate: false,
+        showDesigns: {
+          enabled: true,
+          designIds: [],
+        },
+        showFollowers: true,
+        showFullName: true,
+        showPhone: true,
+        showDescription: true,
+        showCoverPhoto: true,
+        showProfilePhoto: true,
+        socialMedia: [],
+        portfolioLinks: portfolioLinks || [],
+      },
     });
 
     // Handle profile photo and cover photo uploads
@@ -1067,16 +1085,40 @@ const updateSettings = async (req: any, res: Response) => {
 // middleware
 
 const transformToArray = (req: Request, res: Response, next: NextFunction) => {
-  const { portfolioLinks, cvLinks } = req.body;
-
-  if (typeof portfolioLinks === 'string') {
-    req.body.portfolioLinks = portfolioLinks
-      .split(',')
-      .map((link) => link.trim());
+  // Check if portfolioLinks exists and is a string
+  if (req.body.portfolioLinks !== undefined) {
+    if (typeof req.body.portfolioLinks === 'string') {
+      // If it's an empty string, set to empty array
+      if (req.body.portfolioLinks.trim() === '') {
+        req.body.portfolioLinks = [];
+      } else {
+        // Otherwise split by comma and trim
+        req.body.portfolioLinks = req.body.portfolioLinks
+          .split(',')
+          .map((link) => link.trim());
+      }
+    }
+  } else {
+    // If not provided, initialize as empty array
+    req.body.portfolioLinks = [];
   }
 
-  if (typeof cvLinks === 'string') {
-    req.body.cvLinks = cvLinks.split(',').map((link) => link.trim());
+  // Check if cvLinks exists and is a string
+  if (req.body.cvLinks !== undefined) {
+    if (typeof req.body.cvLinks === 'string') {
+      // If it's an empty string, set to empty array
+      if (req.body.cvLinks.trim() === '') {
+        req.body.cvLinks = [];
+      } else {
+        // Otherwise split by comma and trim
+        req.body.cvLinks = req.body.cvLinks
+          .split(',')
+          .map((link) => link.trim());
+      }
+    }
+  } else {
+    // If not provided, initialize as empty array
+    req.body.cvLinks = [];
   }
 
   next();
