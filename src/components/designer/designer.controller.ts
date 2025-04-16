@@ -199,11 +199,10 @@ const sendDesignerRequestEmail = async (
             <ul>
               <li><strong>Artist Name:</strong> ${designerData.artistName}</li>
               <li><strong>Phone:</strong> ${designerData.phone}</li>
-              ${
-                designerData.description
-                  ? `<li><strong>Description:</strong> ${designerData.description}</li>`
-                  : ''
-              }
+              ${designerData.description
+      ? `<li><strong>Description:</strong> ${designerData.description}</li>`
+      : ''
+    }
             </ul>
           </div>
 
@@ -994,12 +993,12 @@ const getRandomDesigners = async (req: Request, res: Response) => {
       profileImage: designer2.profileImage?.url || null,
       designImage:
         designer2.Designs.length > 0 &&
-        designer2.Designs[0].designImage.length > 0
+          designer2.Designs[0].designImage.length > 0
           ? designer2.Designs[0].designImage[0].url
           : null,
       totalDesigns: designer2.Designs.length,
       designerFollowers: designer2.followers.length,
-
+      coverImage: designer2.coverImage?.url || null,
       designName:
         // @ts-ignore
         designer2.Designs.length > 0 ? designer2.Designs[0].title : '',
@@ -1184,8 +1183,7 @@ const joinWaitlist = async (req: Request, res: Response) => {
         // Also send notification to team
         const teamSubject = 'New Dripto™ Waitlist Signup';
         const teamText =
-          `Designer ${
-            existingDesigner.artistName || existingDesigner.fullname
+          `Designer ${existingDesigner.artistName || existingDesigner.fullname
           } has joined the Dripto waitlist.\n\n` +
           `Description: ${description || 'None provided'}\n` +
           `Questions: ${questions || 'None provided'}\n\n` +
@@ -1193,13 +1191,11 @@ const joinWaitlist = async (req: Request, res: Response) => {
         const teamHtml = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
             <h2 style="color: #5D3FD3;">New Dripto™ Waitlist Signup</h2>
-            <p><strong>Designer:</strong> ${
-              existingDesigner.artistName || existingDesigner.fullname
-            }</p>
+            <p><strong>Designer:</strong> ${existingDesigner.artistName || existingDesigner.fullname
+          }</p>
             <div style="background-color: #f7f7f7; padding: 15px; margin: 20px 0; border-radius: 5px;">
-              <p><strong>Description:</strong> ${
-                description || 'None provided'
-              }</p>
+              <p><strong>Description:</strong> ${description || 'None provided'
+          }</p>
               <p><strong>Questions:</strong> ${questions || 'None provided'}</p>
             </div>
             <p><strong>Designer ID:</strong> ${designerId}</p>
@@ -1332,16 +1328,16 @@ const getDesignerProducts = async (req: Request, res: Response) => {
                 front:
                   group.processedImages && group.processedImages.front
                     ? group.processedImages.front.map((img) => ({
-                        url: img.url,
-                        filename: img.filename,
-                      }))
+                      url: img.url,
+                      filename: img.filename,
+                    }))
                     : [],
                 back:
                   group.processedImages && group.processedImages.back
                     ? group.processedImages.back.map((img) => ({
-                        url: img.url,
-                        filename: img.filename,
-                      }))
+                      url: img.url,
+                      filename: img.filename,
+                    }))
                     : [],
               },
             })),
@@ -1483,16 +1479,16 @@ const getAuthenticatedDesignerProducts = async (
                 front:
                   group.processedImages && group.processedImages.front
                     ? group.processedImages.front.map((img) => ({
-                        url: img.url,
-                        filename: img.filename,
-                      }))
+                      url: img.url,
+                      filename: img.filename,
+                    }))
                     : [],
                 back:
                   group.processedImages && group.processedImages.back
                     ? group.processedImages.back.map((img) => ({
-                        url: img.url,
-                        filename: img.filename,
-                      }))
+                      url: img.url,
+                      filename: img.filename,
+                    }))
                     : [],
               },
             })),
