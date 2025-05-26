@@ -1,33 +1,50 @@
 /* eslint-disable no-unused-vars */
 import mongoose, { Schema } from 'mongoose';
-import { Itransactions } from './transcations.interface';
+import { ITransaction } from './transcations.interface';
 
-const TransactionSchema: Schema<Itransactions> = new Schema({
-  DeliveryAddress: {
-    type: Schema.Types.ObjectId,
-    ref: 'Address',
-  },
-  productsBought: [
-    {
-      product: {
-        type: Schema.Types.ObjectId,
-        ref: 'Design',
-      },
-      quantity: Number,
+const TransactionSchema: Schema<ITransaction> = new Schema(
+  {
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
     },
-  ],
-  transaction_id: { type: String },
-  user: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
+    productsBought: [
+      {
+        product: {
+          type: Schema.Types.ObjectId,
+          ref: 'Design',
+          required: true,
+        },
+        quantity: {
+          type: Number,
+          required: true,
+        },
+      },
+    ],
+    amount: {
+      type: Number,
+      required: true,
+    },
+    currency: {
+      type: String,
+      default: 'INR',
+    },
+    status: {
+      type: String,
+      enum: ['created', 'processing', 'failed', 'success', 'refunded'],
+      default: 'created',
+    },
+    razorpay_order_id: String,
+    razorpay_payment_id: String,
+    razorpay_signature: String,
   },
-  isCompleted: { type: Boolean, default: false },
-});
-
-const transcations = mongoose.model<Itransactions>(
+  { timestamps: true },
+);
+const Transactions = mongoose.model<ITransaction>(
   'Transactions',
   TransactionSchema,
 );
 
 // eslint-disable-next-line import/prefer-default-export
-export { transcations };
+export { Transactions };
