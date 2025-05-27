@@ -185,15 +185,15 @@ const sendDesignerRequestEmail = async (
           <img src="https://www.deauth.in/_next/image?url=%2FDeauth-Logo.png&w=256&q=75" alt="Deauth Logo" class="logo">
           <h1>Designer Profile Request Received</h1>
         </div>
-        
+
         <div class="content">
           <p>Hello <span class="highlight">${designerData.fullname}</span>,</p>
-          
+
           <div class="status-box">
             <h3>🎨 Your Request is Under Review</h3>
             <p>We've received your application to become a Deauth designer. We're excited to review your creative portfolio!</p>
           </div>
-          
+
           <div class="details">
             <h3>Profile Details Submitted</h3>
             <ul>
@@ -220,11 +220,11 @@ const sendDesignerRequestEmail = async (
             <p>Have questions? Our designer support team is here to help!</p>
             <a href="mailto:designer.support@deauth.in">designer.support@deauth.in</a>
           </div>
-        
+
           <div class="footer">
             <p>© ${new Date().getFullYear()} Deauth. All rights reserved.</p>
             <div>
-              <a href="https://deauth.in/privacy">Privacy Policy</a> | 
+              <a href="https://deauth.in/privacy">Privacy Policy</a> |
               <a href="https://deauth.in/terms">Terms of Service</a>
             </div>
           </div>
@@ -1521,6 +1521,110 @@ const getAuthenticatedDesignerProducts = async (
   }
 };
 
+const getDesigners = async (req: Request, res: Response) => {
+  try {
+    const page = parseInt(req.query.page as string, 10) || 1;
+    const limit = 5;
+    const skip = (page - 1) * limit;
+
+    // Get total count for pagination metadata
+    const totalCount = await designer.countDocuments({
+      isApproved: true,
+      profileImage: { $exists: true },
+      Designs: { $exists: true, $ne: [] },
+    });
+
+    // Calculate total pages
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // Fetch designers with sorting and pagination
+    const designers = await designer.aggregate([
+      // Match approved designers with profile images and designs
+      {
+        $match: {
+          isApproved: true,
+          profileImage: { $exists: true },
+          coverImage: { $exists: true },
+          Designs: { $exists: true, $ne: [] },
+        },
+      },
+      // Add computed fields for sorting
+      {
+        $addFields: {
+          followersCount: { $size: { $ifNull: ['$followers', []] } },
+          designsCount: { $size: { $ifNull: ['$Designs', []] } },
+        },
+      },
+      // Sort by followers count (desc), then by designs count (desc)
+      {
+        $sort: {
+          followersCount: -1,
+          designsCount: -1,
+        },
+      },
+      // Apply pagination
+      { $skip: skip },
+      { $limit: limit },
+      // Populate the Designs field
+      {
+        $lookup: {
+          from: 'designs',
+          localField: 'Designs',
+          foreignField: '_id',
+          as: 'Designs',
+        },
+      },
+      // Project only the fields we need
+      {
+        $project: {
+          coverImage: 1,
+          profileImage: 1,
+          artistName: 1,
+          fullname: 1,
+          Designs: 1,
+          followersCount: 1,
+          designsCount: 1,
+        },
+      },
+    ]);
+
+    // Format the response data
+    const formattedDesigners = designers.map((designer2) => ({
+      profileImage: designer2.profileImage?.url || null,
+      coverImage: designer2.coverImage?.url || null,
+      designImage:
+        designer2.Designs.length > 0 &&
+        designer2.Designs[0].designImage &&
+        designer2.Designs[0].designImage.length > 0
+          ? designer2.Designs[0].designImage[0].url
+          : null,
+      totalDesigns: designer2.designsCount,
+      designerFollowers: designer2.followersCount,
+      designName:
+        designer2.Designs.length > 0 ? designer2.Designs[0].title || '' : '',
+      designerId: designer2._id.toString(),
+      designerName: designer2.artistName || designer2.fullname || '',
+    }));
+
+    // Return response with pagination metadata
+    return res.status(200).json({
+      designers: formattedDesigners,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+        nextPage: page < totalPages ? page + 1 : null,
+        previousPage: page > 1 ? page - 1 : null,
+      },
+    });
+  } catch (error) {
+    logger.error('Error fetching designers:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export {
   requestDesigner,
@@ -1540,4 +1644,5 @@ export {
   getSettings,
   transformToArray,
   joinWaitlist,
+  getDesigners,
 };

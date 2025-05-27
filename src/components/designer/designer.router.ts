@@ -24,6 +24,7 @@ import {
   transformToArray,
   getDesignerProducts,
   getAuthenticatedDesignerProducts,
+  getDesigners,
 } from './designer.controller';
 import {
   designerValidationSchema,
@@ -42,6 +43,8 @@ router.get(
   [protectedByApiKey],
   getRandomDesigners,
 );
+
+router.get('/designer/getDesigners', [protectedByApiKey], getDesigners);
 
 // TO GET DESIGNER DETAILS
 router.get(
