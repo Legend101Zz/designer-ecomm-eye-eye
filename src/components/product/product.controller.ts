@@ -9,6 +9,8 @@ import {
   IProductImage,
   ProductDocument,
   Color,
+  ClothingCategory,
+  AccessoryCategory,
 } from './product.interface';
 import { createProduct, readProduct, updateProduct } from './product.service';
 
@@ -354,6 +356,183 @@ const getProductsByType = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Get available categories from base products
+ *
+ * Returns all unique categories currently available in the database,
+ * grouped by product type for better organization
+ *
+ * @route GET /api/product/categories
+ * @param req Request object
+ * @param res Response object
+ * @param next Next middleware function
+ * @returns {Promise<void>}
+ */
+const getAvailableCategories = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    // Get distinct categories and product types from active products
+    const categoriesData = await product.aggregate([
+      {
+        $match: { isActive: true },
+      },
+      {
+        $group: {
+          _id: {
+            productType: '$productType',
+            category: '$category',
+          },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $group: {
+          _id: '$_id.productType',
+          categories: {
+            $push: {
+              name: '$_id.category',
+              count: '$count',
+            },
+          },
+        },
+      },
+      {
+        $sort: { _id: 1 },
+      },
+    ]);
+
+    // Format the response
+    const formattedCategories = categoriesData.map((item) => ({
+      productType: item._id,
+      categories: item.categories.sort((a, b) => a.name.localeCompare(b.name)),
+    }));
+
+    // Also get a flat list of all categories for convenience
+    const allCategories = await product.distinct('category', {
+      isActive: true,
+    });
+    const sortedAllCategories = allCategories.sort();
+
+    // Get enum values for reference
+    const availableEnums = {
+      clothing: Object.values(ClothingCategory),
+      accessories: Object.values(AccessoryCategory),
+      productTypes: Object.values(ProductType),
+    };
+
+    logger.debug(
+      `Found ${sortedAllCategories.length} unique categories across ${formattedCategories.length} product types`,
+    );
+
+    res.status(httpStatus.OK).json({
+      success: true,
+      data: {
+        categoriesByType: formattedCategories,
+        allCategories: sortedAllCategories,
+        totalCategories: sortedAllCategories.length,
+        availableEnums,
+      },
+    });
+  } catch (error) {
+    logger.error('Error fetching available categories:', error);
+    next(
+      new AppError(
+        httpStatus.INTERNAL_SERVER_ERROR,
+        'Error fetching categories',
+      ),
+    );
+  }
+};
+
+/**
+ * Get categories for a specific product type
+ *
+ * @route GET /api/product/categories/:productType
+ * @param req Request object with productType parameter
+ * @param res Response object
+ * @param next Next middleware function
+ * @returns {Promise<void>}
+ */
+const getCategoriesByProductType = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { productType } = req.params;
+
+    // Validate product type
+    if (!Object.values(ProductType).includes(productType as ProductType)) {
+      return next(
+        new AppError(
+          httpStatus.BAD_REQUEST,
+          `Invalid product type: ${productType}`,
+        ),
+      );
+    }
+
+    // Get categories for the specific product type
+    const categories = await product.aggregate([
+      {
+        $match: {
+          isActive: true,
+          productType,
+        },
+      },
+      {
+        $group: {
+          _id: '$category',
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          name: '$_id',
+          count: 1,
+          _id: 0,
+        },
+      },
+      {
+        $sort: { name: 1 },
+      },
+    ]);
+
+    // Get enum values for this product type
+    const availableEnums =
+      productType === ProductType.CLOTHING
+        ? Object.values(ClothingCategory)
+        : Object.values(AccessoryCategory);
+
+    logger.debug(
+      `Found ${categories.length} categories for product type: ${productType}`,
+    );
+
+    res.status(httpStatus.OK).json({
+      success: true,
+      data: {
+        productType,
+        categories,
+        totalCategories: categories.length,
+        availableEnums,
+      },
+    });
+  } catch (error) {
+    logger.error(
+      `Error fetching categories for product type ${req.params.productType}:`,
+      error,
+    );
+    next(
+      new AppError(
+        httpStatus.INTERNAL_SERVER_ERROR,
+        'Error fetching categories',
+      ),
+    );
+  }
+};
+
 export {
   createProd,
   readProd,
@@ -362,4 +541,6 @@ export {
   removeColorVariant,
   getProductVariants,
   getProductsByType,
+  getAvailableCategories,
+  getCategoriesByProductType,
 };

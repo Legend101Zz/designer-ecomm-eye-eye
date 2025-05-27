@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import protectedByApiKey from '@core/middlewares/apiKey.middleware';
 import { finalProductUploadMiddleware } from '@core/middlewares/cloudinary';
+import { authenticate } from '@core/middlewares/userAuth.middleware';
 import {
   createFinalProduct,
   getFilteredProducts,
@@ -8,8 +9,8 @@ import {
   updateStock,
   deactivateProduct,
   getProcessedImages,
+  getProductsCount,
 } from './finalprod.controller';
-import { authenticate } from '@core/middlewares/userAuth.middleware';
 
 const router: Router = Router();
 
@@ -23,6 +24,9 @@ router.post(
 
 // Get filtered products list
 router.get('/finalproduct/list', [protectedByApiKey], getFilteredProducts);
+
+// Get product count
+router.get('/finalproduct/count', [protectedByApiKey], getProductsCount);
 
 // Get processed images with optional filters
 router.get('/finalproduct/images', [protectedByApiKey], getProcessedImages);

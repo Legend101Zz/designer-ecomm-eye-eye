@@ -10,6 +10,7 @@ import {
   removeColorVariant,
   getProductVariants,
   getProductsByType,
+  getAvailableCategories,
 } from './product.controller';
 import {
   createProductValidation,
@@ -32,6 +33,9 @@ router.post(
 
 // Product Variant Management Routes
 router.get('/product/variants', [protectedByApiKey], getProductVariants);
+
+// Product Categories available
+router.get('/product/categories', [protectedByApiKey], getAvailableCategories);
 
 // Product Update Routes
 router.patch(

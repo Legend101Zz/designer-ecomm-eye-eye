@@ -409,19 +409,27 @@ export async function createFinalProduct(
     );
   }
 }
-
 /**
- * Retrieves a filtered list of final products
+ * Retrieves a filtered list of final products with pagination and sorting
  *
  * Supports filtering by:
  * - Category of base product
  * - Gender of design group
  * - Specific base product ID
  *
+ * Supports pagination:
+ * - page: Page number (default: 1)
+ * - limit: Items per page (default: 10)
+ *
+ * Supports sorting:
+ * - sortBy: Field to sort by (default: 'createdAt')
+ * - sortOrder: Sort order 'asc' or 'desc' (default: 'desc')
+ *
  * Returns formatted product data with:
  * - Basic product information
  * - Design groups with their variants
  * - Processed images for each variant
+ * - Pagination metadata
  *
  * @route GET /api/finalproduct/list
  * @param req Request with optional query parameters
@@ -435,7 +443,34 @@ export async function getFilteredProducts(
   next: NextFunction,
 ): Promise<void> {
   try {
-    const { category, gender, baseProductId } = req.query;
+    const {
+      category,
+      gender,
+      baseProductId,
+      page = 1,
+      limit = 7, // Just I picked it at random hehe
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+    } = req.query;
+
+    // Parse pagination parameters
+    const pageNumber = parseInt(page as string, 10) || 1;
+    const limitNumber = parseInt(limit as string, 10) || 10;
+    const skip = (pageNumber - 1) * limitNumber;
+
+    // Validate sort order
+    const validSortOrder = sortOrder === 'asc' ? 1 : -1;
+
+    // Validate sort field
+    const allowedSortFields = [
+      'createdAt',
+      'updatedAt',
+      'productName',
+      'designGroups.designPrice',
+    ];
+    const sortField = allowedSortFields.includes(sortBy as string)
+      ? (sortBy as string)
+      : 'createdAt';
 
     // Build query filters
     const query: any = { isActive: true };
@@ -443,11 +478,20 @@ export async function getFilteredProducts(
     if (baseProductId) {
       query['designGroups.variants.baseProductId'] = baseProductId;
     }
+
     if (gender) {
       query['designGroups.gender'] = gender;
     }
 
-    // Fetch products with populated references
+    // Get total count for pagination (before applying skip/limit)
+    const totalCount = await finalProduct.countDocuments(query);
+
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalCount / limitNumber);
+    const hasNextPage = pageNumber < totalPages;
+    const hasPreviousPage = pageNumber > 1;
+
+    // Fetch products with populated references, pagination, and sorting
     const products = await finalProduct
       .find(query)
       .populate({
@@ -463,9 +507,12 @@ export async function getFilteredProducts(
           select: 'artistName',
         },
       })
+      .sort({ [sortField]: validSortOrder })
+      .skip(skip)
+      .limit(limitNumber)
       .lean();
 
-    // Filter out products with no matching variants
+    // Filter out products with no matching variants (after population)
     const filteredProducts = products.filter(
       (prod) =>
         !category ||
@@ -480,6 +527,8 @@ export async function getFilteredProducts(
       id: prod._id,
       productName: prod.productName,
       tags: prod.tags,
+      createdAt: prod.createdAt,
+      updatedAt: prod.updatedAt,
       designGroups: prod.designGroups
         // Only include groups matching gender filter if specified
         .filter((g) => !gender || g.gender === gender)
@@ -507,7 +556,6 @@ export async function getFilteredProducts(
             .map((v) => {
               // Since we're using lean(), stock is already a plain object, not a Map
               const stockData = typeof v.stock === 'object' ? v.stock : {};
-
               return {
                 baseProductId: v.baseProductId._id,
                 // @ts-ignore
@@ -525,11 +573,29 @@ export async function getFilteredProducts(
         })),
     }));
 
-    logger.debug(`Found ${formattedProducts.length} products matching filters`);
+    logger.debug(
+      `Found ${formattedProducts.length} products matching filters on page ${pageNumber}`,
+    );
 
+    // Return response with pagination metadata
     res.status(httpStatus.OK).json({
       success: true,
       products: formattedProducts,
+      pagination: {
+        currentPage: pageNumber,
+        totalPages,
+        totalCount,
+        hasNextPage,
+        hasPreviousPage,
+        nextPage: hasNextPage ? pageNumber + 1 : null,
+        previousPage: hasPreviousPage ? pageNumber - 1 : null,
+        limit: limitNumber,
+        skip,
+      },
+      sorting: {
+        sortBy: sortField,
+        sortOrder: sortOrder as string,
+      },
     });
   } catch (error) {
     console.error('Error in getFilteredProducts:', {
@@ -923,6 +989,101 @@ export async function getProcessedImages(
             httpStatus.INTERNAL_SERVER_ERROR,
             'Error fetching processed images',
           ),
+    );
+  }
+}
+
+/**
+ * Get products count for pagination
+ *
+ * Supports the same filtering as getFilteredProducts but only returns count:
+ * - Category of base product
+ * - Gender of design group
+ * - Specific base product ID
+ *
+ * Returns just the count of products matching the filters for efficient pagination
+ *
+ * @route GET /api/finalproduct/count
+ * @param req Request with optional query parameters
+ * @param res Response object
+ * @param next Next middleware function
+ * @returns {Promise<void>}
+ */
+export async function getProductsCount(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const { category, gender, baseProductId } = req.query;
+
+    // Build query filters (same logic as getFilteredProducts)
+    const query: any = { isActive: true };
+
+    if (baseProductId) {
+      query['designGroups.variants.baseProductId'] = baseProductId;
+    }
+
+    if (gender) {
+      query['designGroups.gender'] = gender;
+    }
+
+    // For category filtering, we need to use aggregation since we filter after population
+    let totalCount: number;
+
+    if (category) {
+      // Use aggregation pipeline when category filter is needed
+      const countResult = await finalProduct.aggregate([
+        // Match initial filters
+        { $match: query },
+
+        // Lookup base products to check category
+        {
+          $lookup: {
+            from: 'products', // Adjust collection name if different
+            localField: 'designGroups.variants.baseProductId',
+            foreignField: '_id',
+            as: 'baseProducts',
+          },
+        },
+
+        // Filter by category
+        {
+          $match: {
+            'baseProducts.category': category,
+          },
+        },
+
+        // Count the results
+        {
+          $count: 'totalCount',
+        },
+      ]);
+
+      totalCount = countResult.length > 0 ? countResult[0].totalCount : 0;
+    } else {
+      // Simple count when no category filter
+      totalCount = await finalProduct.countDocuments(query);
+    }
+
+    logger.debug(`Found ${totalCount} products matching count filters`);
+
+    res.status(httpStatus.OK).json({
+      success: true,
+      totalCount,
+      filters: {
+        category: category || null,
+        gender: gender || null,
+        baseProductId: baseProductId || null,
+      },
+    });
+  } catch (error) {
+    console.error('Error in getProductsCount:', {
+      error: error.message,
+      stack: error.stack,
+    });
+    next(
+      new AppError(httpStatus.INTERNAL_SERVER_ERROR, 'Error counting products'),
     );
   }
 }
