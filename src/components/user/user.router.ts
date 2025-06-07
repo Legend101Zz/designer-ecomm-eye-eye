@@ -4,6 +4,9 @@ import validation from '@core/middlewares/validate.middleware';
 import {
   createUserValidation,
   createAddressValidation,
+  addToCartValidation,
+  changeCartQuantityValidation,
+  removeFromCartValidation,
 } from './createUserValidation';
 import {
   // User Management
@@ -28,6 +31,7 @@ import {
   removeFromCart,
   getUserCart,
 } from './user.controller';
+import { authenticate } from '@core/middlewares/userAuth.middleware';
 
 const router: Router = Router();
 
@@ -90,15 +94,15 @@ router.post('/user/unfollow', [protectedByApiKey], unfollowDesigner);
  */
 
 // Get user's cart contents
-router.get('/user/getCart/:userId', [protectedByApiKey], getUserCart);
+router.get('/user/getCart/', [protectedByApiKey], authenticate, getUserCart);
 
 // Add item to cart
-router.post('/user/addToCart', [protectedByApiKey], addToCart);
+router.post('/user/addToCart', [protectedByApiKey],validation(addToCartValidation), authenticate, addToCart);
 
 // Update cart item quantity
-router.post('/user/updateCart', [protectedByApiKey], changeCartQuantity);
+router.post('/user/updateCart', [protectedByApiKey, validation(changeCartQuantityValidation)], authenticate, changeCartQuantity);
 
 // Remove item from cart
-router.post('/user/deleteFromCart', [protectedByApiKey], removeFromCart);
+router.post('/user/deleteFromCart', [protectedByApiKey, validation(removeFromCartValidation)], authenticate, removeFromCart);
 
 export default router;

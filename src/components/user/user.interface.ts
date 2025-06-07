@@ -1,6 +1,7 @@
 // to be added purchases field
 
 import mongoose from 'mongoose';
+import { Size, Color } from '../product/product.interface';
 
 export interface IUser {
   _id: string;
@@ -16,5 +17,10 @@ export interface IUser {
   name?: string;
   description?: string;
   DesignerId?: { type: mongoose.Schema.Types.ObjectId };
-  cart: { product: mongoose.Schema.Types.ObjectId; quantity: number }[];
+  cart: { 
+    product: mongoose.Schema.Types.ObjectId; 
+    quantity: number;
+    size: Size;
+    color: Color;
+  }[];
 }

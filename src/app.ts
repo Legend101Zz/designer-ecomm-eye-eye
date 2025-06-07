@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express, { Application } from 'express';
 import passport from 'passport';
 import ejs from 'ejs';
