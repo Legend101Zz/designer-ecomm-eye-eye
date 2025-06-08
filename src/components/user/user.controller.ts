@@ -819,7 +819,7 @@ const loginUser = async (req: any, res: Response) => {
 };
 
 // Addresses Controllers
-const addAddress = async (req: Request, res: Response) => {
+const addAddress = async (req: any, res: Response) => {
   const {
     address_line1,
     address_line2,
@@ -828,8 +828,8 @@ const addAddress = async (req: Request, res: Response) => {
     postal_code,
     country,
     address_type,
-    user_id,
   } = req.body;
+  const user_id = req.user?.userId || null;
   try {
     // const duplicateAddresses = await address.aggregate([
     //   {
@@ -857,6 +857,7 @@ const addAddress = async (req: Request, res: Response) => {
     //     duplicates: duplicateAddresses,
     //   });
     // }
+    console.log('user_id: ', user_id);
     const userCheck = await user.findById(user_id);
 
     if (!userCheck) {
@@ -874,11 +875,12 @@ const addAddress = async (req: Request, res: Response) => {
       address_type,
       user_id,
     });
-
+    console.log('userCheck: ', newAddress);
     userCheck.addresses.push(
       // eslint-disable-next-line no-underscore-dangle
       newAddress._id as unknown as mongoose.Schema.Types.ObjectId,
     );
+
     await userCheck.save();
     await newAddress.save();
     return res.status(200).json({ message: 'Address added successfully' });
@@ -890,8 +892,11 @@ const addAddress = async (req: Request, res: Response) => {
   }
 };
 
-const getAddress = async (req: Request, res: Response) => {
-  const { userId } = req.params;
+const getAddress = async (req: any, res: Response) => {
+  let { userId } = req.params;
+  if (!userId) {
+    userId = req.user?.userId;
+  }
   const { type } = req.query;
 
   try {
@@ -1001,7 +1006,9 @@ const addToCart = async (req: any, res: Response) => {
 
   // Validate required fields
   if (!productId || !quantity || !size || !color) {
-    return res.status(400).json({ message: 'Product ID, quantity, size, and color are required' });
+    return res
+      .status(400)
+      .json({ message: 'Product ID, quantity, size, and color are required' });
   }
 
   try {
@@ -1043,14 +1050,16 @@ const addToCart = async (req: any, res: Response) => {
 const changeCartQuantity = async (req: any, res: Response) => {
   const { productId, quantity, size, color } = req.body;
   const userId = req.user?.userId || null; // Assuming user ID is available in req.user
-  
+
   if (!userId) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
   // Validate required fields
   if (!productId || !quantity || !size || !color) {
-    return res.status(400).json({ message: 'Product ID, quantity, size, and color are required' });
+    return res
+      .status(400)
+      .json({ message: 'Product ID, quantity, size, and color are required' });
   }
 
   try {
@@ -1064,14 +1073,16 @@ const changeCartQuantity = async (req: any, res: Response) => {
 
     // Find the cart item corresponding to the product with specific size and color
     const cartItem = checkUser.cart.find(
-      (item) => 
+      (item) =>
         item.product.toString() === productId.toString() &&
         item.size === size &&
-        item.color === color
+        item.color === color,
     );
 
     if (!cartItem) {
-      return res.status(404).json({ message: 'Product with specified size and color not found in cart' });
+      return res.status(404).json({
+        message: 'Product with specified size and color not found in cart',
+      });
     }
 
     // Update the quantity
@@ -1098,7 +1109,9 @@ const removeFromCart = async (req: any, res: Response) => {
 
   // Validate required fields
   if (!productId || !size || !color) {
-    return res.status(400).json({ message: 'Product ID, size, and color are required' });
+    return res
+      .status(400)
+      .json({ message: 'Product ID, size, and color are required' });
   }
 
   try {
@@ -1112,16 +1125,19 @@ const removeFromCart = async (req: any, res: Response) => {
 
     // Remove the specific product variant from the cart by filtering it out
     const updatedCart = checkUser.cart.filter(
-      (item) => !(
-        item.product.toString() === productId.toString() &&
-        item.size === size &&
-        item.color === color
-      )
+      (item) =>
+        !(
+          item.product.toString() === productId.toString() &&
+          item.size === size &&
+          item.color === color
+        ),
     );
-    
+
     // Check if the item was actually removed
     if (updatedCart.length === checkUser.cart.length) {
-      return res.status(404).json({ message: 'Product with specified size and color not found in cart' });
+      return res.status(404).json({
+        message: 'Product with specified size and color not found in cart',
+      });
     }
 
     checkUser.cart = updatedCart;
@@ -1230,7 +1246,7 @@ const getUserCart = async (req: any, res: Response) => {
           // @ts-ignore
           cartItem.product?.prodImages?.length > 0
             ? // @ts-ignore
-            cartItem.product.prodImages[0].url
+              cartItem.product.prodImages[0].url
             : '',
         // @ts-ignore
         price: cartItem.product.price,

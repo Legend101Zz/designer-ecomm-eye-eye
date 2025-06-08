@@ -18,9 +18,6 @@ const createAddressValidation: ValidationSchema = {
     state: Joi.string().required(),
     country: Joi.string().required(),
     address_type: Joi.string().required(),
-    user_id: Joi.string()
-      .regex(/^[0-9a-fA-F]{24}$/)
-      .required(),
   }),
 };
 
@@ -33,14 +30,10 @@ const addToCartValidation: ValidationSchema = {
         'string.pattern.base': 'Invalid product ID format',
         'any.required': 'Product ID is required',
       }),
-    quantity: Joi.number()
-      .integer()
-      .min(1)
-      .required()
-      .messages({
-        'number.min': 'Quantity must be at least 1',
-        'any.required': 'Quantity is required',
-      }),
+    quantity: Joi.number().integer().min(1).required().messages({
+      'number.min': 'Quantity must be at least 1',
+      'any.required': 'Quantity is required',
+    }),
     size: Joi.string()
       .valid(...Object.values(Size))
       .required()
@@ -67,14 +60,10 @@ const changeCartQuantityValidation: ValidationSchema = {
         'string.pattern.base': 'Invalid product ID format',
         'any.required': 'Product ID is required',
       }),
-    quantity: Joi.number()
-      .integer()
-      .min(1)
-      .required()
-      .messages({
-        'number.min': 'Quantity must be at least 1',
-        'any.required': 'Quantity is required',
-      }),
+    quantity: Joi.number().integer().min(1).required().messages({
+      'number.min': 'Quantity must be at least 1',
+      'any.required': 'Quantity is required',
+    }),
     size: Joi.string()
       .valid(...Object.values(Size))
       .required()
@@ -118,8 +107,8 @@ const removeFromCartValidation: ValidationSchema = {
   }),
 };
 
-export { 
-  createUserValidation, 
+export {
+  createUserValidation,
   createAddressValidation,
   addToCartValidation,
   changeCartQuantityValidation,
