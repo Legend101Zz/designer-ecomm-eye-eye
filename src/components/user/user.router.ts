@@ -1,9 +1,13 @@
 import { Router } from 'express';
 import protectedByApiKey from '@core/middlewares/apiKey.middleware';
 import validation from '@core/middlewares/validate.middleware';
+import { authenticate } from '@core/middlewares/userAuth.middleware';
 import {
   createUserValidation,
   createAddressValidation,
+  addToCartValidation,
+  changeCartQuantityValidation,
+  removeFromCartValidation,
 } from './createUserValidation';
 import {
   // User Management
@@ -27,6 +31,7 @@ import {
   changeCartQuantity,
   removeFromCart,
   getUserCart,
+  clearCart,
 } from './user.controller';
 
 const router: Router = Router();
@@ -65,14 +70,14 @@ router.get('/user/info/:userId', [protectedByApiKey], getUserInfo);
 
 // Add new address for user
 router.post(
-  '/user/addAddress/:userId',
-  [protectedByApiKey, validation(createAddressValidation)],
+  '/user/addAddress',
+  [protectedByApiKey, authenticate, validation(createAddressValidation)],
   addAddress,
 );
 
 // Get user's addresses
 router.get('/user/address/:userId', [protectedByApiKey], getAddress);
-
+router.get('/user/address', [protectedByApiKey], authenticate, getAddress);
 /**
  * Designer Following Routes
  * Handles user-designer relationship management
@@ -90,15 +95,34 @@ router.post('/user/unfollow', [protectedByApiKey], unfollowDesigner);
  */
 
 // Get user's cart contents
-router.get('/user/getCart/:userId', [protectedByApiKey], getUserCart);
+router.get('/user/getCart/', [protectedByApiKey], authenticate, getUserCart);
 
 // Add item to cart
-router.post('/user/addToCart', [protectedByApiKey], addToCart);
+router.post(
+  '/user/addToCart',
+  [protectedByApiKey],
+  validation(addToCartValidation),
+  authenticate,
+  addToCart,
+);
 
 // Update cart item quantity
-router.post('/user/updateCart', [protectedByApiKey], changeCartQuantity);
+router.post(
+  '/user/updateCart',
+  [protectedByApiKey, validation(changeCartQuantityValidation)],
+  authenticate,
+  changeCartQuantity,
+);
 
 // Remove item from cart
-router.post('/user/deleteFromCart', [protectedByApiKey], removeFromCart);
+router.post(
+  '/user/deleteFromCart',
+  [protectedByApiKey, validation(removeFromCartValidation)],
+  authenticate,
+  removeFromCart,
+);
+
+// Clear entire cart
+router.post('/user/clearCart', [protectedByApiKey], authenticate, clearCart);
 
 export default router;

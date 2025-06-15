@@ -1,5 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
 import { IUser } from './user.interface';
+import { Size, Color } from '../product/product.interface';
 
 const UserSchema: Schema<IUser> = new Schema(
   {
@@ -71,11 +72,22 @@ const UserSchema: Schema<IUser> = new Schema(
         product: {
           type: Schema.Types.ObjectId,
           ref: 'FinalProduct',
+          required: true,
         },
         quantity: {
           type: Number,
           required: true,
           min: 1,
+        },
+        size: {
+          type: String,
+          enum: Object.values(Size),
+          required: true,
+        },
+        color: {
+          type: String,
+          enum: Object.values(Color),
+          required: true,
         },
       },
     ],
@@ -87,8 +99,9 @@ const UserSchema: Schema<IUser> = new Schema(
   },
 );
 
-// Add a compound index for cart querying
+// Add compound indexes for cart querying
 UserSchema.index({ 'cart.product': 1 });
+UserSchema.index({ 'cart.product': 1, 'cart.size': 1, 'cart.color': 1 });
 
 const user = mongoose.model<IUser>('User', UserSchema);
 
