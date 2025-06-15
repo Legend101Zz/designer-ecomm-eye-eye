@@ -31,6 +31,7 @@ import {
   changeCartQuantity,
   removeFromCart,
   getUserCart,
+  clearCart,
 } from './user.controller';
 
 const router: Router = Router();
@@ -120,5 +121,8 @@ router.post(
   authenticate,
   removeFromCart,
 );
+
+// Clear entire cart
+router.post('/user/clearCart', [protectedByApiKey], authenticate, clearCart);
 
 export default router;

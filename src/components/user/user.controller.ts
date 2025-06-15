@@ -1268,6 +1268,31 @@ const getUserCart = async (req: any, res: Response) => {
   }
 };
 
+const clearCart = async (req: any, res: Response) => {
+  const userId = req.user?.userId || null;
+
+  if (!userId) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+  try {
+    const checkUser = await user.findById(userId);
+
+    if (!checkUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Clear the cart array
+    checkUser.cart = [];
+    await checkUser.save();
+
+    return res.status(200).json({ message: 'Cart cleared successfully' });
+  } catch (err) {
+    logger.error(err);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export {
   createUser,
@@ -1280,6 +1305,7 @@ export {
   addToCart,
   removeFromCart,
   changeCartQuantity,
+  clearCart,
   updatePassword,
   updateUser,
   getAddress,
